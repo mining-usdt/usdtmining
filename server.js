@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const path = require("path"); // تمت إضافة هذه المكتبة للتعامل مع مسارات الملفات
+const path = require("path"); 
 
 const app = express();
 app.use(cors());
@@ -16,8 +16,8 @@ mongoose.connect(MONGODB_URI)
   .catch(err => console.log("❌ MongoDB Error:", err));
 
 // =========================================================
-//   ✅ إعداد خدمة الملفات الثابتة (Frontend)
-//   يجب وضع جميع ملفات HTML و CSS و JS داخل مجلد اسمه "public"
+//   ✅ تم إصلاح المسار هنا (حذف 'src')
+//   الخادم الآن يبحث عن مجلد 'public' في جذر المشروع
 // =========================================================
 app.use(express.static(path.join(__dirname, 'public')));
 
