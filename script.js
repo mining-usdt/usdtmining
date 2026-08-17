@@ -1247,6 +1247,33 @@ function setLang(language){
    ✅ GET CURRENT USER - FIXED (مع مزامنة من الخادم)
    ========================================================= */
 
+async function getCurrentUser() {
+  const localUser = JSON.parse(localStorage.getItem("currentUser"));
+  if (!localUser) return null;
+
+  try {
+    const apiUrl = '/api/login';
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: localUser.email, password: localUser.password })
+    });
+
+    const data = await response.json();
+    if (data.success && data.user) {
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
+      const db = getUsers();
+      db[data.user.email] = data.user;
+      localStorage.setItem("miningUsersDB", JSON.stringify(db));
+      return data.user;
+    }
+  } catch (error) {
+    console.warn("⚠️ فشل الاتصال بالخادم، استخدم البيانات المحلية");
+  }
+
+  return localUser;
+}
+
 
 /* =========================================================
    ✅ SAVE USER - FIXED (مع مزامنة مع الخادم)
@@ -4204,7 +4231,9 @@ async function sendOnlineHeartbeat() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        userId: String(userId)
+        userId: String(userId),
+        name: localUser.name || "مستخدم",
+        email: localUser.email || ""
       })
     });
   } catch (error) {
