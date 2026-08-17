@@ -534,6 +534,11 @@ function handleError(
     );
 }
 
+// ✅ حساب العمولة 20%
+function calculateReferralBonus(amount) {
+  return amount * 0.20;
+}
+
 // ============================================================
 //  📡 API ROUTES
 // ============================================================
@@ -717,6 +722,7 @@ app.post(
           transactions: [],
         });
 
+      // ✅ معالجة كود الدعوة
       if (referralCode) {
         const referrer =
           await User.findOne({
@@ -761,6 +767,11 @@ app.post(
           log(
             `User ${name} registered with referral code ${referralCode}`,
             "INFO"
+          );
+        } else {
+          log(
+            `Invalid referral code: ${referralCode}`,
+            "WARNING"
           );
         }
       }
@@ -933,6 +944,9 @@ app.post(
 
             timerStart:
               user.timerStart,
+
+            lastProfitDate:
+              user.lastProfitDate,
 
             referralCode:
               user.referralCode,
@@ -1453,7 +1467,7 @@ app.post(
       }
 
       if (
-        ![  
+        ![
           "deposit",
           "withdraw",
         ].includes(type)
@@ -1646,10 +1660,10 @@ app.post(
           formattedUser,
 
         message:
-          `✅ تم ${  
+          `✅ ${
             type === "deposit"
-              ? "إيداع"
-              : "سحب"
+              ? "تم إيداع"
+              : "تم سحب"
           } $${amount.toFixed(
             2
           )} بنجاح`,
@@ -1894,6 +1908,9 @@ app.post(
 
       user.timerStart =
         Date.now();
+
+      user.lastProfitDate =
+        null;
 
       if (
         !user.transactions
@@ -2301,7 +2318,7 @@ async function startServer() {
         );
 
         log(
-          `🛡️ Environment: ${  
+          `🛡️ Environment: ${
             process.env.NODE_ENV ||
             "development"
           }`,
