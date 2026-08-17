@@ -1610,14 +1610,14 @@ function ensureAuth() {
 
 
 /* =========================================================
-   PLAN ACTIVATION WITH CONFIRMATION + FIXED TIMER
+   ✅ PLAN ACTIVATION - FIXED (يستخدم السيرفر للحصول على الرصيد)
 ========================================================= */
 
 function activatePlan(planId){
 
   console.log("🟢 activatePlan called with:", planId);
   
-  // ✅ التحقق من تسجيل الدخول مباشرة بدون ensureAuth
+  // ✅ التحقق من تسجيل الدخول
   const user = getCurrentUser();
   if (!user) {
     toast("⚠️ " + t("loginFirst"));
@@ -1635,55 +1635,71 @@ function activatePlan(planId){
   }
 
   console.log("👤 User:", user);
-  console.log("💰 User balance:", user.balance);
-  console.log("💰 Plan amount:", plan.amount);
+  console.log("💰 User balance from localStorage:", user.balance);
 
-  // ✅ التحقق من الرصيد
-  if(Number(user.balance || 0) < plan.amount){
-    toast("⚠️ " + t("insufficientBalance") + " رصيدك: $" + Number(user.balance || 0).toFixed(2) + " — المطلوب: $" + plan.amount);
-    console.log("❌ Insufficient balance");
-    const btns = document.querySelectorAll('[data-plan="' + planId + '"]');
-    btns.forEach(btn => {
-      btn.style.animation = 'shake 0.5s ease';
-      btn.style.borderColor = 'var(--danger)';
-      setTimeout(() => {
-        btn.style.animation = '';
-        btn.style.borderColor = '';
-      }, 600);
+  // ✅ جلب آخر بيانات المستخدم من السيرفر قبل التحقق من الرصيد
+  fetch(`/api/admin/user/${user.userId}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.user) {
+        const freshUser = data.user;
+        console.log("💰 Updated balance from server:", freshUser.balance);
+        
+        // ✅ تحديث البيانات المحلية بأحدث بيانات من السيرفر
+        localStorage.setItem('currentUser', JSON.stringify(freshUser));
+        const db = getUsers();
+        db[freshUser.email] = freshUser;
+        localStorage.setItem('miningUsersDB', JSON.stringify(db));
+
+        // ✅ التحقق من الرصيد بعد التحديث
+        if(Number(freshUser.balance || 0) < plan.amount){
+          toast("⚠️ " + t("insufficientBalance") + " رصيدك: $" + Number(freshUser.balance || 0).toFixed(2) + " — المطلوب: $" + plan.amount);
+          console.log("❌ Insufficient balance");
+          const btns = document.querySelectorAll('[data-plan="' + planId + '"]');
+          btns.forEach(btn => {
+            btn.style.animation = 'shake 0.5s ease';
+            btn.style.borderColor = 'var(--danger)';
+            setTimeout(() => {
+              btn.style.animation = '';
+              btn.style.borderColor = '';
+            }, 600);
+          });
+          return;
+        }
+
+        // ✅ نافذة تأكيد قبل التفعيل
+        showConfirmDialog(
+          "🛒 تأكيد شراء الخطة",
+          `هل أنت متأكد من شراء خطة <strong>${plan.id}</strong> بمبلغ <strong>$${plan.amount}</strong>؟<br><br>
+          📈 العائد اليومي: <strong>${plan.rate}%</strong><br>
+          📅 المدة: <strong>${plan.days} يوم</strong><br>
+          💰 الربح المتوقع: <strong>$${plan.netProfit.toFixed(2)}</strong>`,
+          "✅ نعم، قم بالشراء",
+          "❌ لا، إلغاء",
+          function() {
+            // ✅ تنفيذ الشراء عن طريق السيرفر
+            executePlanActivation(plan, freshUser);
+          },
+          function() {
+            toast("❌ تم إلغاء شراء الخطة");
+          }
+        );
+      } else {
+        toast("❌ فشل الاتصال بالسيرفر، يرجى المحاولة لاحقاً");
+      }
+    })
+    .catch(err => {
+      console.error("❌ فشل الاتصال بالسيرفر:", err);
+      toast("❌ فشل الاتصال بالسيرفر، يرجى المحاولة لاحقاً");
     });
-    return;
-  }
-
-  // ✅ نافذة تأكيد قبل التفعيل
-  showConfirmDialog(
-    // عنوان
-    "🛒 تأكيد شراء الخطة",
-    // رسالة
-    `هل أنت متأكد من شراء خطة <strong>${plan.id}</strong> بمبلغ <strong>$${plan.amount}</strong>؟<br><br>
-    📈 العائد اليومي: <strong>${plan.rate}%</strong><br>
-    📅 المدة: <strong>${plan.days} يوم</strong><br>
-    💰 الربح المتوقع: <strong>$${plan.netProfit.toFixed(2)}</strong>`,
-    // زر تأكيد
-    "✅ نعم، قم بالشراء",
-    // زر إلغاء
-    "❌ لا، إلغاء",
-    // callback عند التأكيد
-    function() {
-      executePlanActivation(plan, user);
-    },
-    // callback عند الإلغاء
-    function() {
-      toast("❌ تم إلغاء شراء الخطة");
-    }
-  );
 }
 
 /* =========================================================
-   تنفيذ التفعيل بعد التأكيد
+   تنفيذ التفعيل عبر السيرفر
 ========================================================= */
 
 async function executePlanActivation(plan, user) {
-  console.log("✅ Executing plan activation for:", plan.id);
+  console.log("✅ Executing plan activation for:", plan.id, "User:", user.userId);
 
   // ✅ إرسال طلب تفعيل الخطة إلى الخادم
   const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -1704,6 +1720,7 @@ async function executePlanActivation(plan, user) {
     });
 
     const data = await response.json();
+    console.log("📥 Server response:", data);
 
     if (!data.success) {
       toast("❌ " + data.message);
@@ -2294,17 +2311,19 @@ function setupLanguageMenu(){
 
 
 /* =========================================================
-   LOGOUT
+   ✅ LOGOUT - FIXED (يحذف الجلسة ويعيد التوجيه)
 ========================================================= */
 
 function logout(){
 
-  localStorage.removeItem(
-    "currentUser"
-  );
-
-  window.location.href =
-    "index.html";
+  // ✅ حذف بيانات المستخدم من localStorage
+  localStorage.removeItem("currentUser");
+  
+  // ✅ حذف أي بيانات أخرى متعلقة بالجلسة إن وجدت
+  // (مثل token، session، إلخ)
+  
+  // ✅ إعادة التوجيه إلى الصفحة الرئيسية
+  window.location.href = "index.html";
 
 }
 
