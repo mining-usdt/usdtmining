@@ -9,6 +9,12 @@ app.use(express.json());
 // 🔗 رابط MongoDB (استخدم متغيرات البيئة للأمان)
 const MONGODB_URI = "mongodb+srv://kabusbaba:aVNjXlWAUTAkdDT3@cluster0.zh0a3gc.mongodb.net/miningusdt";
 
+// ✅ تم إصلاح الاتصال بحذف الخيارات غير المدعومة (useNewUrlParser, useUnifiedTopology)
+// الإصدارات الحديثة من Mongoose تدير هذه الخيارات تلقائياً.
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(err => console.log("❌ MongoDB Error:", err));
+
 // =========================================================
 //   نموذج المستخدم (User Model)
 // =========================================================
@@ -78,27 +84,6 @@ function generateReferralCode(userId) {
 }
 
 // =========================================================
-//   ✅ مسارات Health Check (لـ Render)
-// =========================================================
-app.get('/', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    message: '🚀 Server is running',
-    timestamp: new Date().toISOString(),
-    mongodb: mongoose.connection.readyState === 1 ? '✅ Connected' : '❌ Disconnected'
-  });
-});
-
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString()
-  });
-});
-
-// =========================================================
 //   المسارات (Routes)
 // =========================================================
 
@@ -136,7 +121,7 @@ app.post("/register", async (req, res) => {
       userId,
       name,
       email,
-      password,
+      password, // ⚠️ في الإنتاج استخدم bcrypt لتشفير كلمة المرور
       referralCode: referralCodeGenerated,
       referredBy: null,
       balance: 0,
@@ -178,7 +163,7 @@ app.post("/register", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Register error:", error);
+    console.error("Register error:", error);
     res.status(500).json({ success: false, message: "❌ حدث خطأ في الخادم" });
   }
 });
@@ -193,6 +178,7 @@ app.post("/login", async (req, res) => {
       return res.status(401).json({ success: false, message: "❌ البريد أو كلمة المرور غير صحيحة" });
     }
 
+    // ⚠️ في الإنتاج استخدم bcrypt للمقارنة
     if (user.password !== password) {
       return res.status(401).json({ success: false, message: "❌ البريد أو كلمة المرور غير صحيحة" });
     }
@@ -218,7 +204,7 @@ app.post("/login", async (req, res) => {
     });
 
   } catch (error) {
-    console.error("❌ Login error:", error);
+    console.error("Login error:", error);
     res.status(500).json({ success: false, message: "❌ حدث خطأ في الخادم" });
   }
 });
@@ -229,7 +215,6 @@ app.get("/admin/users", async (req, res) => {
     const users = await User.find({}).select('-password');
     res.json({ success: true, users });
   } catch (error) {
-    console.error("❌ Admin users error:", error);
     res.status(500).json({ success: false, message: "❌ خطأ في الخادم" });
   }
 });
@@ -243,7 +228,6 @@ app.get("/admin/user/:userId", async (req, res) => {
     }
     res.json({ success: true, user });
   } catch (error) {
-    console.error("❌ Admin user error:", error);
     res.status(500).json({ success: false, message: "❌ خطأ في الخادم" });
   }
 });
@@ -282,7 +266,6 @@ app.post("/admin/user/:userId/balance", async (req, res) => {
     res.json({ success: true, message: "✅ تم التعديل بنجاح", balance: user.balance });
 
   } catch (error) {
-    console.error("❌ Balance update error:", error);
     res.status(500).json({ success: false, message: "❌ خطأ في الخادم" });
   }
 });
@@ -296,78 +279,10 @@ app.delete("/admin/user/:userId", async (req, res) => {
     }
     res.json({ success: true, message: "🗑️ تم حذف الحساب بنجاح" });
   } catch (error) {
-    console.error("❌ Delete user error:", error);
     res.status(500).json({ success: false, message: "❌ خطأ في الخادم" });
   }
 });
 
-// =========================================================
-//   🚀 تشغيل السيرفر مع إدارة اتصال MongoDB
-// =========================================================
-
+// 🚀 تشغيل السيرفر
 const PORT = process.env.PORT || 3000;
-
-// دالة للاتصال بقاعدة البيانات
-function connectToDatabase() {
-  console.log('🔄 Connecting to MongoDB...');
-  mongoose.connect(MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000,
-  })
-  .then(() => {
-    console.log('✅ MongoDB Connected Successfully');
-  })
-  .catch(err => {
-    console.error('❌ MongoDB Connection Error:', err.message);
-    // محاولة إعادة الاتصال بعد 5 ثوانٍ
-    setTimeout(() => {
-      console.log('🔄 Retrying MongoDB connection...');
-      connectToDatabase();
-    }, 5000);
-  });
-}
-
-// بدء الاتصال بقاعدة البيانات
-connectToDatabase();
-
-// مراقبة حالة الاتصال بعد البدء
-mongoose.connection.on('error', (err) => {
-  console.error('❌ MongoDB error after connection:', err.message);
-});
-
-mongoose.connection.on('disconnected', () => {
-  console.log('⚠️ MongoDB disconnected, attempting to reconnect...');
-  setTimeout(() => {
-    connectToDatabase();
-  }, 5000);
-});
-
-mongoose.connection.on('reconnected', () => {
-  console.log('✅ MongoDB reconnected successfully');
-});
-
-// تشغيل السيرفر
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📍 http://localhost:${PORT}`);
-  console.log(`✅ Health check: http://localhost:${PORT}/health`);
-});
-
-// =========================================================
-//   معالجة الإغلاق بشكل آمن
-// =========================================================
-process.on('SIGINT', async () => {
-  console.log('🛑 Shutting down gracefully...');
-  await mongoose.connection.close();
-  console.log('✅ MongoDB connection closed');
-  process.exit(0);
-});
-
-process.on('SIGTERM', async () => {
-  console.log('🛑 Shutting down gracefully...');
-  await mongoose.connection.close();
-  console.log('✅ MongoDB connection closed');
-  process.exit(0);
-});
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
