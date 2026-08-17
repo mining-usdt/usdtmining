@@ -1260,11 +1260,8 @@ async function getCurrentUser() {
       return localUser;
     }
 
-    const apiUrl =
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1"
-        ? `http://localhost:3000/api/admin/user/${encodeURIComponent(userId)}`
-        : `/api/admin/user/${encodeURIComponent(userId)}`;
+    // ✅ استخدام المسار النسبي بدلاً من localhost
+    const apiUrl = `/api/admin/user/${encodeURIComponent(userId)}`;
 
     const response = await fetch(apiUrl);
 
@@ -1329,12 +1326,8 @@ function saveUser(user) {
     JSON.stringify(database)
   );
 
-  // تحديث الحساب الموجود في MongoDB
-  const apiUrl =
-    window.location.hostname === "localhost" ||
-    window.location.hostname === "127.0.0.1"
-      ? `http://localhost:3000/api/admin/user/${encodeURIComponent(user.userId)}`
-      : `/api/admin/user/${encodeURIComponent(user.userId)}`;
+  // ✅ استخدام المسار النسبي بدلاً من localhost
+  const apiUrl = `/api/admin/user/${encodeURIComponent(user.userId)}`;
 
   fetch(apiUrl, {
     method: "PUT",
@@ -1638,6 +1631,7 @@ function activatePlan(planId){
   console.log("💰 User balance from localStorage:", user.balance);
 
   // ✅ جلب آخر بيانات المستخدم من السيرفر قبل التحقق من الرصيد
+  // ✅ استخدام المسار النسبي بدلاً من localhost
   fetch(`/api/admin/user/${user.userId}`)
     .then(res => res.json())
     .then(data => {
@@ -1702,9 +1696,8 @@ async function executePlanActivation(plan, user) {
   console.log("✅ Executing plan activation for:", plan.id, "User:", user.userId);
 
   // ✅ إرسال طلب تفعيل الخطة إلى الخادم
-  const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3000/api/activate-plan'
-    : '/api/activate-plan';
+  // ✅ استخدام المسار النسبي بدلاً من localhost
+  const apiUrl = '/api/activate-plan';
 
   try {
     const response = await fetch(apiUrl, {
@@ -2987,9 +2980,8 @@ function setupLogin() {
     }
 
     // ✅ محاولة تسجيل الدخول عبر الخادم أولاً
-    const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:3000/api/login'
-      : '/api/login';
+    // ✅ استخدام المسار النسبي بدلاً من localhost
+    const apiUrl = '/api/login';
 
     fetch(apiUrl, {
       method: "POST",
