@@ -4130,3 +4130,66 @@ document.addEventListener(
 // =========================================================
 window.activatePlan = activatePlan;
 console.log("✅ activatePlan is now available globally via window.activatePlan");
+
+
+// =========================================================
+//  ✅ FORCE LOGOUT AND PLAN BUTTONS - FIX (إضافي لضمان العمل)
+// =========================================================
+document.addEventListener("DOMContentLoaded", function() {
+  // ربط أزرار تسجيل الخروج
+  document.querySelectorAll("[data-logout]").forEach(button => {
+    const newButton = button.cloneNode(true);
+    button.parentNode.replaceChild(newButton, button);
+    
+    newButton.addEventListener("click", function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      console.log("🚪 Logout button clicked");
+      if (typeof window.logout === 'function') {
+        window.logout();
+      } else {
+        localStorage.removeItem("currentUser");
+        window.location.href = "index.html";
+      }
+    });
+  });
+
+  // ربط أزرار الخطط
+  document.querySelectorAll("[data-plan]").forEach(button => {
+    const newButton = button.cloneNode(true);
+    button.parentNode.replaceChild(newButton, button);
+    
+    newButton.addEventListener("click", function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const planId = this.dataset.plan;
+      console.log("🟢 [FORCE] Plan button clicked:", planId);
+      if (typeof window.activatePlan === 'function') {
+        window.activatePlan(planId);
+      } else {
+        toast("❌ حدث خطأ في النظام، يرجى تحديث الصفحة");
+      }
+    });
+  });
+});
+
+
+// =========================================================
+//  ✅ EXPOSE FUNCTIONS GLOBALLY - FIX (صلاحية إضافية)
+// =========================================================
+window.activatePlan = activatePlan;
+window.executePlanActivation = executePlanActivation;
+window.logout = logout;
+window.toast = toast;
+window.t = t;
+window.ensureAuth = ensureAuth;
+window.getCurrentUser = getCurrentUser;
+window.saveUser = saveUser;
+window.renderPlans = renderPlans;
+window.renderDashboard = renderDashboard;
+
+console.log("✅ All functions are now available globally (final)");
+console.log("✅ activatePlan:", typeof window.activatePlan);
+console.log("✅ executePlanActivation:", typeof window.executePlanActivation);
+console.log("✅ logout:", typeof window.logout);
+console.log("✅ ensureAuth:", typeof window.ensureAuth);
