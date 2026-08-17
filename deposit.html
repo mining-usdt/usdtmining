@@ -1454,9 +1454,8 @@ document.addEventListener("DOMContentLoaded", function(){
         this.textContent = "⏳ جاري الإيداع...";
 
         // ✅ إرسال طلب الإيداع إلى الخادم
-        const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-          ? 'http://localhost:3000/api/admin/balance'
-          : '/api/admin/balance';
+        // ✅ استخدام المسار النسبي بدلاً من localhost
+        const apiUrl = '/api/admin/balance';
 
         try {
           console.log("📤 إرسال إيداع:", {
