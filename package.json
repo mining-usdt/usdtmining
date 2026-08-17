@@ -1,7 +1,7 @@
 {
   "name": "miningusdt1",
   "version": "1.0.0",
-  "description": "Mining USDT Platform",
+  "description": "MiningUSDT Platform",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -11,7 +11,7 @@
     "type": "git",
     "url": "git+https://github.com/mining-usdt/usdt.git"
   },
-  "keywords": [],
+  "keywords": ["mining", "usdt", "crypto", "investment"],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
@@ -23,7 +23,7 @@
     "bcrypt": "^5.1.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "helmet": "^7.1.0",
+    "helmet": "^8.1.0",
     "mongoose": "^9.9.2"
   }
 }
