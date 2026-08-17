@@ -1244,138 +1244,161 @@ function setLang(language){
    ✅ GET CURRENT USER - FIXED (مع مزامنة من الخادم)
    ========================================================= */
 async function getCurrentUser() {
-  const localUser = JSON.parse(localStorage.getItem("currentUser"));
+  const localUser = JSON.parse(
+    localStorage.getItem("currentUser")
+  );
+
   if (!localUser) return null;
 
-  // ✅ محاولة تحديث البيانات من الخادم
   try {
-    const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:3000/api/login'
-      : '/api/login';
+    const userId = localUser.userId || localUser._id;
 
-    const response = await fetch(apiUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: localUser.email, password: localUser.password })
-    });
+    if (!userId) {
+      return localUser;
+    }
+
+    const apiUrl =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1"
+        ? `http://localhost:3000/api/admin/user/${encodeURIComponent(userId)}`
+        : `/api/admin/user/${encodeURIComponent(userId)}`;
+
+    const response = await fetch(apiUrl);
 
     const data = await response.json();
+
     if (data.success && data.user) {
-      // ✅ تحديث المستخدم المحلي بالبيانات الجديدة
-      localStorage.setItem("currentUser", JSON.stringify(data.user));
-      // تحديث قاعدة البيانات المحلية
+      localStorage.setItem(
+        "currentUser",
+        JSON.stringify(data.user)
+      );
+
       const db = getUsers();
       db[data.user.email] = data.user;
-      localStorage.setItem("miningUsersDB", JSON.stringify(db));
+
+      localStorage.setItem(
+        "miningUsersDB",
+        JSON.stringify(db)
+      );
+
       return data.user;
     }
+
   } catch (error) {
-    console.warn("⚠️ فشل الاتصال بالخادم، استخدم البيانات المحلية");
+    console.warn(
+      "⚠️ فشل تحديث المستخدم من الخادم:",
+      error
+    );
   }
 
   return localUser;
 }
 
-
 /* =========================================================
    ✅ SAVE USER - FIXED (مع مزامنة مع الخادم)
 ========================================================= */
 
-function saveUser(user){
+function saveUser(user) {
   if (!user) {
-    console.error('❌ لا يوجد مستخدم للحفظ');
+    console.error("❌ لا يوجد مستخدم للحفظ");
     return;
   }
 
-  // ✅ التأكد من وجود userId
   if (!user.userId) {
-    user.userId = generateUniqueUserId();
-    console.log('✅ تم إنشاء معرف جديد:', user.userId);
-  }
-  
-  if (!user.referralCode) {
-    user.referralCode = generateReferralCode(user.userId);
-    console.log('✅ تم إنشاء كود دعوة:', user.referralCode);
+    console.error("❌ المستخدم لا يحتوي على userId");
+    return;
   }
 
-  // حفظ محلياً
-  localStorage.setItem("currentUser", JSON.stringify(user));
+  // حفظ محلي
+  localStorage.setItem(
+    "currentUser",
+    JSON.stringify(user)
+  );
 
   const database = getUsers();
-  database[user.email] = user;
-  localStorage.setItem("miningUsersDB", JSON.stringify(database));
 
-  // ✅ إرسال إلى الخادم
-  const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-    ? 'http://localhost:3000/api/register'
-    : '/api/register';
-    
-  fetch(apiUrl, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      userId: user.userId,
-      name: user.name,
-      email: user.email,
-      password: user.password,
-      balance: user.balance || 0,
-      profit: user.profit || 0,
-      plan: user.plan || null,
-      planAmount: user.planAmount || 0,
-      planRate: user.planRate || 0,
-      planDays: user.planDays || 0,
-      planStart: user.planStart || null,
-      timerStart: user.timerStart || null,
-      referralCode: user.referralCode,
-      referredBy: user.referredBy || null,
-      referralBonus: user.referralBonus || 0,
-      referredUsers: user.referredUsers || [],
-      transactions: user.transactions || [],
-      createdAt: user.createdAt || new Date().toISOString()
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success && data.user) {
-      console.log("✅ تم حفظ المستخدم في الخادم:", data);
-      localStorage.setItem("currentUser", JSON.stringify(data.user));
-      const db = getUsers();
-      db[data.user.email] = data.user;
-      localStorage.setItem("miningUsersDB", JSON.stringify(db));
-    }
-  })
-  .catch(err => {
-    console.warn("⚠️ الخادم غير متصل، تم الحفظ محلياً فقط:", err);
-  });
-}
-
-
-/* =========================================================
-   AUTH
-========================================================= */
-
-function ensureAuth(){
-
-  if(!getCurrentUser()){
-
-    toast(
-      t("loginFirst")
-    );
-
-    setTimeout(
-      () => {
-        window.location.href =
-          "register.html";
-      },
-      700
-    );
-
-    return false;
-
+  if (user.email) {
+    database[user.email] = user;
   }
 
-  return true;
+  localStorage.setItem(
+    "miningUsersDB",
+    JSON.stringify(database)
+  );
 
+  // تحديث الحساب الموجود في MongoDB
+  const apiUrl =
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1"
+      ? `http://localhost:3000/api/admin/user/${encodeURIComponent(user.userId)}`
+      : `/api/admin/user/${encodeURIComponent(user.userId)}`;
+
+  fetch(apiUrl, {
+    method: "PUT",
+
+    headers: {
+      "Content-Type": "application/json"
+    },
+
+    body: JSON.stringify({
+      name: user.name,
+      email: user.email,
+
+      balance: Number(user.balance || 0),
+      profit: Number(user.profit || 0),
+
+      plan: user.plan || null,
+      planAmount: Number(user.planAmount || 0),
+      planRate: Number(user.planRate || 0),
+      planDays: Number(user.planDays || 0),
+
+      planStart: user.planStart || null,
+      timerStart: user.timerStart || null,
+      lastProfitDate: user.lastProfitDate || null,
+
+      referredBy: user.referredBy || null,
+      referralBonus: Number(user.referralBonus || 0),
+
+      referredUsers: user.referredUsers || [],
+      transactions: user.transactions || []
+    })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.user) {
+        console.log(
+          "✅ تم تحديث المستخدم في MongoDB:",
+          data.user.balance
+        );
+
+        localStorage.setItem(
+          "currentUser",
+          JSON.stringify(data.user)
+        );
+
+        const db = getUsers();
+
+        if (data.user.email) {
+          db[data.user.email] = data.user;
+        }
+
+        localStorage.setItem(
+          "miningUsersDB",
+          JSON.stringify(db)
+        );
+      } else {
+        console.error(
+          "❌ فشل تحديث المستخدم:",
+          data
+        );
+      }
+    })
+    .catch(err => {
+      console.error(
+        "❌ خطأ في الاتصال بالسيرفر:",
+        err
+      );
+    });
 }
 
 
