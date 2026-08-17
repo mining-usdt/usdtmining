@@ -1041,9 +1041,9 @@ Email
     // ✅ عرض المعرف - الإصلاح الأساسي
     const userIdEl = document.getElementById("dashUserId");
     if (userIdEl) {
-      const userId = user.userId || user._id || "—";
+      const userId = user.userId || "—";
       userIdEl.textContent = userId;
-      console.log("✅ تم عرض المعرف:", userId);
+      console.log("✅ تم عرض معرف الحساب:", userId);
     }
 
     // ✅ عرض الرصيد
@@ -1318,6 +1318,53 @@ Email
   }
 
   // =========================================================
+  //   ✅ تحديث بيانات المستخدم من MongoDB
+  // =========================================================
+  async function refreshCurrentUserFromServer() {
+    try {
+      const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+      if (!currentUser || !currentUser.userId) return currentUser;
+
+      const hostname = window.location.hostname;
+      const apiBase = (hostname === "localhost" || hostname === "127.0.0.1")
+        ? "http://localhost:3000/api"
+        : "/api";
+
+      const response = await fetch(
+        `${apiBase}/admin/user/${encodeURIComponent(currentUser.userId)}`,
+        { cache: "no-store" }
+      );
+
+      const data = await response.json();
+
+      if (data.success && data.user) {
+        const freshUser = {
+          ...data.user,
+          userId: data.user.userId,
+          _id: data.user._id
+        };
+
+        localStorage.setItem("currentUser", JSON.stringify(freshUser));
+
+        try {
+          const db = JSON.parse(localStorage.getItem("miningUsersDB")) || {};
+          if (freshUser.email) {
+            db[freshUser.email] = freshUser;
+            localStorage.setItem("miningUsersDB", JSON.stringify(db));
+          }
+        } catch (e) {}
+
+        console.log("✅ تم تحديث بيانات الحساب من MongoDB:", freshUser.userId);
+        return freshUser;
+      }
+    } catch (error) {
+      console.warn("⚠️ تعذر تحديث بيانات الحساب من الخادم، سيتم استخدام البيانات المحلية", error);
+    }
+
+    return JSON.parse(localStorage.getItem("currentUser"));
+  }
+
+  // =========================================================
   //   ✅ INIT - عند تحميل الصفحة
   // =========================================================
 
@@ -1331,8 +1378,13 @@ Email
       return;
     }
 
-    // ✅ عرض البيانات
+    // ✅ عرض البيانات فوراً من البيانات المحلية
     renderDashboardFixed();
+
+    // ✅ ثم جلب آخر بيانات من MongoDB حتى يظهر الرصيد والمعرف الصحيحان
+    refreshCurrentUserFromServer().then(() => {
+      renderDashboardFixed();
+    });
 
     // ✅ بدء المؤقت
     startTimerLoopFixed();
