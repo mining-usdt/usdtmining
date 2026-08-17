@@ -167,12 +167,6 @@ const UserSchema = new mongoose.Schema({
     }
   ],
 
-  // =======================================================
-  // مهم جداً:
-  // تم تغيير transactions إلى Mixed
-  // حتى يقبل MongoDB جميع بيانات العمليات القديمة والجديدة
-  // =======================================================
-
   transactions: {
     type: [mongoose.Schema.Types.Mixed],
     default: []
@@ -841,14 +835,12 @@ app.post(
 
       let user = null;
 
-      // البحث بالـ userId
       if (userId) {
         user =
           await User.findOne({
             userId
           });
 
-        // احتياطياً إذا كان المعرف MongoDB ObjectId
         if (
           !user &&
           mongoose.isValidObjectId(
@@ -862,7 +854,6 @@ app.post(
         }
       }
 
-      // البحث بالإيميل كاحتياط
       if (!user && email) {
         user =
           await User.findOne({
@@ -902,10 +893,6 @@ app.post(
       let transactionAmount;
       let transactionType;
 
-      // =====================================================
-      // DEPOSIT
-      // =====================================================
-
       if (type === "deposit") {
         newBalance =
           oldBalance + amount;
@@ -915,13 +902,7 @@ app.post(
 
         transactionType =
           "💰 إيداع (أدمن)";
-      }
-
-      // =====================================================
-      // WITHDRAW
-      // =====================================================
-
-      else {
+      } else {
         if (
           oldBalance < amount
         ) {
@@ -976,10 +957,6 @@ app.post(
         }
       );
 
-      // =====================================================
-      // تحديث مباشر في MongoDB
-      // =====================================================
-
       const result =
         await User.updateOne(
           {
@@ -1018,10 +995,6 @@ app.post(
             "❌ لم يتم تحديث الحساب في MongoDB"
         });
       }
-
-      // =====================================================
-      // جلب الحساب بعد التحديث
-      // =====================================================
 
       const updatedUser =
         await User.findById(
@@ -1091,6 +1064,87 @@ app.post(
     }
   }
 );
+
+// =========================================================
+// ✅ API: ACTIVATE PLAN - NEW
+// =========================================================
+
+app.post("/api/activate-plan", async (req, res) => {
+  try {
+    const { userId, planId, planAmount, planRate, planDays } = req.body;
+
+    console.log("📥 Activate plan request:", { userId, planId, planAmount });
+
+    if (!userId || !planId) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ المعرف والخطة مطلوبان"
+      });
+    }
+
+    const user = await User.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ المستخدم غير موجود"
+      });
+    }
+
+    if (Number(user.balance || 0) < planAmount) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ الرصيد غير كافٍ - رصيدك: $" + Number(user.balance || 0).toFixed(2)
+      });
+    }
+
+    const oldBalance = Number(user.balance || 0);
+    user.balance = oldBalance - planAmount;
+    user.plan = planId;
+    user.planAmount = planAmount;
+    user.planRate = planRate;
+    user.planDays = planDays;
+    user.planStart = new Date();
+    user.timerStart = Date.now();
+
+    if (!user.transactions) user.transactions = [];
+    user.transactions.unshift({
+      type: `🚀 تفعيل خطة ${planId}`,
+      amount: -planAmount,
+      date: new Date(),
+      status: '✅ مكتمل'
+    });
+
+    await user.save();
+
+    console.log("✅ Plan activated for:", user.email, "New balance:", user.balance);
+
+    return res.json({
+      success: true,
+      message: "✅ تم تفعيل الخطة بنجاح",
+      user: {
+        userId: user.userId,
+        name: user.name,
+        email: user.email,
+        balance: user.balance,
+        profit: user.profit,
+        plan: user.plan,
+        planAmount: user.planAmount,
+        planRate: user.planRate,
+        planStart: user.planStart,
+        timerStart: user.timerStart,
+        referralCode: user.referralCode,
+        transactions: user.transactions.slice(0, 20)
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Activate plan error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ حدث خطأ في الخادم: " + error.message
+    });
+  }
+});
 
 // =========================================================
 // START SERVER
