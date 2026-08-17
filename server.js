@@ -6,6 +6,7 @@
  *  - أمان عالي
  *  - أداء محسن
  *  - بنية قابلة للتوسع
+ *  - اتصال MongoDB مستقر
  * ============================================================
  */
 
@@ -106,20 +107,32 @@ app.use(
 );
 
 // ============================================================
-//  🗄️ DATABASE CONNECTION
+//  🗄️ DATABASE CONNECTION (محسّن)
 // ============================================================
 
 const dbOptions = {
-  serverSelectionTimeoutMS: 10000,
-  socketTimeoutMS: 45000,
+  serverSelectionTimeoutMS: 15000,
+  socketTimeoutMS: 60000,
   family: 4,
-  maxPoolSize: 10,
-  minPoolSize: 2,
+  maxPoolSize: 20,
+  minPoolSize: 5,
+  maxIdleTimeMS: 30000,
+  heartbeatFrequencyMS: 10000,
+  retryWrites: true,
+  retryReads: true,
 };
+
+let isDbConnected = false;
 
 async function connectDatabase() {
   try {
+    if (isDbConnected) {
+      return true;
+    }
+
     await mongoose.connect(MONGODB_URI, dbOptions);
+
+    isDbConnected = true;
 
     log(
       "✅ MongoDB Connected Successfully",
@@ -128,6 +141,7 @@ async function connectDatabase() {
 
     return true;
   } catch (error) {
+    isDbConnected = false;
     logError(error, "Database Connection");
 
     log(
@@ -141,7 +155,14 @@ async function connectDatabase() {
   }
 }
 
+// ✅ مراقبة اتصال MongoDB
+mongoose.connection.on("connected", () => {
+  isDbConnected = true;
+  log("✅ MongoDB connection established", "SUCCESS");
+});
+
 mongoose.connection.on("disconnected", () => {
+  isDbConnected = false;
   log(
     "⚠️ MongoDB Disconnected - Attempting to reconnect",
     "WARNING"
@@ -151,7 +172,13 @@ mongoose.connection.on("disconnected", () => {
 });
 
 mongoose.connection.on("error", (error) => {
+  isDbConnected = false;
   logError(error, "MongoDB Error");
+});
+
+mongoose.connection.on("reconnected", () => {
+  isDbConnected = true;
+  log("✅ MongoDB reconnected successfully", "SUCCESS");
 });
 
 // ============================================================
@@ -570,6 +597,10 @@ app.get(
             mongodb:
               states[mongoState] ||
               "unknown",
+
+            mongodbState: mongoState,
+
+            isConnected: isDbConnected,
 
             uptime:
               process.uptime(),
@@ -2327,6 +2358,11 @@ async function startServer() {
 
         log(
           `📁 Logs directory: ${LOGS_DIR}`,
+          "INFO"
+        );
+
+        log(
+          `🔄 MongoDB connection status: ${isDbConnected ? 'Connected' : 'Disconnected'}`,
           "INFO"
         );
       }
