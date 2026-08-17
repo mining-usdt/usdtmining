@@ -8,7 +8,7 @@
    - 24-hour Timer with auto-profit addition
    - Celebration on plan activation
    - ✅ تم إصلاح مشاكل الرفع على Render و GitHub
-   - ✅ تم إصلاح مشكة المعرفات (ID) والمزامنة مع الخادم
+   - ✅ تم إصلاح مشكلة المعرفات (ID) والمزامنة مع الخادم
    - ✅ تم إصلاح نظام الإيداع مع الخادم
 ========================================================= */
 
@@ -1287,6 +1287,7 @@ function saveUser(user){
     return;
   }
 
+  // ✅ التأكد من وجود userId
   if (!user.userId) {
     user.userId = generateUniqueUserId();
     console.log('✅ تم إنشاء معرف جديد:', user.userId);
@@ -1304,7 +1305,7 @@ function saveUser(user){
   database[user.email] = user;
   localStorage.setItem("miningUsersDB", JSON.stringify(database));
 
-  // ✅ إرسال إلى الخادم (باستخدام المسار الصحيح)
+  // ✅ إرسال إلى الخادم
   const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3000/api/register'
     : '/api/register';
@@ -1335,24 +1336,20 @@ function saveUser(user){
   })
   .then(res => res.json())
   .then(data => {
-    if (data.success) {
+    if (data.success && data.user) {
       console.log("✅ تم حفظ المستخدم في الخادم:", data);
       // ✅ تحديث البيانات من الخادم للتأكد من التطابق
-      if (data.user) {
-        localStorage.setItem("currentUser", JSON.stringify(data.user));
-        const db = getUsers();
-        db[data.user.email] = data.user;
-        localStorage.setItem("miningUsersDB", JSON.stringify(db));
-      }
-    } else {
-      console.warn("⚠️ فشل حفظ المستخدم في الخادم:", data.message);
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
+      const db = getUsers();
+      db[data.user.email] = data.user;
+      localStorage.setItem("miningUsersDB", JSON.stringify(db));
     }
   })
   .catch(err => {
     console.warn("⚠️ الخادم غير متصل، تم الحفظ محلياً فقط:", err);
   });
-
 }
+
 
 
 /* =========================================================
