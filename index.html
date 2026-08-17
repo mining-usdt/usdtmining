@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>miningusdt</title>
   
-  <!-- ✅ تم إزالة وسم base الخاطئ، والآن الملفات تبحث في نفس المجلد -->
   <link rel="stylesheet" href="style.css">
   <script defer src="script.js"></script>
 </head>
@@ -206,22 +205,6 @@
           </div>
         `).join('');
 
-        // ✅ ربط الأزرار باستخدام Event Delegation
-        document.addEventListener('click', function(e) {
-          const btn = e.target.closest('[data-plan]');
-          if (!btn) return;
-          e.preventDefault();
-          e.stopPropagation();
-          const planId = btn.dataset.plan;
-          console.log("🟢 Button clicked for plan:", planId);
-          if (typeof window.activatePlan === 'function') {
-            window.activatePlan(planId);
-          } else {
-            console.error('❌ activatePlan not found!');
-            toast('❌ حدث خطأ في النظام، يرجى تحديث الصفحة');
-          }
-        });
-
         document.querySelectorAll('[data-logout]').forEach(btn => {
           btn.addEventListener('click', function() {
             if (typeof logout === 'function') logout();
@@ -268,32 +251,6 @@
         }
       });
     });
-  // =========================================================
-  //  FORCE BIND PLAN BUTTONS - FIX
-  // =========================================================
-  document.addEventListener("DOMContentLoaded", function() {
-    console.log("🔄 Forcing plan button binding...");
-    
-    // ربط الأزرار يدوياً
-    document.querySelectorAll("[data-plan]").forEach(button => {
-      console.log("🔘 Found plan button:", button.dataset.plan);
-      button.addEventListener("click", function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        const planId = this.dataset.plan;
-        console.log("🟢 Plan button clicked:", planId);
-        
-        if (typeof window.activatePlan === 'function') {
-          console.log("✅ Calling activatePlan for:", planId);
-          window.activatePlan(planId);
-        } else {
-          console.error("❌ activatePlan is undefined!");
-          toast("❌ حدث خطأ في النظام، يرجى تحديث الصفحة");
-        }
-      });
-    });
-  });
-
   </script>
 
 </body>
