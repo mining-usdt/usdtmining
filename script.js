@@ -8,6 +8,8 @@
    - 24-hour Timer with auto-profit addition
    - Celebration on plan activation
    - ✅ تم إصلاح مشاكل الرفع على Render و GitHub
+   - ✅ تم إصلاح مشكلة المعرفات (ID) والمزامنة مع الخادم
+   - ✅ تم إصلاح نظام الإيداع مع الخادم
 ========================================================= */
 
 const I18N = {
@@ -1239,30 +1241,44 @@ function setLang(language){
 
 
 /* =========================================================
-   USER STORAGE
-========================================================= */
+   ✅ GET CURRENT USER - FIXED (مع مزامنة من الخادم)
+   ========================================================= */
+async function getCurrentUser() {
+  const localUser = JSON.parse(localStorage.getItem("currentUser"));
+  if (!localUser) return null;
 
-function getCurrentUser(){
+  // ✅ محاولة تحديث البيانات من الخادم
+  try {
+    const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:3000/api/login'
+      : '/api/login';
 
-  try{
+    const response = await fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: localUser.email, password: localUser.password })
+    });
 
-    return JSON.parse(
-      localStorage.getItem(
-        "currentUser"
-      )
-    );
-
-  }catch{
-
-    return null;
-
+    const data = await response.json();
+    if (data.success && data.user) {
+      // ✅ تحديث المستخدم المحلي بالبيانات الجديدة
+      localStorage.setItem("currentUser", JSON.stringify(data.user));
+      // تحديث قاعدة البيانات المحلية
+      const db = getUsers();
+      db[data.user.email] = data.user;
+      localStorage.setItem("miningUsersDB", JSON.stringify(db));
+      return data.user;
+    }
+  } catch (error) {
+    console.warn("⚠️ فشل الاتصال بالخادم، استخدم البيانات المحلية");
   }
 
+  return localUser;
 }
 
 
 /* =========================================================
-   ✅ SAVE USER - FIXED (مع دعم الخادم)
+   ✅ SAVE USER - FIXED (مع مزامنة مع الخادم)
 ========================================================= */
 
 function saveUser(user){
@@ -1296,12 +1312,38 @@ function saveUser(user){
   fetch(apiUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(user)
+    body: JSON.stringify({
+      userId: user.userId,
+      name: user.name,
+      email: user.email,
+      password: user.password,
+      balance: user.balance || 0,
+      profit: user.profit || 0,
+      plan: user.plan || null,
+      planAmount: user.planAmount || 0,
+      planRate: user.planRate || 0,
+      planDays: user.planDays || 0,
+      planStart: user.planStart || null,
+      timerStart: user.timerStart || null,
+      referralCode: user.referralCode,
+      referredBy: user.referredBy || null,
+      referralBonus: user.referralBonus || 0,
+      referredUsers: user.referredUsers || [],
+      transactions: user.transactions || [],
+      createdAt: user.createdAt || new Date().toISOString()
+    })
   })
   .then(res => res.json())
   .then(data => {
     if (data.success) {
       console.log("✅ تم حفظ المستخدم في الخادم:", data);
+      // ✅ تحديث البيانات من الخادم للتأكد من التطابق
+      if (data.user) {
+        localStorage.setItem("currentUser", JSON.stringify(data.user));
+        const db = getUsers();
+        db[data.user.email] = data.user;
+        localStorage.setItem("miningUsersDB", JSON.stringify(db));
+      }
     } else {
       console.warn("⚠️ فشل حفظ المستخدم في الخادم:", data.message);
     }
@@ -1408,7 +1450,7 @@ function addTransaction(
   user,
   type,
   amount,
-  status="Account",
+  status="مكتمل",
   extra={}
 ){
 
@@ -2880,6 +2922,10 @@ function setupLogin() {
     .then(data => {
       if (data.success) {
         localStorage.setItem("currentUser", JSON.stringify(data.user));
+        // تحديث قاعدة البيانات المحلية
+        const db = getUsers();
+        db[data.user.email] = data.user;
+        localStorage.setItem("miningUsersDB", JSON.stringify(db));
         toast(t("logged"));
         setTimeout(() => {
           window.location.href = "dashboard.html";
