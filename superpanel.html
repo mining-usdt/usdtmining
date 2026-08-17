@@ -422,6 +422,15 @@
       margin-right: auto;
     }
 
+    .admin-card-premium .card-title .online-badge {
+      font-size: 11px;
+      background: rgba(24, 255, 255, 0.08);
+      color: var(--admin-cyan);
+      padding: 2px 12px;
+      border-radius: 20px;
+      border: 1px solid rgba(24, 255, 255, 0.1);
+    }
+
     .admin-card-premium label {
       color: var(--muted);
       font-size: 12px;
@@ -534,6 +543,12 @@
     }
     .user-info-premium .info-value.danger {
       color: var(--danger);
+    }
+    .user-info-premium .info-value.online {
+      color: var(--admin-cyan);
+    }
+    .user-info-premium .info-value.offline {
+      color: var(--muted);
     }
 
     .action-grid-premium {
@@ -679,6 +694,32 @@
     .user-item-premium .user-name {
       color: var(--text);
       font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .user-item-premium .user-name .online-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .user-item-premium .user-name .online-dot.online {
+      background: var(--admin-cyan);
+      box-shadow: 0 0 10px rgba(24, 255, 255, 0.4);
+      animation: onlinePulse 2s ease-in-out infinite;
+    }
+
+    .user-item-premium .user-name .online-dot.offline {
+      background: var(--muted);
+      opacity: 0.4;
+    }
+
+    @keyframes onlinePulse {
+      0%, 100% { box-shadow: 0 0 10px rgba(24, 255, 255, 0.2); }
+      50% { box-shadow: 0 0 20px rgba(24, 255, 255, 0.6); }
     }
 
     .user-item-premium .user-balance {
@@ -1061,6 +1102,21 @@
       0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.05); }
       50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.15); }
     }
+
+    .online-count-badge {
+      background: rgba(24, 255, 255, 0.1);
+      border: 1px solid rgba(24, 255, 255, 0.15);
+      color: var(--admin-cyan);
+      padding: 2px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 10px;
+    }
+
+    .online-count-badge .count {
+      font-weight: 800;
+    }
   </style>
 
 </head>
@@ -1118,7 +1174,7 @@
           <span>🔄</span> تحديث
         </button>
         <button onclick="syncWithServer()" class="sync-btn">
-          <span>🌐</span> مزامنة مع الخادم
+          <span>🌐</span> مزامنة
         </button>
         <button onclick="exportData()">
           <span>📥</span> تصدير
@@ -1136,6 +1192,11 @@
         <div class="stat-label">إجمالي المستخدمين</div>
       </div>
       <div class="admin-stat-premium" onclick="playSound('click')">
+        <div class="stat-icon">🟢</div>
+        <div class="stat-number" id="adminOnlineUsers" style="color: var(--admin-cyan);">0</div>
+        <div class="stat-label">المتصلون الآن</div>
+      </div>
+      <div class="admin-stat-premium" onclick="playSound('click')">
         <div class="stat-icon">💰</div>
         <div class="stat-number gold" id="adminTotalBalance">$0</div>
         <div class="stat-label">إجمالي الأرصدة</div>
@@ -1144,11 +1205,6 @@
         <div class="stat-icon">📈</div>
         <div class="stat-number purple" id="adminTotalProfit">$0</div>
         <div class="stat-label">إجمالي الأرباح</div>
-      </div>
-      <div class="admin-stat-premium" onclick="playSound('click')">
-        <div class="stat-icon">📊</div>
-        <div class="stat-number" id="adminActivePlans">0</div>
-        <div class="stat-label">الخطط النشطة</div>
       </div>
     </div>
 
@@ -1215,6 +1271,10 @@
               <span class="info-label">🔗 كود الدعوة</span>
               <span class="info-value green" id="infoReferral">—</span>
             </div>
+            <div class="info-row full">
+              <span class="info-label">🟢 حالة الاتصال</span>
+              <span class="info-value" id="infoOnlineStatus">⚪ غير متصل</span>
+            </div>
           </div>
         </div>
 
@@ -1243,6 +1303,7 @@
           <span class="icon">📋</span>
           المستخدمين
           <span class="badge" id="userCountLabel">0</span>
+          <span class="online-count-badge" id="onlineCountBadge">🟢 <span class="count" id="onlineCountDisplay">0</span> متصل</span>
         </div>
 
         <div class="user-list-premium" id="userList">
@@ -1274,6 +1335,7 @@
     let allUsers = {};
     let selectedUser = null;
     let currentAdmin = null;
+    let onlineUsersSet = new Set();
 
     // =========================================================
     //   ✅ TOGGLE SOUND
@@ -1476,85 +1538,66 @@
     // =========================================================
     async function loadUsers() {
       try {
-        const limit = 100;
-        let page = 1;
-        let allServerUsers = [];
-        let total = null;
-
-        while (true) {
-          const apiUrl = getApiUrl(`/admin/users?page=${page}&limit=${limit}`);
-          const response = await fetch(apiUrl, {
-            method: 'GET',
-            cache: 'no-store',
-            headers: {
-              'Accept': 'application/json'
-            }
-          });
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-          }
-
-          const data = await response.json();
-
-          if (!data.success || !Array.isArray(data.users)) {
-            throw new Error(data.message || 'فشل جلب المستخدمين من السيرفر');
-          }
-
-          allServerUsers.push(...data.users);
-
-          if (data.pagination && Number.isFinite(Number(data.pagination.total))) {
-            total = Number(data.pagination.total);
-          }
-
-          const received = data.users.length;
-
-          if (received === 0) break;
-          if (total !== null && allServerUsers.length >= total) break;
-          if (received < limit) break;
-
-          page++;
-
-          // حماية من التكرار اللانهائي
-          if (page > 10000) break;
-        }
-
-        const serverUsers = {};
-        allServerUsers.forEach(user => {
-          const key = user.email || user.userId || user._id || user.id;
-          if (key) serverUsers[key] = user;
+        // ✅ جلب المستخدمين من الخادم
+        const apiUrl = getApiUrl('/admin/users?page=1&limit=200');
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          cache: 'no-store',
+          headers: { 'Accept': 'application/json' }
         });
 
-        // السيرفر / MongoDB هو المصدر الأساسي والوحيد للحسابات.
-        // لا ندمج حسابات localStorage حتى لا تظهر حسابات جهاز آخر فقط.
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.success || !Array.isArray(data.users)) {
+          throw new Error(data.message || 'فشل جلب المستخدمين من السيرفر');
+        }
+
+        // ✅ تخزين المستخدمين
+        const serverUsers = {};
+        data.users.forEach(user => {
+          const key = user.email || user.userId || user._id || user.id;
+          if (key) {
+            serverUsers[key] = {
+              ...user,
+              isOnline: user.isOnline || false
+            };
+          }
+        });
+
         allUsers = serverUsers;
 
-        console.log('✅ تم جلب جميع الحسابات من MongoDB:', allServerUsers.length);
-        console.log('🌐 عدد الحسابات الكلي من السيرفر:', total ?? allServerUsers.length);
+        // ✅ تحديث قائمة المتصلين
+        onlineUsersSet = new Set();
+        data.users.forEach(user => {
+          if (user.isOnline) {
+            onlineUsersSet.add(String(user.userId || user._id));
+          }
+        });
+
+        console.log('✅ تم جلب جميع الحسابات من MongoDB:', Object.keys(allUsers).length);
+        console.log('🟢 عدد المتصلين:', onlineUsersSet.size);
 
         updateStats();
         renderUserList();
 
       } catch (error) {
         console.error('❌ فشل جلب الحسابات من السيرفر:', error);
-
-        // لا تستخدم localStorage كبديل لقائمة الحسابات.
-        // هذا يمنع ظهور حسابات جهاز واحد فقط عند فتح لوحة الأدمن من جهاز آخر.
         allUsers = {};
+        onlineUsersSet = new Set();
         updateStats();
         renderUserList();
-
-        showNotification(
-          '❌ تعذر الاتصال بالسيرفر — لم يتم تحميل حسابات محلية',
-          '❌'
-        );
+        showNotification('❌ تعذر الاتصال بالسيرفر', '❌');
       }
     }
 
     async function syncWithServer() {
       showNotification('🔄 جاري المزامنة مع الخادم...', '🔄');
       await loadUsers();
-      showNotification('✅ تمت المزامنة بنجاح — ' + Object.keys(allUsers).length + ' مستخدم', '✅');
+      showNotification('✅ تمت المزامنة بنجاح — ' + Object.keys(allUsers).length + ' مستخدم, ' + onlineUsersSet.size + ' متصل', '✅');
       playSound('success');
     }
 
@@ -1589,27 +1632,33 @@
     function updateStats() {
       const users = Object.values(allUsers);
       const totalUsers = users.length;
+      const onlineCount = onlineUsersSet.size;
       let totalBalance = 0;
       let totalProfit = 0;
       let activePlans = 0;
+
       users.forEach(user => {
         totalBalance += Number(user.balance || 0);
         totalProfit += Number(user.profit || 0);
         if (user.plan && user.plan !== '—' && user.plan !== null) activePlans++;
       });
+
       document.getElementById('adminTotalUsers').textContent = totalUsers;
+      document.getElementById('adminOnlineUsers').textContent = onlineCount;
       document.getElementById('adminTotalBalance').textContent = '$' + totalBalance.toFixed(2);
       document.getElementById('adminTotalProfit').textContent = '$' + totalProfit.toFixed(2);
-      document.getElementById('adminActivePlans').textContent = activePlans;
       document.getElementById('userCountLabel').textContent = totalUsers + ' مستخدم';
+      document.getElementById('onlineCountDisplay').textContent = onlineCount;
+      document.getElementById('onlineCountBadge').innerHTML = `🟢 <span class="count" id="onlineCountDisplay">${onlineCount}</span> متصل`;
     }
 
     // =========================================================
-    //   ✅ RENDER USER LIST
+    //   ✅ RENDER USER LIST مع عرض حالة الاتصال
     // =========================================================
     function renderUserList() {
       const container = document.getElementById('userList');
       const users = Object.values(allUsers);
+
       if (!users.length) {
         container.innerHTML = `
           <div style="text-align:center;color:var(--muted);padding:40px 0;">
@@ -1618,22 +1667,33 @@
         `;
         return;
       }
+
       const sorted = users.sort((a, b) => {
         const aDate = a.createdAt || a.planStart || '';
         const bDate = b.createdAt || b.planStart || '';
         return bDate.localeCompare(aDate);
       });
-      container.innerHTML = sorted.map(user => `
-        <div class="user-item-premium" onclick="selectUser('${user.userId || user._id || user.email}')">
-          <span class="user-id">🆔 ${user.userId || user._id || '—'}</span>
-          <span class="user-name">${user.name || 'غير معروف'}</span>
-          <span class="user-balance">$${Number(user.balance || 0).toFixed(2)}</span>
-        </div>
-      `).join('');
+
+      container.innerHTML = sorted.map(user => {
+        const isOnline = user.isOnline || onlineUsersSet.has(String(user.userId || user._id));
+        const dotClass = isOnline ? 'online' : 'offline';
+        const statusText = isOnline ? '🟢' : '⚪';
+
+        return `
+          <div class="user-item-premium" onclick="selectUser('${user.userId || user._id || user.email}')">
+            <span class="user-id">🆔 ${user.userId || user._id || '—'}</span>
+            <span class="user-name">
+              ${statusText} ${user.name || 'غير معروف'}
+              <span class="online-dot ${dotClass}"></span>
+            </span>
+            <span class="user-balance">$${Number(user.balance || 0).toFixed(2)}</span>
+          </div>
+        `;
+      }).join('');
     }
 
     // =========================================================
-    //   ✅ SEARCH USER (FIXED)
+    //   ✅ SEARCH USER
     // =========================================================
     async function searchUser() {
       const identifier = document.getElementById('adminUserId').value.trim();
@@ -1666,6 +1726,7 @@
           const data = await response.json();
           if (data.success && data.user) {
             user = data.user;
+            user.isOnline = onlineUsersSet.has(String(user.userId || user._id));
             allUsers[user.email] = user;
           }
         } catch (error) {
@@ -1708,9 +1769,11 @@
     }
 
     // =========================================================
-    //   ✅ DISPLAY USER INFO
+    //   ✅ DISPLAY USER INFO مع حالة الاتصال
     // =========================================================
     function displayUserInfo(user) {
+      const isOnline = user.isOnline || onlineUsersSet.has(String(user.userId || user._id));
+
       document.getElementById('infoUserId').textContent = user.userId || user._id || '—';
       document.getElementById('infoName').textContent = user.name || '—';
       document.getElementById('infoEmail').textContent = user.email || '—';
@@ -1722,6 +1785,16 @@
         user.planStart ? new Date(user.planStart).toLocaleString() : '—';
       document.getElementById('infoTransactions').textContent = (user.transactions || []).length;
       document.getElementById('infoReferral').textContent = user.referralCode || '—';
+
+      // حالة الاتصال
+      const onlineStatusEl = document.getElementById('infoOnlineStatus');
+      if (isOnline) {
+        onlineStatusEl.textContent = '🟢 متصل';
+        onlineStatusEl.className = 'info-value online';
+      } else {
+        onlineStatusEl.textContent = '⚪ غير متصل';
+        onlineStatusEl.className = 'info-value offline';
+      }
 
       let timerDisplay = '—';
       if (user.plan && user.plan !== '—' && user.timerStart) {
@@ -1779,7 +1852,7 @@
     }
 
     // =========================================================
-    //   ✅ ADMIN: DEPOSIT (FIXED)
+    //   ✅ ADMIN: DEPOSIT
     // =========================================================
     async function adminDeposit() {
       if (!selectedUser) {
@@ -1805,61 +1878,47 @@
           cancelText: 'إلغاء'
         });
 
-        // تحديث محلياً أولاً
-        const oldBalance = Number(selectedUser.balance || 0);
-        selectedUser.balance = oldBalance + amount;
-        if (!selectedUser.transactions) selectedUser.transactions = [];
-        selectedUser.transactions.unshift({
-          type: '💰 إيداع (أدمن)',
-          amount: amount,
-          date: new Date().toISOString(),
-          status: '✅ مكتمل',
-          note: `بواسطة الأدمن ${currentAdmin || 'أدمن'}`
+        // ✅ إرسال إلى الخادم
+        const apiUrl = getApiUrl('/admin/balance');
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: selectedUser.userId || selectedUser._id,
+            email: selectedUser.email,
+            amount: amount,
+            type: 'deposit',
+            adminName: currentAdmin || 'أدمن'
+          })
         });
 
+        const data = await response.json();
+
+        if (!data.success) {
+          showNotification(data.message || '❌ فشل الإيداع', '❌');
+          return;
+        }
+
+        // ✅ تحديث البيانات
+        selectedUser = data.user;
+        selectedUser.isOnline = onlineUsersSet.has(String(selectedUser.userId || selectedUser._id));
+        allUsers[selectedUser.email] = selectedUser;
         saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
         playSound('coin');
-        showNotification(`✅ تم إيداع $${amount.toFixed(2)} للحساب بنجاح (تم الحفظ محلياً)`, '💰');
+        showNotification(`✅ تم إيداع $${amount.toFixed(2)} بنجاح - الرصيد الجديد: $${Number(selectedUser.balance).toFixed(2)}`, '💰');
         document.getElementById('adminAmount').value = '';
 
-        // ✅ مزامنة مع الخادم
-        const apiUrl = getApiUrl('/admin/balance');
-        try {
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: selectedUser.userId || selectedUser._id,
-              email: selectedUser.email,
-              amount: amount,
-              type: 'deposit',
-              adminName: currentAdmin || 'أدمن'
-            })
-          });
-          const data = await response.json();
-          if (data.success && data.user) {
-            console.log('✅ تم مزامنة الإيداع مع الخادم');
-            selectedUser = data.user;
-            allUsers[data.user.email] = data.user;
-            saveUserToDB(data.user);
-            displayUserInfo(selectedUser);
-            loadUsers();
-            showNotification(`✅ تم مزامنة الإيداع مع الخادم - الرصيد الجديد: $${Number(data.user.balance).toFixed(2)}`, '💰');
-          }
-        } catch (err) {
-          console.warn('⚠️ فشل مزامنة الإيداع مع الخادم:', err);
-          showNotification('⚠️ تم الإيداع محلياً، لكن لم يتم المزامنة مع الخادم', '⚠️');
-        }
-
       } catch (e) {
-        playSound('click');
+        if (e !== false) {
+          showNotification('❌ فشل الاتصال بالخادم', '❌');
+        }
       }
     }
 
     // =========================================================
-    //   ✅ ADMIN: WITHDRAW (FIXED)
+    //   ✅ ADMIN: WITHDRAW
     // =========================================================
     async function adminWithdraw() {
       if (!selectedUser) {
@@ -1891,60 +1950,47 @@
           cancelText: 'إلغاء'
         });
 
-        // تحديث محلياً أولاً
-        selectedUser.balance = Number(selectedUser.balance || 0) - amount;
-        if (!selectedUser.transactions) selectedUser.transactions = [];
-        selectedUser.transactions.unshift({
-          type: '💸 سحب (أدمن)',
-          amount: -amount,
-          date: new Date().toISOString(),
-          status: '✅ مكتمل',
-          note: `بواسطة الأدمن ${currentAdmin || 'أدمن'}`
+        // ✅ إرسال إلى الخادم
+        const apiUrl = getApiUrl('/admin/balance');
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: selectedUser.userId || selectedUser._id,
+            email: selectedUser.email,
+            amount: amount,
+            type: 'withdraw',
+            adminName: currentAdmin || 'أدمن'
+          })
         });
 
+        const data = await response.json();
+
+        if (!data.success) {
+          showNotification(data.message || '❌ فشل السحب', '❌');
+          return;
+        }
+
+        // ✅ تحديث البيانات
+        selectedUser = data.user;
+        selectedUser.isOnline = onlineUsersSet.has(String(selectedUser.userId || selectedUser._id));
+        allUsers[selectedUser.email] = selectedUser;
         saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
         playSound('coin');
-        showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح (تم الحفظ محلياً)`, '💸');
+        showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح - الرصيد الجديد: $${Number(selectedUser.balance).toFixed(2)}`, '💸');
         document.getElementById('adminAmount').value = '';
 
-        // ✅ مزامنة مع الخادم
-        const apiUrl = getApiUrl('/admin/balance');
-        try {
-          const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              userId: selectedUser.userId || selectedUser._id,
-              email: selectedUser.email,
-              amount: amount,
-              type: 'withdraw',
-              adminName: currentAdmin || 'أدمن'
-            })
-          });
-          const data = await response.json();
-          if (data.success && data.user) {
-            console.log('✅ تم مزامنة السحب مع الخادم');
-            selectedUser = data.user;
-            allUsers[data.user.email] = data.user;
-            saveUserToDB(data.user);
-            displayUserInfo(selectedUser);
-            loadUsers();
-            showNotification(`✅ تم مزامنة السحب مع الخادم - الرصيد الجديد: $${Number(data.user.balance).toFixed(2)}`, '💸');
-          }
-        } catch (err) {
-          console.warn('⚠️ فشل مزامنة السحب مع الخادم:', err);
-          showNotification('⚠️ تم السحب محلياً، لكن لم يتم المزامنة مع الخادم', '⚠️');
-        }
-
       } catch (e) {
-        playSound('click');
+        if (e !== false) {
+          showNotification('❌ فشل الاتصال بالخادم', '❌');
+        }
       }
     }
 
     // =========================================================
-    //   ✅ ADMIN: DELETE USER (FIXED)
+    //   ✅ ADMIN: DELETE USER
     // =========================================================
     async function adminDeleteUser() {
       if (!selectedUser) {
@@ -1967,29 +2013,23 @@
           cancelText: 'إلغاء'
         });
 
-        // حذف من localStorage
+        // ✅ حذف من الخادم
+        const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(selectedUser.userId || selectedUser._id));
+        const response = await fetch(apiUrl, { method: 'DELETE' });
+        const data = await response.json();
+
+        if (!data.success) {
+          showNotification(data.message || '❌ فشل حذف المستخدم', '❌');
+          return;
+        }
+
+        // ✅ حذف من localStorage
         const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
         delete db[selectedUser.email];
         localStorage.setItem('miningUsersDB', JSON.stringify(db));
 
-        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-        if (currentUser && currentUser.email === selectedUser.email) {
-          localStorage.removeItem('currentUser');
-        }
-
         delete allUsers[selectedUser.email];
-
-        // حذف من الخادم
-        const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(selectedUser.userId || selectedUser._id));
-        try {
-          const response = await fetch(apiUrl, { method: 'DELETE' });
-          const data = await response.json();
-          if (data.success) {
-            console.log('✅ تم حذف المستخدم من الخادم');
-          }
-        } catch (err) {
-          console.warn('⚠️ فشل حذف المستخدم من الخادم:', err);
-        }
+        onlineUsersSet.delete(String(selectedUser.userId || selectedUser._id));
 
         selectedUser = null;
         document.getElementById('userInfoDisplay').classList.remove('active');
@@ -1999,12 +2039,14 @@
         playSound('error');
         showNotification('🗑️ تم حذف الحساب بنجاح', '🗑️');
       } catch (e) {
-        playSound('click');
+        if (e !== false) {
+          showNotification('❌ فشل الاتصال بالخادم', '❌');
+        }
       }
     }
 
     // =========================================================
-    //   ✅ ADMIN: RESET PLAN (FIXED)
+    //   ✅ ADMIN: RESET PLAN
     // =========================================================
     async function resetUserPlan() {
       if (!selectedUser) {
@@ -2031,6 +2073,7 @@
           cancelText: 'إلغاء'
         });
 
+        // ✅ تحديث محلياً
         selectedUser.plan = null;
         selectedUser.planAmount = 0;
         selectedUser.planRate = 0;
@@ -2044,18 +2087,35 @@
           status: '✅ مكتمل'
         });
 
+        // ✅ تحديث في الخادم
+        const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(selectedUser.userId || selectedUser._id));
+        await fetch(apiUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            plan: null,
+            planAmount: 0,
+            planRate: 0,
+            planStart: null,
+            timerStart: null,
+            transactions: selectedUser.transactions
+          })
+        });
+
         saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
         playSound('success');
         showNotification('✅ تم إلغاء الخطة بنجاح', '🔄');
       } catch (e) {
-        playSound('click');
+        if (e !== false) {
+          showNotification('❌ فشل الاتصال بالخادم', '❌');
+        }
       }
     }
 
     // =========================================================
-    //   ✅ ADMIN: RESET TIMER TO 25 SECONDS (FIXED)
+    //   ✅ ADMIN: RESET TIMER TO 25 SECONDS
     // =========================================================
     async function resetTimerTo25Seconds() {
       if (!selectedUser) {
@@ -2100,20 +2160,32 @@
           note: 'تم تصفير التايمر إلى 25 ثانية'
         });
 
+        // ✅ تحديث في الخادم
+        const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(selectedUser.userId || selectedUser._id));
+        await fetch(apiUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            timerStart: selectedUser.timerStart,
+            transactions: selectedUser.transactions
+          })
+        });
+
         saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
-
         playSound('success');
         showNotification(`✅ تم تصفير تايمر ${selectedUser.name} إلى 25 ثانية`, '⏱️');
 
       } catch (e) {
-        playSound('click');
+        if (e !== false) {
+          showNotification('❌ فشل الاتصال بالخادم', '❌');
+        }
       }
     }
 
     // =========================================================
-    //   ✅ ADMIN: VIEW TRANSACTIONS (FIXED)
+    //   ✅ ADMIN: VIEW TRANSACTIONS
     // =========================================================
     async function viewTransactions() {
       if (!selectedUser) {
@@ -2121,8 +2193,8 @@
         return;
       }
 
-      // محاولة جلب العمليات من الخادم
       let transactions = selectedUser.transactions || [];
+
       try {
         const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(selectedUser.userId || selectedUser._id) + '/transactions');
         const response = await fetch(apiUrl);
@@ -2153,6 +2225,7 @@
           </div>
         `;
       });
+
       if (transactions.length > 15) {
         listHtml += `<div style="text-align:center;color:var(--muted);padding:8px;">... و ${transactions.length - 15} عملية أخرى</div>`;
       }
@@ -2206,21 +2279,46 @@
     });
 
     // =========================================================
+    //   ✅ تحديث المستخدمين المتصلين كل 10 ثواني
+    // =========================================================
+    setInterval(async function() {
+      if (currentAdmin) {
+        try {
+          const response = await fetch(getApiUrl('/online'));
+          const data = await response.json();
+          if (data.success) {
+            onlineUsersSet = new Set();
+            data.users.forEach(user => {
+              onlineUsersSet.add(String(user.userId));
+            });
+            // تحديث حالة الاتصال في allUsers
+            Object.values(allUsers).forEach(user => {
+              user.isOnline = onlineUsersSet.has(String(user.userId || user._id));
+            });
+            updateStats();
+            renderUserList();
+            if (selectedUser) {
+              displayUserInfo(selectedUser);
+            }
+          }
+        } catch (e) {
+          console.warn('⚠️ فشل تحديث المتصلين:', e);
+        }
+      }
+    }, 10000);
+
+    // =========================================================
     //   ✅ INIT
     // =========================================================
     if (currentAdmin) {
       document.getElementById('adminLogin').style.display = 'none';
       document.getElementById('adminPanel').classList.add('active');
       loadUsers();
-
-      // تحديث قائمة الحسابات من MongoDB كل 15 ثانية
-      setInterval(() => {
-        if (currentAdmin) loadUsers();
-      }, 15000);
     }
 
     console.log('🛡️ SUPER PANEL | KBS ✕ RT7');
     console.log('🌐 جلب المستخدمين من الخادم عبر:', getApiUrl('/admin/users'));
+    console.log('🟢 سيتم تحديث المتصلين كل 10 ثواني');
   </script>
 
 </body>
