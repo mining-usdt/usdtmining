@@ -1246,53 +1246,7 @@ function setLang(language){
 /* =========================================================
    ✅ GET CURRENT USER - FIXED (مع مزامنة من الخادم)
    ========================================================= */
-async function getCurrentUser() {
-  const localUser = JSON.parse(
-    localStorage.getItem("currentUser")
-  );
 
-  if (!localUser) return null;
-
-  try {
-    const userId = localUser.userId || localUser._id;
-
-    if (!userId) {
-      return localUser;
-    }
-
-    // ✅ استخدام المسار النسبي بدلاً من localhost
-    const apiUrl = `/api/admin/user/${encodeURIComponent(userId)}`;
-
-    const response = await fetch(apiUrl);
-
-    const data = await response.json();
-
-    if (data.success && data.user) {
-      localStorage.setItem(
-        "currentUser",
-        JSON.stringify(data.user)
-      );
-
-      const db = getUsers();
-      db[data.user.email] = data.user;
-
-      localStorage.setItem(
-        "miningUsersDB",
-        JSON.stringify(db)
-      );
-
-      return data.user;
-    }
-
-  } catch (error) {
-    console.warn(
-      "⚠️ فشل تحديث المستخدم من الخادم:",
-      error
-    );
-  }
-
-  return localUser;
-}
 
 /* =========================================================
    ✅ SAVE USER - FIXED (مع مزامنة مع الخادم)
@@ -1498,7 +1452,7 @@ function addTransaction(
    RENDER PLANS
 ========================================================= */
 
-function renderPlans() {
+async function renderPlans() {
   const container = document.getElementById("plansGrid");
   if (!container) return;
 
@@ -1606,86 +1560,107 @@ function ensureAuth() {
    ✅ PLAN ACTIVATION - FIXED (يستخدم السيرفر للحصول على الرصيد)
 ========================================================= */
 
-function activatePlan(planId){
+async function activatePlan(planId) {
 
-  console.log("🟢 activatePlan called with:", planId);
-  
-  // ✅ التحقق من تسجيل الدخول
+  console.log("🟢 activatePlan:", planId);
+
   const user = getCurrentUser();
+
   if (!user) {
-    toast("⚠️ " + t("loginFirst"));
+    toast("⚠️ يجب تسجيل الدخول أولاً");
     setTimeout(() => {
       window.location.href = "login.html";
     }, 1500);
     return;
   }
 
-  const plan = PLANS.find(item => item.id === planId);
-  if(!plan){
-    toast(t("planNotFound"));
-    console.log("❌ Plan not found:", planId);
+  const userId = user.userId || user._id;
+
+  if (!userId) {
+    console.error("❌ لا يوجد userId:", user);
+    toast("❌ معرف المستخدم غير موجود");
     return;
   }
 
-  console.log("👤 User:", user);
-  console.log("💰 User balance from localStorage:", user.balance);
+  const plan = PLANS.find(item => item.id === planId);
 
-  // ✅ جلب آخر بيانات المستخدم من السيرفر قبل التحقق من الرصيد
-  // ✅ استخدام المسار النسبي بدلاً من localhost
-  fetch(`/api/admin/user/${user.userId}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.success && data.user) {
-        const freshUser = data.user;
-        console.log("💰 Updated balance from server:", freshUser.balance);
-        
-        // ✅ تحديث البيانات المحلية بأحدث بيانات من السيرفر
-        localStorage.setItem('currentUser', JSON.stringify(freshUser));
-        const db = getUsers();
-        db[freshUser.email] = freshUser;
-        localStorage.setItem('miningUsersDB', JSON.stringify(db));
+  if (!plan) {
+    toast("❌ الخطة غير موجودة");
+    return;
+  }
 
-        // ✅ التحقق من الرصيد بعد التحديث
-        if(Number(freshUser.balance || 0) < plan.amount){
-          toast("⚠️ " + t("insufficientBalance") + " رصيدك: $" + Number(freshUser.balance || 0).toFixed(2) + " — المطلوب: $" + plan.amount);
-          console.log("❌ Insufficient balance");
-          const btns = document.querySelectorAll('[data-plan="' + planId + '"]');
-          btns.forEach(btn => {
-            btn.style.animation = 'shake 0.5s ease';
-            btn.style.borderColor = 'var(--danger)';
-            setTimeout(() => {
-              btn.style.animation = '';
-              btn.style.borderColor = '';
-            }, 600);
-          });
-          return;
-        }
+  console.log("👤 User ID:", userId);
+  console.log("📦 Plan:", plan);
 
-        // ✅ نافذة تأكيد قبل التفعيل
-        showConfirmDialog(
-          "🛒 تأكيد شراء الخطة",
-          `هل أنت متأكد من شراء خطة <strong>${plan.id}</strong> بمبلغ <strong>$${plan.amount}</strong>؟<br><br>
-          📈 العائد اليومي: <strong>${plan.rate}%</strong><br>
-          📅 المدة: <strong>${plan.days} يوم</strong><br>
-          💰 الربح المتوقع: <strong>$${plan.netProfit.toFixed(2)}</strong>`,
-          "✅ نعم، قم بالشراء",
-          "❌ لا، إلغاء",
-          function() {
-            // ✅ تنفيذ الشراء عن طريق السيرفر
-            executePlanActivation(plan, freshUser);
-          },
-          function() {
-            toast("❌ تم إلغاء شراء الخطة");
-          }
-        );
-      } else {
-        toast("❌ فشل الاتصال بالسيرفر، يرجى المحاولة لاحقاً");
+  try {
+
+    const response = await fetch(
+      `/api/admin/user/${encodeURIComponent(userId)}`
+    );
+
+    const data = await response.json();
+
+    console.log("📥 بيانات المستخدم:", data);
+
+    if (!response.ok || !data.success || !data.user) {
+      toast("❌ لم يتم العثور على المستخدم في السيرفر");
+      return;
+    }
+
+    const freshUser = data.user;
+
+    localStorage.setItem(
+      "currentUser",
+      JSON.stringify(freshUser)
+    );
+
+    const db = getUsers();
+    db[freshUser.email] = freshUser;
+
+    localStorage.setItem(
+      "miningUsersDB",
+      JSON.stringify(db)
+    );
+
+    const balance = Number(freshUser.balance || 0);
+
+    if (balance < Number(plan.amount)) {
+
+      toast(
+        `⚠️ الرصيد غير كافٍ — رصيدك: $${balance.toFixed(2)} — المطلوب: $${plan.amount}`
+      );
+
+      return;
+    }
+
+    showConfirmDialog(
+      "🛒 تأكيد شراء الخطة",
+
+      `هل أنت متأكد من شراء خطة <strong>${plan.id}</strong>
+      بمبلغ <strong>$${plan.amount}</strong>؟<br><br>
+      📈 العائد اليومي: <strong>${plan.rate}%</strong><br>
+      📅 المدة: <strong>${plan.days} يوم</strong><br>
+      💰 الربح المتوقع: <strong>$${plan.netProfit.toFixed(2)}</strong>`,
+
+      "✅ نعم، قم بالشراء",
+
+      "❌ لا، إلغاء",
+
+      function () {
+        executePlanActivation(plan, freshUser);
+      },
+
+      function () {
+        toast("❌ تم إلغاء شراء الخطة");
       }
-    })
-    .catch(err => {
-      console.error("❌ فشل الاتصال بالسيرفر:", err);
-      toast("❌ فشل الاتصال بالسيرفر، يرجى المحاولة لاحقاً");
-    });
+    );
+
+  } catch (error) {
+
+    console.error("❌ خطأ تفعيل الخطة:", error);
+
+    toast("❌ فشل الاتصال بالسيرفر");
+  }
 }
 
 /* =========================================================
@@ -4204,3 +4179,39 @@ console.log("✅ activatePlan:", typeof window.activatePlan);
 console.log("✅ executePlanActivation:", typeof window.executePlanActivation);
 console.log("✅ logout:", typeof window.logout);
 console.log("✅ ensureAuth:", typeof window.ensureAuth);
+// ===============================
+// REAL ONLINE HEARTBEAT
+// ===============================
+
+async function sendOnlineHeartbeat() {
+  try {
+    const localUser = JSON.parse(
+      localStorage.getItem("currentUser")
+    );
+
+    if (!localUser) return;
+
+    const userId =
+      localUser.userId ||
+      localUser._id ||
+      localUser.id;
+
+    if (!userId) return;
+
+    await fetch("/api/online/heartbeat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        userId: String(userId)
+      })
+    });
+  } catch (error) {
+    console.warn("Heartbeat failed:", error);
+  }
+}
+
+sendOnlineHeartbeat();
+
+setInterval(sendOnlineHeartbeat, 30000);
