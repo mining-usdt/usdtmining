@@ -5,24 +5,16 @@ const path = require("path");
 
 const app = express();
 
-/* =========================================================
-   BASIC SERVER SETTINGS
-========================================================= */
-
 app.use(cors());
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
-/* =========================================================
-   MONGODB
-========================================================= */
+// =========================================================
+// MongoDB
+// =========================================================
 
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  console.error("❌ MONGODB_URI is missing from Render Environment Variables.");
-  process.exit(1);
-}
+const MONGODB_URI =
+  "mongodb+srv://kabusbaba:Ahmed123456@cluster0.zh0a3gc.mongodb.net/miningusdt?retryWrites=true&w=majority";
 
 mongoose
   .connect(MONGODB_URI)
@@ -31,13 +23,12 @@ mongoose
   })
   .catch((error) => {
     console.error("❌ MongoDB Connection Error:", error);
-    process.exit(1);
   });
 
-/* =========================================================
-   STATIC WEBSITE FILES
-   Your HTML/CSS/JS files are in the project root.
-========================================================= */
+// =========================================================
+// Website files
+// ملفات الموقع موجودة في جذر المشروع وليس public
+// =========================================================
 
 app.use(express.static(__dirname));
 
@@ -45,155 +36,150 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-/* =========================================================
-   USER MODEL
-========================================================= */
+// =========================================================
+// User Model
+// =========================================================
 
-const UserSchema = new mongoose.Schema(
-  {
-    userId: {
-      type: String,
-      unique: true,
-      required: true,
-      index: true
-    },
-
-    name: {
-      type: String,
-      required: true,
-      trim: true
-    },
-
-    email: {
-      type: String,
-      unique: true,
-      required: true,
-      lowercase: true,
-      trim: true,
-      index: true
-    },
-
-    password: {
-      type: String,
-      required: true
-    },
-
-    balance: {
-      type: Number,
-      default: 0
-    },
-
-    profit: {
-      type: Number,
-      default: 0
-    },
-
-    plan: {
-      type: String,
-      default: null
-    },
-
-    planAmount: {
-      type: Number,
-      default: 0
-    },
-
-    planRate: {
-      type: Number,
-      default: 0
-    },
-
-    planDays: {
-      type: Number,
-      default: 0
-    },
-
-    planStart: {
-      type: Date,
-      default: null
-    },
-
-    timerStart: {
-      type: Number,
-      default: null
-    },
-
-    lastProfitDate: {
-      type: String,
-      default: null
-    },
-
-    referralCode: {
-      type: String,
-      unique: true,
-      required: true,
-      index: true
-    },
-
-    referredBy: {
-      type: String,
-      default: null
-    },
-
-    referralBonus: {
-      type: Number,
-      default: 0
-    },
-
-    referredUsers: [
-      {
-        email: String,
-        name: String,
-        joinedAt: Date,
-        totalDeposits: {
-          type: Number,
-          default: 0
-        },
-        commissionEarned: {
-          type: Number,
-          default: 0
-        }
-      }
-    ],
-
-    transactions: [
-      {
-        type: String,
-        amount: Number,
-        date: Date,
-        status: String,
-        note: String,
-        game: String,
-        address: String,
-        network: String,
-        bet: Number,
-        playerTotal: Number,
-        dealerTotal: Number,
-        guess: Number,
-        target: Number,
-        dice: [Number],
-        sum: Number,
-        symbols: [String],
-        choice: String,
-        result: String
-      }
-    ],
-
-    createdAt: {
-      type: Date,
-      default: Date.now
-    }
+const UserSchema = new mongoose.Schema({
+  userId: {
+    type: String,
+    unique: true,
+    required: true,
+    index: true
   },
-  {
-    minimize: false
+
+  name: {
+    type: String,
+    required: true,
+    trim: true
+  },
+
+  email: {
+    type: String,
+    unique: true,
+    required: true,
+    lowercase: true,
+    trim: true,
+    index: true
+  },
+
+  password: {
+    type: String,
+    required: true
+  },
+
+  balance: {
+    type: Number,
+    default: 0
+  },
+
+  profit: {
+    type: Number,
+    default: 0
+  },
+
+  plan: {
+    type: String,
+    default: null
+  },
+
+  planAmount: {
+    type: Number,
+    default: 0
+  },
+
+  planRate: {
+    type: Number,
+    default: 0
+  },
+
+  planDays: {
+    type: Number,
+    default: 0
+  },
+
+  planStart: {
+    type: Date,
+    default: null
+  },
+
+  timerStart: {
+    type: Number,
+    default: null
+  },
+
+  lastProfitDate: {
+    type: String,
+    default: null
+  },
+
+  referralCode: {
+    type: String,
+    unique: true,
+    required: true,
+    index: true
+  },
+
+  referredBy: {
+    type: String,
+    default: null
+  },
+
+  referralBonus: {
+    type: Number,
+    default: 0
+  },
+
+  referredUsers: [
+    {
+      email: String,
+      name: String,
+      joinedAt: Date,
+      totalDeposits: {
+        type: Number,
+        default: 0
+      },
+      commissionEarned: {
+        type: Number,
+        default: 0
+      }
+    }
+  ],
+
+  transactions: [
+    {
+      type: String,
+      amount: Number,
+      date: Date,
+      status: String,
+      note: String,
+      game: String,
+      address: String,
+      network: String,
+      bet: Number,
+      playerTotal: Number,
+      dealerTotal: Number,
+      guess: Number,
+      target: Number,
+      dice: [Number],
+      sum: Number,
+      symbols: [String],
+      choice: String,
+      result: String
+    }
+  ],
+
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
-);
+});
 
 const User = mongoose.model("User", UserSchema);
 
-/* =========================================================
-   HELPER FUNCTIONS
-========================================================= */
+// =========================================================
+// Helper functions
+// =========================================================
 
 function generateUniqueUserId() {
   return Math.floor(
@@ -221,10 +207,7 @@ async function createUniqueUserId() {
 
   while (exists) {
     userId = generateUniqueUserId();
-
-    exists = await User.exists({
-      userId
-    });
+    exists = await User.exists({ userId });
   }
 
   return userId;
@@ -236,18 +219,15 @@ async function createUniqueReferralCode(userId) {
 
   while (exists) {
     referralCode = generateReferralCode(userId);
-
-    exists = await User.exists({
-      referralCode
-    });
+    exists = await User.exists({ referralCode });
   }
 
   return referralCode;
 }
 
-/* =========================================================
-   HEALTH CHECK
-========================================================= */
+// =========================================================
+// Health check
+// =========================================================
 
 app.get("/api/health", async (req, res) => {
   const mongoConnected =
@@ -256,17 +236,20 @@ app.get("/api/health", async (req, res) => {
   res.json({
     success: true,
     server: "online",
-    mongodb: mongoConnected ? "connected" : "disconnected"
+    mongodb: mongoConnected
+      ? "connected"
+      : "disconnected"
   });
 });
 
-/* =========================================================
-   REGISTER
-========================================================= */
+// =========================================================
+// Register
+// =========================================================
 
 app.post("/register", async (req, res) => {
   try {
     const name = String(req.body.name || "").trim();
+
     const email = String(req.body.email || "")
       .trim()
       .toLowerCase();
@@ -286,9 +269,7 @@ app.post("/register", async (req, res) => {
       });
     }
 
-    const existingUser = await User.findOne({
-      email
-    });
+    const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       return res.status(400).json({
@@ -296,11 +277,6 @@ app.post("/register", async (req, res) => {
         message: "❌ البريد مستخدم بالفعل"
       });
     }
-
-    /* -----------------------------------------------------
-       Generate ONE ID on the server.
-       MongoDB becomes the source of truth.
-    ----------------------------------------------------- */
 
     const userId = await createUniqueUserId();
 
@@ -333,10 +309,7 @@ app.post("/register", async (req, res) => {
       transactions: []
     });
 
-    /* -----------------------------------------------------
-       Referral
-    ----------------------------------------------------- */
-
+    // Referral
     if (referralCode) {
       const referrer = await User.findOne({
         referralCode
@@ -409,9 +382,9 @@ app.post("/register", async (req, res) => {
   }
 });
 
-/* =========================================================
-   LOGIN
-========================================================= */
+// =========================================================
+// Login
+// =========================================================
 
 app.post("/login", async (req, res) => {
   try {
@@ -428,9 +401,7 @@ app.post("/login", async (req, res) => {
       });
     }
 
-    const user = await User.findOne({
-      email
-    });
+    const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(401).json({
@@ -487,9 +458,9 @@ app.post("/login", async (req, res) => {
   }
 });
 
-/* =========================================================
-   ADMIN - ALL USERS
-========================================================= */
+// =========================================================
+// Admin - all users
+// =========================================================
 
 app.get("/admin/users", async (req, res) => {
   try {
@@ -512,9 +483,9 @@ app.get("/admin/users", async (req, res) => {
   }
 });
 
-/* =========================================================
-   ADMIN - GET ONE USER
-========================================================= */
+// =========================================================
+// Admin - one user
+// =========================================================
 
 app.get("/admin/user/:userId", async (req, res) => {
   try {
@@ -548,9 +519,9 @@ app.get("/admin/user/:userId", async (req, res) => {
   }
 });
 
-/* =========================================================
-   ADMIN - CHANGE USER BALANCE
-========================================================= */
+// =========================================================
+// Admin - balance
+// =========================================================
 
 app.post(
   "/admin/user/:userId/balance",
@@ -560,13 +531,13 @@ app.post(
         req.params.userId || ""
       ).trim();
 
-      const amount = Number(
-        req.body.amount
-      );
+      const amount = Number(req.body.amount);
 
       const type = String(
         req.body.type || ""
-      ).trim().toLowerCase();
+      )
+        .trim()
+        .toLowerCase();
 
       if (!Number.isFinite(amount) || amount <= 0) {
         return res.status(400).json({
@@ -597,7 +568,6 @@ app.post(
       }
 
       if (type === "deposit") {
-
         user.balance += amount;
 
         user.transactions.unshift({
@@ -606,11 +576,9 @@ app.post(
           date: new Date(),
           status: "✅ مكتمل"
         });
-
       }
 
       if (type === "withdraw") {
-
         if (user.balance < amount) {
           return res.status(400).json({
             success: false,
@@ -650,9 +618,9 @@ app.post(
   }
 );
 
-/* =========================================================
-   ADMIN - DELETE USER
-========================================================= */
+// =========================================================
+// Admin - delete user
+// =========================================================
 
 app.delete(
   "/admin/user/:userId",
@@ -693,20 +661,9 @@ app.delete(
   }
 );
 
-/* =========================================================
-   404 API RESPONSE
-========================================================= */
-
-app.use("/api", (req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "❌ API endpoint not found"
-  });
-});
-
-/* =========================================================
-   SERVER
-========================================================= */
+// =========================================================
+// Start server
+// =========================================================
 
 const PORT = process.env.PORT || 3000;
 
