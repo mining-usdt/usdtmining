@@ -1338,7 +1338,6 @@ function saveUser(user){
   .then(data => {
     if (data.success && data.user) {
       console.log("✅ تم حفظ المستخدم في الخادم:", data);
-      // ✅ تحديث البيانات من الخادم للتأكد من التطابق
       localStorage.setItem("currentUser", JSON.stringify(data.user));
       const db = getUsers();
       db[data.user.email] = data.user;
@@ -1349,7 +1348,6 @@ function saveUser(user){
     console.warn("⚠️ الخادم غير متصل، تم الحفظ محلياً فقط:", err);
   });
 }
-
 
 
 /* =========================================================
