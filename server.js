@@ -882,6 +882,13 @@ app.post(
           );
       }
 
+      // ✅ تسجيل المستخدم كمتصل
+      markUserOnline(
+        user.userId,
+        user.name,
+        user.email
+      );
+
       log(
         `User logged in: ${user.name} (${user.email})`,
         "SUCCESS"
@@ -960,7 +967,7 @@ app.post(
 );
 
 // --------------------------------------------
-//  👥 ADMIN - GET ALL USERS (FIXED)
+//  👥 ADMIN - GET ALL USERS
 // --------------------------------------------
 
 app.get(
@@ -1014,11 +1021,17 @@ app.get(
           })
         );
 
+      // ✅ إضافة حالة الاتصال لكل مستخدم
+      const usersWithOnline = formattedUsers.map(user => ({
+        ...user,
+        isOnline: onlineUsers.has(String(user.userId || user._id))
+      }));
+
       return res.json({
         success: true,
 
         users:
-          formattedUsers,
+          usersWithOnline,
 
         pagination: {
           page,
@@ -1029,6 +1042,8 @@ app.get(
               total / limit
             ),
         },
+
+        onlineCount: onlineUsers.size,
 
         timestamp:
           new Date().toISOString(),
@@ -1059,7 +1074,7 @@ app.get(
 // ============================================================
 
 app.post(
-  "/api/online",
+  "/api/online/heartbeat",
   async (req, res) => {
     try {
       const {
@@ -1086,6 +1101,7 @@ app.post(
 
       return res.json({
         success: true,
+        onlineCount: onlineUsers.size,
       });
     } catch (error) {
       console.error(
@@ -1124,7 +1140,7 @@ app.get(
 );
 
 // --------------------------------------------
-//  👤 ADMIN - GET SINGLE USER (FIXED)
+//  👤 ADMIN - GET SINGLE USER
 // --------------------------------------------
 
 app.get(
@@ -1208,6 +1224,8 @@ app.get(
 
           _id:
             user._id.toString(),
+
+          isOnline: onlineUsers.has(String(user.userId || user._id))
         };
 
       return res.json({
@@ -1237,7 +1255,7 @@ app.get(
 );
 
 // --------------------------------------------
-//  ✏️ ADMIN - UPDATE USER (FIXED)
+//  ✏️ ADMIN - UPDATE USER
 // --------------------------------------------
 
 app.put(
@@ -1390,7 +1408,7 @@ app.put(
 );
 
 // --------------------------------------------
-//  💰 ADMIN - BALANCE (DEPOSIT / WITHDRAW) (FIXED)
+//  💰 ADMIN - BALANCE (DEPOSIT / WITHDRAW)
 // --------------------------------------------
 
 app.post(
@@ -1435,7 +1453,7 @@ app.post(
       }
 
       if (
-        ![
+        ![  
           "deposit",
           "withdraw",
         ].includes(type)
@@ -1628,7 +1646,7 @@ app.post(
           formattedUser,
 
         message:
-          `✅ تم ${
+          `✅ تم ${  
             type === "deposit"
               ? "إيداع"
               : "سحب"
@@ -1658,7 +1676,7 @@ app.post(
 );
 
 // --------------------------------------------
-//  📋 ADMIN - TRANSACTIONS (FIXED)
+//  📋 ADMIN - TRANSACTIONS
 // --------------------------------------------
 
 app.get(
@@ -1764,7 +1782,7 @@ app.get(
 );
 
 // --------------------------------------------
-//  🚀 ACTIVATE PLAN (FIXED)
+//  🚀 ACTIVATE PLAN
 // --------------------------------------------
 
 app.post(
@@ -1952,7 +1970,7 @@ app.post(
 );
 
 // --------------------------------------------
-//  ❌ DELETE USER (ADMIN) (FIXED)
+//  ❌ DELETE USER (ADMIN)
 // --------------------------------------------
 
 app.delete(
@@ -2026,6 +2044,9 @@ app.delete(
             user.name,
         };
 
+      // ✅ حذف من قائمة المتصلين
+      onlineUsers.delete(String(user.userId));
+
       await User.deleteOne({
         _id:
           user._id,
@@ -2073,7 +2094,7 @@ app.delete(
 );
 
 // --------------------------------------------
-//  📊 ADMIN STATS (FIXED)
+//  📊 ADMIN STATS
 // --------------------------------------------
 
 app.get(
@@ -2141,6 +2162,8 @@ app.get(
             ?.total || 0,
 
         activePlans,
+
+        onlineCount: onlineUsers.size,
 
         timestamp:
           new Date().toISOString(),
@@ -2278,7 +2301,7 @@ async function startServer() {
         );
 
         log(
-          `🛡️ Environment: ${
+          `🛡️ Environment: ${  
             process.env.NODE_ENV ||
             "development"
           }`,
