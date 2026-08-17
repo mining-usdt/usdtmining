@@ -1,19 +1,30 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const path = require("path"); // تمت إضافة هذه المكتبة للتعامل مع مسارات الملفات
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 🔗 رابط MongoDB (استخدم متغيرات البيئة للأمان)
+// 🔗 رابط MongoDB
 const MONGODB_URI = "mongodb+srv://kabusbaba:aVNjXlWAUTAkdDT3@cluster0.zh0a3gc.mongodb.net/miningusdt";
 
-// ✅ تم إصلاح الاتصال بحذف الخيارات غير المدعومة (useNewUrlParser, useUnifiedTopology)
-// الإصدارات الحديثة من Mongoose تدير هذه الخيارات تلقائياً.
+// ✅ إصلاح الاتصال بحذف الخيارات غير المدعومة
 mongoose.connect(MONGODB_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.log("❌ MongoDB Error:", err));
+
+// =========================================================
+//   ✅ إعداد خدمة الملفات الثابتة (Frontend)
+//   يجب وضع جميع ملفات HTML و CSS و JS داخل مجلد اسمه "public"
+// =========================================================
+app.use(express.static(path.join(__dirname, 'public')));
+
+// عند فتح الصفحة الرئيسية، يتم إرسال ملف index.html الموجود داخل مجلد public
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // =========================================================
 //   نموذج المستخدم (User Model)
@@ -84,21 +95,18 @@ function generateReferralCode(userId) {
 }
 
 // =========================================================
-//   المسارات (Routes)
+//   المسارات (Routes) - API
 // =========================================================
 
 // 📌 تسجيل مستخدم جديد
 app.post("/register", async (req, res) => {
   try {
     const { name, email, password, referralCode } = req.body;
-
-    // التحقق من وجود المستخدم
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ success: false, message: "❌ البريد مستخدم بالفعل" });
     }
 
-    // إنشاء userId فريد
     let userId;
     let isUnique = false;
     while (!isUnique) {
@@ -107,7 +115,6 @@ app.post("/register", async (req, res) => {
       if (!existing) isUnique = true;
     }
 
-    // إنشاء كود دعوة فريد
     let referralCodeGenerated;
     let isReferralUnique = false;
     while (!isReferralUnique) {
@@ -116,12 +123,11 @@ app.post("/register", async (req, res) => {
       if (!existing) isReferralUnique = true;
     }
 
-    // إنشاء المستخدم
     const newUser = new User({
       userId,
       name,
       email,
-      password, // ⚠️ في الإنتاج استخدم bcrypt لتشفير كلمة المرور
+      password,
       referralCode: referralCodeGenerated,
       referredBy: null,
       balance: 0,
@@ -130,7 +136,6 @@ app.post("/register", async (req, res) => {
       referredUsers: []
     });
 
-    // معالجة كود الدعوة
     if (referralCode) {
       const referrer = await User.findOne({ referralCode });
       if (referrer) {
@@ -172,13 +177,10 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(401).json({ success: false, message: "❌ البريد أو كلمة المرور غير صحيحة" });
     }
-
-    // ⚠️ في الإنتاج استخدم bcrypt للمقارنة
     if (user.password !== password) {
       return res.status(401).json({ success: false, message: "❌ البريد أو كلمة المرور غير صحيحة" });
     }
