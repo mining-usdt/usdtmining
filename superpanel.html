@@ -1475,57 +1475,83 @@
     //   ✅ LOAD USERS (FIXED)
     // =========================================================
     async function loadUsers() {
-      try {
-        const apiUrl = getApiUrl('/admin/users');
-        const response = await fetch(apiUrl);
-        const data = await response.json();
 
-        let serverUsers = {};
-        if (data.success && data.users && data.users.length > 0) {
-          // ✅ الإصلاح: قراءة data.users مباشرة (كما يرسلها السيرفر الآن)
-          data.users.forEach(user => {
-            serverUsers[user.email] = user;
-          });
-          console.log('✅ تم جلب ' + data.users.length + ' مستخدم من الخادم');
-        } else {
-          console.warn('⚠️ فشل جلب المستخدمين من الخادم أو لا يوجد مستخدمين');
-          console.log('📥 بيانات الخادم:', data);
-        }
+  try {
 
-        let localUsers = {};
-        try {
-          localUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-          console.log('📦 تم جلب ' + Object.keys(localUsers).length + ' مستخدم من localStorage');
-        } catch (e) {
-          console.warn('⚠️ فشل قراءة localStorage');
-        }
+    const response = await fetch('/api/admin/users');
 
-        // دمج البيانات (الخادم أولاً، ثم المحلي)
-        const merged = { ...localUsers, ...serverUsers };
-        Object.keys(localUsers).forEach(email => {
-          if (!serverUsers[email]) {
-            merged[email] = localUsers[email];
-          }
-        });
+    const data = await response.json();
 
-        allUsers = merged;
-        console.log('📊 إجمالي المستخدمين بعد الدمج:', Object.keys(allUsers).length);
+    console.log("📥 Users API:", data);
 
-        updateStats();
-        renderUserList();
-
-      } catch (error) {
-        console.warn('⚠️ خطأ في الاتصال بالخادم، استخدام localStorage فقط:', error);
-        try {
-          allUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-        } catch {
-          allUsers = {};
-        }
-        updateStats();
-        renderUserList();
-        showNotification('⚠️ تم استخدام البيانات المحلية (الخادم غير متصل)', '⚠️');
-      }
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || "فشل جلب المستخدمين");
     }
+
+    const serverUsers = {};
+
+    data.users.forEach(user => {
+
+      const key =
+        user.email ||
+        user.userId ||
+        user._id;
+
+      serverUsers[key] = {
+        ...user,
+
+        userId:
+          user.userId ||
+          user._id,
+
+        _id:
+          user._id
+      };
+
+    });
+
+    allUsers = serverUsers;
+
+    console.log(
+      "✅ عدد المستخدمين:",
+      Object.keys(allUsers).length
+    );
+
+    updateStats();
+    renderUserList();
+
+  } catch (error) {
+
+    console.error(
+      "❌ خطأ جلب المستخدمين:",
+      error
+    );
+
+    allUsers = {};
+
+    updateStats();
+    renderUserList();
+
+    showNotification(
+      "❌ فشل الاتصال بالسيرفر",
+      "❌"
+    );
+  }
+}
+<div class="admin-stat-premium">
+  <div class="stat-icon">🟢</div>
+
+  <div
+    class="stat-number cyan"
+    id="onlineUsersCount"
+  >
+    0
+  </div>
+
+  <div class="stat-label">
+    المتصلون الآن
+  </div>
+</div>
 
     async function syncWithServer() {
       showNotification('🔄 جاري المزامنة مع الخادم...', '🔄');
@@ -1600,7 +1626,7 @@
         return bDate.localeCompare(aDate);
       });
       container.innerHTML = sorted.map(user => `
-        <div class="user-item-premium" onclick="selectUser('${user.userId || user._id || user.email}')">
+        <div class="user-item-premium" onclick="selectUser('${user.userId || user._id || user.email || user.email}')">
           <span class="user-id">🆔 ${user.userId || user._id || '—'}</span>
           <span class="user-name">${user.name || 'غير معروف'}</span>
           <span class="user-balance">$${Number(user.balance || 0).toFixed(2)}</span>
@@ -2193,7 +2219,56 @@
     console.log('🛡️ SUPER PANEL | KBS ✕ RT7');
     console.log('🌐 جلب المستخدمين من الخادم عبر:', getApiUrl('/admin/users'));
   </script>
+<script>
 
+async function loadOnlineUsers() {
+
+  try {
+
+    const response =
+      await fetch("/api/online");
+
+    const data =
+      await response.json();
+
+    if (!data.success) {
+      return;
+    }
+
+    const count =
+      document.getElementById(
+        "onlineUsersCount"
+      );
+
+    if (count) {
+      count.textContent =
+        data.count;
+    }
+
+    console.log(
+      "🟢 المتصلون الآن:",
+      data.users
+    );
+
+  } catch (error) {
+
+    console.error(
+      "❌ Online API:",
+      error
+    );
+
+  }
+}
+
+
+loadOnlineUsers();
+
+setInterval(
+  loadOnlineUsers,
+  10000
+);
+
+</script>
 </body>
 
 </html>
