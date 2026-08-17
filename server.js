@@ -325,16 +325,93 @@ app.post("/api/login", async (req, res) => {
 });
 
 // =========================================================
-// ✅ API: ADMIN - GET ALL USERS
+// ✅ API: DEPOSIT - NEW ENDPOINT
+// =========================================================
+
+app.post("/api/deposit", async (req, res) => {
+  try {
+    const { userId, email, network, amount, proofName } = req.body;
+    
+    if (!userId && !email) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ معرف المستخدم أو البريد مطلوب"
+      });
+    }
+
+    let user;
+    if (userId) {
+      user = await User.findOne({ userId });
+    } else if (email) {
+      user = await User.findOne({ email });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ المستخدم غير موجود"
+      });
+    }
+
+    // ✅ إضافة طلب الإيداع كعملية معلقة
+    if (!user.transactions) user.transactions = [];
+    user.transactions.unshift({
+      type: `💰 إيداع عبر ${network || 'USDT'}`,
+      amount: amount || 0,
+      date: new Date(),
+      status: '⏳ قيد المراجعة',
+      network: network || 'USDT',
+      proofName: proofName || 'تم الرفع'
+    });
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "✅ تم استلام طلب الإيداع",
+      user: {
+        userId: user.userId,
+        name: user.name,
+        email: user.email,
+        balance: user.balance,
+        profit: user.profit,
+        plan: user.plan,
+        planAmount: user.planAmount,
+        planRate: user.planRate,
+        planDays: user.planDays,
+        planStart: user.planStart,
+        timerStart: user.timerStart,
+        referralCode: user.referralCode,
+        referralBonus: user.referralBonus,
+        transactions: user.transactions
+      }
+    });
+  } catch (error) {
+    console.error("❌ Deposit error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم"
+    });
+  }
+});
+
+// =========================================================
+// ✅ API: ADMIN - GET ALL USERS (FIXED)
 // =========================================================
 
 app.get("/api/admin/users", async (req, res) => {
   try {
     const users = await User.find({}).select("-password").sort({ createdAt: -1 });
-    console.log(`✅ تم جلب ${users.length} مستخدم`);
+    // ✅ إعادة هيكلة البيانات لتوحيد المعرف
+    const formattedUsers = users.map(user => ({
+      ...user.toObject(),
+      id: user.userId || user._id.toString(),
+      userId: user.userId || user._id.toString()
+    }));
+    console.log(`✅ تم جلب ${formattedUsers.length} مستخدم`);
     return res.json({
       success: true,
-      users: users
+      users: formattedUsers
     });
   } catch (error) {
     console.error("❌ Admin users error:", error);
@@ -377,7 +454,10 @@ app.get("/api/admin/user/:identifier", async (req, res) => {
 
     return res.json({
       success: true,
-      user
+      user: {
+        ...user.toObject(),
+        id: user.userId || user._id.toString()
+      }
     });
 
   } catch (error) {
@@ -390,7 +470,7 @@ app.get("/api/admin/user/:identifier", async (req, res) => {
 });
 
 // =========================================================
-// ✅ API: ADMIN - UPDATE USER (مزامنة كاملة)
+// ✅ API: ADMIN - UPDATE USER
 // =========================================================
 
 app.put("/api/admin/user/:userId", async (req, res) => {
@@ -418,7 +498,10 @@ app.put("/api/admin/user/:userId", async (req, res) => {
     return res.json({
       success: true,
       message: "✅ تم تحديث المستخدم بنجاح",
-      user
+      user: {
+        ...user.toObject(),
+        id: user.userId || user._id.toString()
+      }
     });
 
   } catch (error) {
