@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 
@@ -26,10 +27,9 @@ mongoose
   });
 
 // =========================================================
-// ✅ IMPORTANT: Serve static files from root directory
+// ✅ Serve static files from root directory
 // =========================================================
 
-// خدمة جميع الملفات الثابتة من الجذر
 app.use(express.static(__dirname));
 
 // =========================================================
@@ -40,16 +40,9 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// =========================================================
-// ✅ دعم جميع الصفحات (للتحديث المباشر)
-// =========================================================
-
 app.get("/:page.html", (req, res) => {
   const page = req.params.page;
   const filePath = path.join(__dirname, `${page}.html`);
-  
-  // التحقق من وجود الملف
-  const fs = require("fs");
   if (fs.existsSync(filePath)) {
     res.sendFile(filePath);
   } else {
@@ -239,7 +232,7 @@ app.get("/api/health", async (req, res) => {
 });
 
 // =========================================================
-// ✅ Register - FIXED
+// ✅ API: REGISTER
 // =========================================================
 
 app.post("/api/register", async (req, res) => {
@@ -364,7 +357,7 @@ app.post("/api/register", async (req, res) => {
 });
 
 // =========================================================
-// ✅ Login - FIXED
+// ✅ API: LOGIN
 // =========================================================
 
 app.post("/api/login", async (req, res) => {
@@ -433,7 +426,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 // =========================================================
-// Admin - all users
+// ✅ API: ADMIN - GET ALL USERS (لـ Super Panel)
 // =========================================================
 
 app.get("/api/admin/users", async (req, res) => {
@@ -442,9 +435,11 @@ app.get("/api/admin/users", async (req, res) => {
       .select("-password")
       .sort({ createdAt: -1 });
 
+    console.log(`✅ تم جلب ${users.length} مستخدم من قاعدة البيانات`);
+
     return res.json({
       success: true,
-      users
+      users: users
     });
 
   } catch (error) {
@@ -452,13 +447,14 @@ app.get("/api/admin/users", async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "❌ خطأ في الخادم"
+      message: "❌ خطأ في الخادم",
+      users: []
     });
   }
 });
 
 // =========================================================
-// Admin - one user
+// ✅ API: ADMIN - GET SINGLE USER
 // =========================================================
 
 app.get("/api/admin/user/:userId", async (req, res) => {
@@ -494,7 +490,7 @@ app.get("/api/admin/user/:userId", async (req, res) => {
 });
 
 // =========================================================
-// Admin - balance
+// ✅ API: ADMIN - UPDATE BALANCE
 // =========================================================
 
 app.post(
@@ -590,7 +586,7 @@ app.post(
 );
 
 // =========================================================
-// Admin - delete user
+// ✅ API: ADMIN - DELETE USER
 // =========================================================
 
 app.delete(
@@ -633,6 +629,87 @@ app.delete(
 );
 
 // =========================================================
+// ✅ API: ADMIN - UPDATE USER (مزامنة كاملة)
+// =========================================================
+
+app.put("/api/admin/user/:userId", async (req, res) => {
+  try {
+    const userId = String(
+      req.params.userId || ""
+    ).trim();
+
+    const updateData = req.body;
+
+    // إزالة الحقول التي لا يجب تحديثها
+    delete updateData._id;
+    delete updateData.__v;
+    delete updateData.password;
+
+    const user = await User.findOneAndUpdate(
+      { userId },
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ المستخدم غير موجود"
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "✅ تم تحديث المستخدم بنجاح",
+      user
+    });
+
+  } catch (error) {
+    console.error("❌ Admin update error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم"
+    });
+  }
+});
+
+// =========================================================
+// ✅ API: ADMIN - GET USER STATS
+// =========================================================
+
+app.get("/api/admin/stats", async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const totalBalance = await User.aggregate([
+      { $group: { _id: null, total: { $sum: "$balance" } } }
+    ]);
+    const totalProfit = await User.aggregate([
+      { $group: { _id: null, total: { $sum: "$profit" } } }
+    ]);
+    const activePlans = await User.countDocuments({
+      plan: { $ne: null, $ne: "" }
+    });
+
+    return res.json({
+      success: true,
+      stats: {
+        totalUsers,
+        totalBalance: totalBalance[0]?.total || 0,
+        totalProfit: totalProfit[0]?.total || 0,
+        activePlans
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Admin stats error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم"
+    });
+  }
+});
+
+// =========================================================
 // Start server
 // =========================================================
 
@@ -642,4 +719,6 @@ app.listen(PORT, () => {
   console.log(
     `🚀 Server running on port ${PORT}`
   );
+  console.log(`📡 API доступен على: http://localhost:${PORT}/api`);
+  console.log(`👥 مسار المستخدمين: http://localhost:${PORT}/api/admin/users`);
 });
