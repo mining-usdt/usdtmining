@@ -154,10 +154,12 @@ const UserSchema = new mongoose.Schema({
       email: String,
       name: String,
       joinedAt: Date,
+
       totalDeposits: {
         type: Number,
         default: 0
       },
+
       commissionEarned: {
         type: Number,
         default: 0
@@ -165,28 +167,16 @@ const UserSchema = new mongoose.Schema({
     }
   ],
 
-  transactions: [
-    {
-      type: String,
-      amount: Number,
-      date: Date,
-      status: String,
-      note: String,
-      game: String,
-      address: String,
-      network: String,
-      bet: Number,
-      playerTotal: Number,
-      dealerTotal: Number,
-      guess: Number,
-      target: Number,
-      dice: [Number],
-      sum: Number,
-      symbols: [String],
-      choice: String,
-      result: String
-    }
-  ],
+  // =======================================================
+  // مهم جداً:
+  // تم تغيير transactions إلى Mixed
+  // حتى يقبل MongoDB جميع بيانات العمليات القديمة والجديدة
+  // =======================================================
+
+  transactions: {
+    type: [mongoose.Schema.Types.Mixed],
+    default: []
+  },
 
   createdAt: {
     type: Date,
@@ -396,6 +386,7 @@ app.post("/api/register", async (req, res) => {
 
     return res.status(201).json({
       success: true,
+
       message:
         "✅ تم إنشاء الحساب بنجاح",
 
@@ -503,6 +494,7 @@ app.post("/api/login", async (req, res) => {
 
     return res.json({
       success: true,
+
       message:
         "✅ تم تسجيل الدخول بنجاح",
 
@@ -517,6 +509,7 @@ app.post("/api/login", async (req, res) => {
         profit: user.profit,
 
         plan: user.plan,
+
         planAmount:
           user.planAmount,
 
@@ -739,6 +732,7 @@ app.put(
 
       return res.json({
         success: true,
+
         message:
           "✅ تم تحديث المستخدم بنجاح",
 
@@ -854,7 +848,7 @@ app.post(
             userId
           });
 
-        // احتياطياً MongoDB ObjectId
+        // احتياطياً إذا كان المعرف MongoDB ObjectId
         if (
           !user &&
           mongoose.isValidObjectId(
@@ -868,7 +862,7 @@ app.post(
         }
       }
 
-      // احتياطياً بالإيميل
+      // البحث بالإيميل كاحتياط
       if (!user && email) {
         user =
           await User.findOne({
@@ -884,6 +878,23 @@ app.post(
         });
       }
 
+      console.log(
+        "👤 USER FOUND:",
+        {
+          mongoId:
+            user._id.toString(),
+
+          userId:
+            user.userId,
+
+          email:
+            user.email,
+
+          oldBalance:
+            user.balance
+        }
+      );
+
       const oldBalance =
         Number(user.balance || 0);
 
@@ -891,9 +902,9 @@ app.post(
       let transactionAmount;
       let transactionType;
 
-      // =========================
+      // =====================================================
       // DEPOSIT
-      // =========================
+      // =====================================================
 
       if (type === "deposit") {
         newBalance =
@@ -906,9 +917,9 @@ app.post(
           "💰 إيداع (أدمن)";
       }
 
-      // =========================
+      // =====================================================
       // WITHDRAW
-      // =========================
+      // =====================================================
 
       else {
         if (
@@ -966,8 +977,7 @@ app.post(
       );
 
       // =====================================================
-      // التعديل المباشر في MongoDB
-      // بدون user.save()
+      // تحديث مباشر في MongoDB
       // =====================================================
 
       const result =
@@ -1009,7 +1019,10 @@ app.post(
         });
       }
 
-      // جلب البيانات بعد التعديل
+      // =====================================================
+      // جلب الحساب بعد التحديث
+      // =====================================================
+
       const updatedUser =
         await User.findById(
           user._id
@@ -1068,6 +1081,7 @@ app.post(
 
       return res.status(500).json({
         success: false,
+
         message:
           "❌ خطأ في الخادم",
 
