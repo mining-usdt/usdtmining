@@ -1472,7 +1472,7 @@
     }
 
     // =========================================================
-    //   ✅ LOAD USERS
+    //   ✅ LOAD USERS (FIXED)
     // =========================================================
     async function loadUsers() {
       try {
@@ -1482,12 +1482,14 @@
 
         let serverUsers = {};
         if (data.success && data.users && data.users.length > 0) {
+          // ✅ الإصلاح: قراءة data.users مباشرة (كما يرسلها السيرفر الآن)
           data.users.forEach(user => {
             serverUsers[user.email] = user;
           });
           console.log('✅ تم جلب ' + data.users.length + ' مستخدم من الخادم');
         } else {
           console.warn('⚠️ فشل جلب المستخدمين من الخادم أو لا يوجد مستخدمين');
+          console.log('📥 بيانات الخادم:', data);
         }
 
         let localUsers = {};
@@ -1498,6 +1500,7 @@
           console.warn('⚠️ فشل قراءة localStorage');
         }
 
+        // دمج البيانات (الخادم أولاً، ثم المحلي)
         const merged = { ...localUsers, ...serverUsers };
         Object.keys(localUsers).forEach(email => {
           if (!serverUsers[email]) {
@@ -1520,6 +1523,7 @@
         }
         updateStats();
         renderUserList();
+        showNotification('⚠️ تم استخدام البيانات المحلية (الخادم غير متصل)', '⚠️');
       }
     }
 
@@ -1605,21 +1609,22 @@
     }
 
     // =========================================================
-    //   ✅ SEARCH USER - FIXED
+    //   ✅ SEARCH USER (FIXED)
     // =========================================================
-    function searchUser() {
+    async function searchUser() {
       const identifier = document.getElementById('adminUserId').value.trim();
       if (!identifier) {
         showNotification('⚠️ أدخل المعرف أو البريد أو كود الدعوة', '⚠️');
         return;
       }
-      selectUser(identifier);
+      await selectUser(identifier);
       playSound('click');
     }
 
-    function selectUser(identifier) {
+    async function selectUser(identifier) {
+      // البحث في allUsers أولاً
       const users = Object.values(allUsers);
-      const user = users.find(u =>
+      let user = users.find(u =>
         u.userId === identifier ||
         u.userId === String(identifier) ||
         u._id === identifier ||
@@ -1628,6 +1633,21 @@
         u.referralCode === identifier ||
         u.referralCode === identifier.toUpperCase()
       );
+
+      // إذا لم يتم العثور، جلب من الخادم مباشرة
+      if (!user) {
+        try {
+          const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(identifier));
+          const response = await fetch(apiUrl);
+          const data = await response.json();
+          if (data.success && data.user) {
+            user = data.user;
+            allUsers[user.email] = user;
+          }
+        } catch (error) {
+          console.warn('⚠️ فشل جلب المستخدم من الخادم:', error);
+        }
+      }
 
       if (!user) {
         showNotification('❌ لم يتم العثور على مستخدم', '❌');
@@ -1721,301 +1741,101 @@
     // =========================================================
     //   ✅ SAVE USER TO DB
     // =========================================================
+    function saveUserToDB(user) {
+      const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+      db[user.email] = user;
+      localStorage.setItem('miningUsersDB', JSON.stringify(db));
+
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (currentUser && currentUser.email === user.email) {
+        localStorage.setItem('currentUser', JSON.stringify(user));
+      }
+
+      allUsers[user.email] = user;
+    }
+
     // =========================================================
-//   ✅ SAVE USER TO DB - FIXED (مع دعم الخادم)
-// =========================================================
-// =========================================================
-//   ✅ SAVE USER TO DB - FIXED
-// =========================================================
-function saveUserToDB(user) {
-  // حفظ في localStorage
-  const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-  db[user.email] = user;
-  localStorage.setItem('miningUsersDB', JSON.stringify(db));
+    //   ✅ ADMIN: DEPOSIT (FIXED)
+    // =========================================================
+    async function adminDeposit() {
+      if (!selectedUser) {
+        showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
+        return;
+      }
+      const amount = getAmount();
+      if (!amount) return;
 
-  const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-  if (currentUser && currentUser.email === user.email) {
-    localStorage.setItem('currentUser', JSON.stringify(user));
-  }
+      try {
+        await showModal({
+          icon: '💰',
+          title: 'تأكيد الإيداع',
+          type: 'success',
+          message: `هل أنت متأكد من إيداع <strong>$${amount.toFixed(2)}</strong> إلى حساب <strong>${selectedUser.name}</strong>؟`,
+          details: {
+            '👤 المستخدم': selectedUser.name,
+            '🆔 المعرف': selectedUser.userId || selectedUser._id || '—',
+            '💰 المبلغ': '$' + amount.toFixed(2),
+            '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
+          },
+          confirmText: '💰 تأكيد الإيداع',
+          cancelText: 'إلغاء'
+        });
 
-  allUsers[user.email] = user;
-}
+        // تحديث محلياً أولاً
+        const oldBalance = Number(selectedUser.balance || 0);
+        selectedUser.balance = oldBalance + amount;
+        if (!selectedUser.transactions) selectedUser.transactions = [];
+        selectedUser.transactions.unshift({
+          type: '💰 إيداع (أدمن)',
+          amount: amount,
+          date: new Date().toISOString(),
+          status: '✅ مكتمل',
+          note: `بواسطة الأدمن ${currentAdmin || 'أدمن'}`
+        });
 
-// =========================================================
-//   ✅ ADMIN: DEPOSIT - FIXED
-// =========================================================
-async function adminDeposit() {
-  if (!selectedUser) {
-    showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
-    return;
-  }
-
-  const amount = getAmount();
-  if (!amount) return;
-
-  try {
-    await showModal({
-      icon: '💰',
-      title: 'تأكيد الإيداع',
-      type: 'success',
-      message: `هل أنت متأكد من إيداع <strong>$${amount.toFixed(2)}</strong> إلى حساب <strong>${selectedUser.name}</strong>؟`,
-      details: {
-        '👤 المستخدم': selectedUser.name,
-        '🆔 المعرف': selectedUser.userId,
-        '💰 المبلغ': '$' + amount.toFixed(2),
-        '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
-      },
-      confirmText: '💰 تأكيد الإيداع',
-      cancelText: 'إلغاء'
-    });
-
-    const apiUrl = getApiUrl('/admin/balance');
-
-    console.log('📤 إرسال الإيداع:', {
-      userId: selectedUser.userId,
-      email: selectedUser.email,
-      amount: amount,
-      type: 'deposit'
-    });
-
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        userId: String(selectedUser.userId).trim(),
-        email: selectedUser.email,
-        amount: Number(amount),
-        type: 'deposit',
-        adminName: currentAdmin || 'أدمن'
-      })
-    });
-
-    const data = await response.json();
-
-    console.log('📥 رد السيرفر:', data);
-
-    if (!response.ok || !data.success) {
-      throw new Error(
-        data.message || 'فشل تنفيذ الإيداع'
-      );
-    }
-
-    // تحديث الحساب من بيانات MongoDB التي رجعت من السيرفر
-    selectedUser = data.user;
-
-    if (data.user.email) {
-      allUsers[data.user.email] = data.user;
-    }
-
-    saveUserToDB(data.user);
-
-    displayUserInfo(selectedUser);
-    loadUsers();
-
-    document.getElementById('adminAmount').value = '';
-
-    playSound('coin');
-
-    showNotification(
-      `✅ تم إيداع $${amount.toFixed(2)} للحساب بنجاح`,
-      '💰'
-    );
-
-  } catch (error) {
-    console.error('❌ فشل الإيداع:', error);
-
-    showNotification(
-      `❌ لم يتم الإيداع: ${error.message}`,
-      '❌'
-    );
-
-    playSound('error');
-  }
-}
-
-// =========================================================
-//   ✅ ADMIN: WITHDRAW - FIXED
-// =========================================================
-async function adminWithdraw() {
-  if (!selectedUser) {
-    showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
-    return;
-  }
-  const amount = getAmount();
-  if (!amount) return;
-  
-  if (Number(selectedUser.balance || 0) < amount) {
-    showNotification('❌ الرصيد غير كافٍ', '❌');
-    playSound('error');
-    return;
-  }
-  
-  try {
-    await showModal({
-      icon: '💸',
-      title: 'تأكيد السحب',
-      type: 'danger',
-      message: `هل أنت متأكد من سحب <strong>$${amount.toFixed(2)}</strong> من حساب <strong>${selectedUser.name}</strong>؟`,
-      details: {
-        '👤 المستخدم': selectedUser.name,
-        '🆔 المعرف': selectedUser.userId || selectedUser._id || '—',
-        '💸 المبلغ': '$' + amount.toFixed(2),
-        '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
-      },
-      confirmText: '💸 تأكيد السحب',
-      cancelText: 'إلغاء'
-    });
-    
-    selectedUser.balance = Number(selectedUser.balance || 0) - amount;
-    if (!selectedUser.transactions) selectedUser.transactions = [];
-    selectedUser.transactions.unshift({
-      type: '💸 سحب (أدمن)',
-      amount: -amount,
-      date: new Date().toISOString(),
-      status: '✅ مكتمل'
-    });
-    
-    saveUserToDB(selectedUser);
-    
-    const apiUrl = getApiUrl('/admin/balance');
-    fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: selectedUser.userId || selectedUser._id,
-        email: selectedUser.email,
-        amount: amount,
-        type: 'withdraw',
-        adminName: currentAdmin || 'أدمن'
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success && data.user) {
-        console.log('✅ تم مزامنة السحب مع الخادم');
-        selectedUser = data.user;
-        allUsers[data.user.email] = data.user;
-        saveUserToDB(data.user);
+        saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
-        showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح (تمت المزامنة)`, '💸');
-      }
-    })
-    .catch(err => {
-      console.warn('⚠️ فشل مزامنة السحب مع الخادم:', err);
-      showNotification(`✅ تم سحب $${amount.toFixed(2)} محلياً (الخادم غير متصل)`, '💸');
-    });
-    
-    displayUserInfo(selectedUser);
-    loadUsers();
-    playSound('coin');
-    document.getElementById('adminAmount').value = '';
-    
-  } catch (e) {
-    playSound('click');
-  }
-}
+        playSound('coin');
+        showNotification(`✅ تم إيداع $${amount.toFixed(2)} للحساب بنجاح (تم الحفظ محلياً)`, '💰');
+        document.getElementById('adminAmount').value = '';
 
-// =========================================================
-//   ✅ ADMIN: WITHDRAW - FIXED
-// =========================================================
-async function adminWithdraw() {
-  if (!selectedUser) {
-    showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
-    return;
-  }
-  const amount = getAmount();
-  if (!amount) return;
-  
-  if (Number(selectedUser.balance || 0) < amount) {
-    showNotification('❌ الرصيد غير كافٍ', '❌');
-    playSound('error');
-    return;
-  }
-  
-  try {
-    await showModal({
-      icon: '💸',
-      title: 'تأكيد السحب',
-      type: 'danger',
-      message: `هل أنت متأكد من سحب <strong>$${amount.toFixed(2)}</strong> من حساب <strong>${selectedUser.name}</strong>؟`,
-      details: {
-        '👤 المستخدم': selectedUser.name,
-        '🆔 المعرف': selectedUser.userId || selectedUser._id || '—',
-        '💸 المبلغ': '$' + amount.toFixed(2),
-        '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
-      },
-      confirmText: '💸 تأكيد السحب',
-      cancelText: 'إلغاء'
-    });
-    
-    // ✅ تحديث الرصيد محلياً
-    selectedUser.balance = Number(selectedUser.balance || 0) - amount;
-    if (!selectedUser.transactions) selectedUser.transactions = [];
-    selectedUser.transactions.unshift({
-      type: '💸 سحب (أدمن)',
-      amount: -amount,
-      date: new Date().toISOString(),
-      status: '✅ مكتمل'
-    });
-    
-    // ✅ حفظ محلياً
-    const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-    db[selectedUser.email] = selectedUser;
-    localStorage.setItem('miningUsersDB', JSON.stringify(db));
-    
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (currentUser && currentUser.email === selectedUser.email) {
-      localStorage.setItem('currentUser', JSON.stringify(selectedUser));
-    }
-    
-    allUsers[selectedUser.email] = selectedUser;
-    
-    // ✅ إرسال إلى الخادم
-    const apiUrl = getApiUrl('/admin/balance');
-    fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: selectedUser.userId || selectedUser._id,
-        email: selectedUser.email,
-        amount: amount,
-        type: 'withdraw',
-        adminName: currentAdmin || 'أدمن'
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success && data.user) {
-        console.log('✅ تم مزامنة السحب مع الخادم');
-        allUsers[data.user.email] = data.user;
-        const db2 = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-        db2[data.user.email] = data.user;
-        localStorage.setItem('miningUsersDB', JSON.stringify(db2));
-        if (currentUser && currentUser.email === data.user.email) {
-          localStorage.setItem('currentUser', JSON.stringify(data.user));
+        // ✅ مزامنة مع الخادم
+        const apiUrl = getApiUrl('/admin/balance');
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: selectedUser.userId || selectedUser._id,
+              email: selectedUser.email,
+              amount: amount,
+              type: 'deposit',
+              adminName: currentAdmin || 'أدمن'
+            })
+          });
+          const data = await response.json();
+          if (data.success && data.user) {
+            console.log('✅ تم مزامنة الإيداع مع الخادم');
+            selectedUser = data.user;
+            allUsers[data.user.email] = data.user;
+            saveUserToDB(data.user);
+            displayUserInfo(selectedUser);
+            loadUsers();
+            showNotification(`✅ تم مزامنة الإيداع مع الخادم - الرصيد الجديد: $${Number(data.user.balance).toFixed(2)}`, '💰');
+          }
+        } catch (err) {
+          console.warn('⚠️ فشل مزامنة الإيداع مع الخادم:', err);
+          showNotification('⚠️ تم الإيداع محلياً، لكن لم يتم المزامنة مع الخادم', '⚠️');
         }
-        selectedUser = data.user;
-        displayUserInfo(selectedUser);
-        loadUsers();
+
+      } catch (e) {
+        playSound('click');
       }
-    })
-    .catch(err => console.warn('⚠️ فشل مزامنة السحب مع الخادم:', err));
-    
-    displayUserInfo(selectedUser);
-    loadUsers();
-    playSound('coin');
-    showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح`, '💸');
-    document.getElementById('adminAmount').value = '';
-    
-  } catch (e) {
-    playSound('click');
-  }
-}
+    }
+
     // =========================================================
-    //   ✅ ADMIN: WITHDRAW
+    //   ✅ ADMIN: WITHDRAW (FIXED)
     // =========================================================
     async function adminWithdraw() {
       if (!selectedUser) {
@@ -2024,11 +1844,13 @@ async function adminWithdraw() {
       }
       const amount = getAmount();
       if (!amount) return;
+
       if (Number(selectedUser.balance || 0) < amount) {
         showNotification('❌ الرصيد غير كافٍ', '❌');
         playSound('error');
         return;
       }
+
       try {
         await showModal({
           icon: '💸',
@@ -2044,27 +1866,61 @@ async function adminWithdraw() {
           confirmText: '💸 تأكيد السحب',
           cancelText: 'إلغاء'
         });
+
+        // تحديث محلياً أولاً
         selectedUser.balance = Number(selectedUser.balance || 0) - amount;
         if (!selectedUser.transactions) selectedUser.transactions = [];
         selectedUser.transactions.unshift({
           type: '💸 سحب (أدمن)',
           amount: -amount,
           date: new Date().toISOString(),
-          status: '✅ مكتمل'
+          status: '✅ مكتمل',
+          note: `بواسطة الأدمن ${currentAdmin || 'أدمن'}`
         });
+
         saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
         playSound('coin');
-        showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح`, '💸');
+        showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح (تم الحفظ محلياً)`, '💸');
         document.getElementById('adminAmount').value = '';
+
+        // ✅ مزامنة مع الخادم
+        const apiUrl = getApiUrl('/admin/balance');
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: selectedUser.userId || selectedUser._id,
+              email: selectedUser.email,
+              amount: amount,
+              type: 'withdraw',
+              adminName: currentAdmin || 'أدمن'
+            })
+          });
+          const data = await response.json();
+          if (data.success && data.user) {
+            console.log('✅ تم مزامنة السحب مع الخادم');
+            selectedUser = data.user;
+            allUsers[data.user.email] = data.user;
+            saveUserToDB(data.user);
+            displayUserInfo(selectedUser);
+            loadUsers();
+            showNotification(`✅ تم مزامنة السحب مع الخادم - الرصيد الجديد: $${Number(data.user.balance).toFixed(2)}`, '💸');
+          }
+        } catch (err) {
+          console.warn('⚠️ فشل مزامنة السحب مع الخادم:', err);
+          showNotification('⚠️ تم السحب محلياً، لكن لم يتم المزامنة مع الخادم', '⚠️');
+        }
+
       } catch (e) {
         playSound('click');
       }
     }
 
     // =========================================================
-    //   ✅ ADMIN: DELETE USER
+    //   ✅ ADMIN: DELETE USER (FIXED)
     // =========================================================
     async function adminDeleteUser() {
       if (!selectedUser) {
@@ -2086,6 +1942,8 @@ async function adminWithdraw() {
           confirmText: '🗑️ حذف نهائي',
           cancelText: 'إلغاء'
         });
+
+        // حذف من localStorage
         const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
         delete db[selectedUser.email];
         localStorage.setItem('miningUsersDB', JSON.stringify(db));
@@ -2097,12 +1955,22 @@ async function adminWithdraw() {
 
         delete allUsers[selectedUser.email];
 
-        const apiUrl = getApiUrl('/admin/user/' + (selectedUser.userId || selectedUser._id));
-        await fetch(apiUrl, { method: 'DELETE' });
+        // حذف من الخادم
+        const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(selectedUser.userId || selectedUser._id));
+        try {
+          const response = await fetch(apiUrl, { method: 'DELETE' });
+          const data = await response.json();
+          if (data.success) {
+            console.log('✅ تم حذف المستخدم من الخادم');
+          }
+        } catch (err) {
+          console.warn('⚠️ فشل حذف المستخدم من الخادم:', err);
+        }
 
         selectedUser = null;
         document.getElementById('userInfoDisplay').classList.remove('active');
         document.getElementById('adminActions').classList.remove('active');
+        document.getElementById('adminUserId').value = '';
         loadUsers();
         playSound('error');
         showNotification('🗑️ تم حذف الحساب بنجاح', '🗑️');
@@ -2112,14 +1980,14 @@ async function adminWithdraw() {
     }
 
     // =========================================================
-    //   ✅ ADMIN: RESET PLAN
+    //   ✅ ADMIN: RESET PLAN (FIXED)
     // =========================================================
     async function resetUserPlan() {
       if (!selectedUser) {
         showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
         return;
       }
-      if (!selectedUser.plan || selectedUser.plan === '—') {
+      if (!selectedUser.plan || selectedUser.plan === '—' || selectedUser.plan === null) {
         showNotification('ℹ️ هذا المستخدم ليس لديه خطة نشطة', 'ℹ️');
         return;
       }
@@ -2138,6 +2006,7 @@ async function adminWithdraw() {
           confirmText: '🔄 تأكيد الإلغاء',
           cancelText: 'إلغاء'
         });
+
         selectedUser.plan = null;
         selectedUser.planAmount = 0;
         selectedUser.planRate = 0;
@@ -2150,6 +2019,7 @@ async function adminWithdraw() {
           date: new Date().toISOString(),
           status: '✅ مكتمل'
         });
+
         saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
@@ -2161,7 +2031,7 @@ async function adminWithdraw() {
     }
 
     // =========================================================
-    //   ✅ ADMIN: RESET TIMER TO 25 SECONDS
+    //   ✅ ADMIN: RESET TIMER TO 25 SECONDS (FIXED)
     // =========================================================
     async function resetTimerTo25Seconds() {
       if (!selectedUser) {
@@ -2219,18 +2089,34 @@ async function adminWithdraw() {
     }
 
     // =========================================================
-    //   ✅ ADMIN: VIEW TRANSACTIONS
+    //   ✅ ADMIN: VIEW TRANSACTIONS (FIXED)
     // =========================================================
     async function viewTransactions() {
       if (!selectedUser) {
         showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
         return;
       }
-      const transactions = selectedUser.transactions || [];
+
+      // محاولة جلب العمليات من الخادم
+      let transactions = selectedUser.transactions || [];
+      try {
+        const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(selectedUser.userId || selectedUser._id) + '/transactions');
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        if (data.success && data.transactions) {
+          transactions = data.transactions;
+          selectedUser.transactions = transactions;
+          saveUserToDB(selectedUser);
+        }
+      } catch (err) {
+        console.warn('⚠️ فشل جلب العمليات من الخادم:', err);
+      }
+
       if (!transactions.length) {
         showNotification('📭 لا توجد عمليات لهذا المستخدم', '📭');
         return;
       }
+
       let listHtml = '';
       transactions.slice(0, 15).forEach(t => {
         const sign = t.amount > 0 ? '+' : '';
@@ -2246,6 +2132,7 @@ async function adminWithdraw() {
       if (transactions.length > 15) {
         listHtml += `<div style="text-align:center;color:var(--muted);padding:8px;">... و ${transactions.length - 15} عملية أخرى</div>`;
       }
+
       const overlay = document.getElementById('modalOverlay');
       const icon = document.getElementById('modalIcon');
       const title = document.getElementById('modalTitle');
