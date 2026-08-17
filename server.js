@@ -10,7 +10,7 @@ app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
 // =========================================================
-// MongoDB
+// ✅ MongoDB - الرابط الصحيح
 // =========================================================
 
 const MONGODB_URI =
@@ -26,14 +26,35 @@ mongoose
   });
 
 // =========================================================
-// Website files
-// ملفات الموقع موجودة في جذر المشروع وليس public
+// ✅ IMPORTANT: Serve static files from root directory
 // =========================================================
 
+// خدمة جميع الملفات الثابتة من الجذر
 app.use(express.static(__dirname));
+
+// =========================================================
+// ✅ SPA Support - جميع الطلبات تذهب إلى index.html
+// =========================================================
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
+});
+
+// =========================================================
+// ✅ دعم جميع الصفحات (للتحديث المباشر)
+// =========================================================
+
+app.get("/:page.html", (req, res) => {
+  const page = req.params.page;
+  const filePath = path.join(__dirname, `${page}.html`);
+  
+  // التحقق من وجود الملف
+  const fs = require("fs");
+  if (fs.existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    res.status(404).send("الصفحة غير موجودة");
+  }
 });
 
 // =========================================================
@@ -47,13 +68,11 @@ const UserSchema = new mongoose.Schema({
     required: true,
     index: true
   },
-
   name: {
     type: String,
     required: true,
     trim: true
   },
-
   email: {
     type: String,
     unique: true,
@@ -62,74 +81,60 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     index: true
   },
-
   password: {
     type: String,
     required: true
   },
-
   balance: {
     type: Number,
     default: 0
   },
-
   profit: {
     type: Number,
     default: 0
   },
-
   plan: {
     type: String,
     default: null
   },
-
   planAmount: {
     type: Number,
     default: 0
   },
-
   planRate: {
     type: Number,
     default: 0
   },
-
   planDays: {
     type: Number,
     default: 0
   },
-
   planStart: {
     type: Date,
     default: null
   },
-
   timerStart: {
     type: Number,
     default: null
   },
-
   lastProfitDate: {
     type: String,
     default: null
   },
-
   referralCode: {
     type: String,
     unique: true,
     required: true,
     index: true
   },
-
   referredBy: {
     type: String,
     default: null
   },
-
   referralBonus: {
     type: Number,
     default: 0
   },
-
   referredUsers: [
     {
       email: String,
@@ -145,7 +150,6 @@ const UserSchema = new mongoose.Schema({
       }
     }
   ],
-
   transactions: [
     {
       type: String,
@@ -168,7 +172,6 @@ const UserSchema = new mongoose.Schema({
       result: String
     }
   ],
-
   createdAt: {
     type: Date,
     default: Date.now
@@ -189,39 +192,32 @@ function generateUniqueUserId() {
 
 function generateReferralCode(userId) {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
   let code = "";
-
   for (let i = 0; i < 8; i++) {
     code += chars.charAt(
       Math.floor(Math.random() * chars.length)
     );
   }
-
   return code + userId.slice(-4);
 }
 
 async function createUniqueUserId() {
   let userId;
   let exists = true;
-
   while (exists) {
     userId = generateUniqueUserId();
     exists = await User.exists({ userId });
   }
-
   return userId;
 }
 
 async function createUniqueReferralCode(userId) {
   let referralCode;
   let exists = true;
-
   while (exists) {
     referralCode = generateReferralCode(userId);
     exists = await User.exists({ referralCode });
   }
-
   return referralCode;
 }
 
@@ -243,19 +239,16 @@ app.get("/api/health", async (req, res) => {
 });
 
 // =========================================================
-// Register
+// ✅ Register - FIXED
 // =========================================================
 
-app.post("/register", async (req, res) => {
+app.post("/api/register", async (req, res) => {
   try {
     const name = String(req.body.name || "").trim();
-
     const email = String(req.body.email || "")
       .trim()
       .toLowerCase();
-
     const password = String(req.body.password || "");
-
     const referralCode = String(
       req.body.referralCode || ""
     )
@@ -279,7 +272,6 @@ app.post("/register", async (req, res) => {
     }
 
     const userId = await createUniqueUserId();
-
     const referralCodeGenerated =
       await createUniqueReferralCode(userId);
 
@@ -288,23 +280,18 @@ app.post("/register", async (req, res) => {
       name,
       email,
       password,
-
       balance: 0,
       profit: 0,
-
       plan: null,
       planAmount: 0,
       planRate: 0,
       planDays: 0,
       planStart: null,
-
       timerStart: null,
       lastProfitDate: null,
-
       referralCode: referralCodeGenerated,
       referredBy: null,
       referralBonus: 0,
-
       referredUsers: [],
       transactions: []
     });
@@ -339,27 +326,21 @@ app.post("/register", async (req, res) => {
     return res.status(201).json({
       success: true,
       message: "✅ تم إنشاء الحساب بنجاح",
-
       user: {
         userId: newUser.userId,
         name: newUser.name,
         email: newUser.email,
-
         balance: newUser.balance,
         profit: newUser.profit,
-
         plan: newUser.plan,
         planAmount: newUser.planAmount,
         planRate: newUser.planRate,
         planDays: newUser.planDays,
         planStart: newUser.planStart,
-
         timerStart: newUser.timerStart,
-
         referralCode: newUser.referralCode,
         referredBy: newUser.referredBy,
         referralBonus: newUser.referralBonus,
-
         referredUsers: newUser.referredUsers,
         transactions: newUser.transactions
       }
@@ -383,10 +364,10 @@ app.post("/register", async (req, res) => {
 });
 
 // =========================================================
-// Login
+// ✅ Login - FIXED
 // =========================================================
 
-app.post("/login", async (req, res) => {
+app.post("/api/login", async (req, res) => {
   try {
     const email = String(req.body.email || "")
       .trim()
@@ -420,29 +401,22 @@ app.post("/login", async (req, res) => {
     return res.json({
       success: true,
       message: "✅ تم تسجيل الدخول بنجاح",
-
       user: {
         userId: user.userId,
         name: user.name,
         email: user.email,
-
         balance: user.balance,
         profit: user.profit,
-
         plan: user.plan,
         planAmount: user.planAmount,
         planRate: user.planRate,
         planDays: user.planDays,
         planStart: user.planStart,
-
         timerStart: user.timerStart,
-
         referralCode: user.referralCode,
         referredBy: user.referredBy,
         referralBonus: user.referralBonus,
-
         referredUsers: user.referredUsers,
-
         transactions:
           user.transactions.slice(0, 20)
       }
@@ -462,7 +436,7 @@ app.post("/login", async (req, res) => {
 // Admin - all users
 // =========================================================
 
-app.get("/admin/users", async (req, res) => {
+app.get("/api/admin/users", async (req, res) => {
   try {
     const users = await User.find({})
       .select("-password")
@@ -487,7 +461,7 @@ app.get("/admin/users", async (req, res) => {
 // Admin - one user
 // =========================================================
 
-app.get("/admin/user/:userId", async (req, res) => {
+app.get("/api/admin/user/:userId", async (req, res) => {
   try {
     const userId = String(
       req.params.userId || ""
@@ -524,7 +498,7 @@ app.get("/admin/user/:userId", async (req, res) => {
 // =========================================================
 
 app.post(
-  "/admin/user/:userId/balance",
+  "/api/admin/user/:userId/balance",
   async (req, res) => {
     try {
       const userId = String(
@@ -532,7 +506,6 @@ app.post(
       ).trim();
 
       const amount = Number(req.body.amount);
-
       const type = String(
         req.body.type || ""
       )
@@ -569,7 +542,6 @@ app.post(
 
       if (type === "deposit") {
         user.balance += amount;
-
         user.transactions.unshift({
           type: "💰 إيداع (أدمن)",
           amount,
@@ -587,7 +559,6 @@ app.post(
         }
 
         user.balance -= amount;
-
         user.transactions.unshift({
           type: "💸 سحب (أدمن)",
           amount: -amount,
@@ -623,7 +594,7 @@ app.post(
 // =========================================================
 
 app.delete(
-  "/admin/user/:userId",
+  "/api/admin/user/:userId",
   async (req, res) => {
     try {
       const userId = String(
