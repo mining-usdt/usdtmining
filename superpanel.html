@@ -1025,7 +1025,6 @@
       box-shadow: var(--admin-glow-strong);
     }
 
-    /* ✅ تحسين عرض التايمر */
     .timer-display-admin {
       font-family: 'Courier New', monospace;
       color: var(--admin-gold);
@@ -1338,7 +1337,13 @@
 
   <script>
     let soundEnabled = true;
+    let allUsers = {};
+    let selectedUser = null;
+    let currentAdmin = null;
 
+    // =========================================================
+    //   ✅ TOGGLE SOUND
+    // =========================================================
     function toggleSound() {
       soundEnabled = !soundEnabled;
       document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
@@ -1390,6 +1395,9 @@
       }, 3000);
     }
 
+    // =========================================================
+    //   ✅ CURSOR GLOW
+    // =========================================================
     const cursorGlow = document.getElementById('cursorGlow');
     document.addEventListener('mousemove', function(e) {
       cursorGlow.style.left = e.clientX + 'px';
@@ -1401,13 +1409,10 @@
     document.addEventListener('mouseup', function() {
       cursorGlow.classList.remove('active');
     });
-    document.addEventListener('mouseleave', function() {
-      cursorGlow.style.opacity = '0';
-    });
-    document.addEventListener('mouseenter', function() {
-      cursorGlow.style.opacity = '1';
-    });
 
+    // =========================================================
+    //   ✅ MODAL
+    // =========================================================
     let modalResolve = null;
     let modalReject = null;
 
@@ -1474,15 +1479,28 @@
 
     function confirmModal() {}
 
+    // =========================================================
+    //   ✅ ADMIN CREDENTIALS
+    // =========================================================
     const ADMIN_CREDENTIALS = [
       { username: 'kbs', password: 'kbs' },
       { username: 'rt7', password: 'rt7' }
     ];
 
-    let currentAdmin = null;
-    let selectedUser = null;
-    let allUsers = {};
+    // =========================================================
+    //   ✅ API URL (يعمل محلياً وعبر Render)
+    // =========================================================
+    function getApiUrl(endpoint) {
+      const hostname = window.location.hostname;
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:3000/api' + endpoint;
+      }
+      return '/api' + endpoint;
+    }
 
+    // =========================================================
+    //   ✅ LOGIN
+    // =========================================================
     document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const username = document.getElementById('adminUsername').value.trim();
@@ -1519,12 +1537,52 @@
       showNotification('👋 تم تسجيل الخروج', '👋');
     }
 
-    function loadUsers() {
+    // =========================================================
+    //   ✅ LOAD USERS FROM SERVER (MongoDB) + LocalStorage
+    // =========================================================
+    async function loadUsers() {
       try {
-        allUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-      } catch {
-        allUsers = {};
+        // ✅ جلب المستخدمين من الخادم (MongoDB)
+        const apiUrl = getApiUrl('/admin/users');
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        if (data.success && data.users) {
+          // تحويل المصفوفة إلى كائن باستخدام البريد الإلكتروني كمفتاح
+          allUsers = {};
+          data.users.forEach(user => {
+            allUsers[user.email] = user;
+          });
+          console.log('✅ تم جلب ' + data.users.length + ' مستخدم من الخادم');
+        } else {
+          // إذا فشل الخادم، استخدم localStorage
+          console.warn('⚠️ فشل جلب المستخدمين من الخادم، استخدام localStorage');
+          try {
+            allUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+          } catch {
+            allUsers = {};
+          }
+        }
+      } catch (error) {
+        console.warn('⚠️ خطأ في الاتصال بالخادم، استخدام localStorage:', error);
+        try {
+          allUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+        } catch {
+          allUsers = {};
+        }
       }
+
+      // ✅ دمج المستخدمين من localStorage مع المستخدمين من الخادم
+      try {
+        const localUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+        // دمج بحيث لا يتم فقدان أي مستخدم
+        Object.keys(localUsers).forEach(key => {
+          if (!allUsers[key]) {
+            allUsers[key] = localUsers[key];
+          }
+        });
+      } catch (e) {}
+
       updateStats();
       renderUserList();
     }
@@ -1548,6 +1606,9 @@
       showNotification('📥 تم تصدير البيانات بنجاح', '📥');
     }
 
+    // =========================================================
+    //   ✅ UPDATE STATS
+    // =========================================================
     function updateStats() {
       const users = Object.values(allUsers);
       const totalUsers = users.length;
@@ -1557,7 +1618,7 @@
       users.forEach(user => {
         totalBalance += Number(user.balance || 0);
         totalProfit += Number(user.profit || 0);
-        if (user.plan && user.plan !== '—') activePlans++;
+        if (user.plan && user.plan !== '—' && user.plan !== null) activePlans++;
       });
       document.getElementById('adminTotalUsers').textContent = totalUsers;
       document.getElementById('adminTotalBalance').textContent = '$' + totalBalance.toFixed(2);
@@ -1566,6 +1627,9 @@
       document.getElementById('userCountLabel').textContent = totalUsers + ' مستخدم';
     }
 
+    // =========================================================
+    //   ✅ RENDER USER LIST
+    // =========================================================
     function renderUserList() {
       const container = document.getElementById('userList');
       const users = Object.values(allUsers);
@@ -1591,6 +1655,9 @@
       `).join('');
     }
 
+    // =========================================================
+    //   ✅ SEARCH USER
+    // =========================================================
     function searchUser() {
       const userId = document.getElementById('adminUserId').value.trim();
       if (!userId) {
@@ -1606,6 +1673,9 @@
       playSound('click');
     }
 
+    // =========================================================
+    //   ✅ SELECT USER BY ID
+    // =========================================================
     function selectUserById(id) {
       const users = Object.values(allUsers);
       const user = users.find(u => u.userId === id || u.email === id);
@@ -1625,6 +1695,9 @@
       showNotification(`✅ تم العثور على ${user.name}`, '✅');
     }
 
+    // =========================================================
+    //   ✅ DISPLAY USER INFO
+    // =========================================================
     function displayUserInfo(user) {
       document.getElementById('infoUserId').textContent = user.userId || '—';
       document.getElementById('infoName').textContent = user.name || '—';
@@ -1638,7 +1711,7 @@
       document.getElementById('infoTransactions').textContent = (user.transactions || []).length;
       document.getElementById('infoReferral').textContent = user.referralCode || '—';
 
-      // ✅ عرض التايمر المتبقي
+      // عرض التايمر المتبقي
       let timerDisplay = '—';
       if (user.plan && user.plan !== '—' && user.timerStart) {
         const now = Date.now();
@@ -1660,6 +1733,9 @@
       document.getElementById('userInfoDisplay').classList.add('active');
     }
 
+    // =========================================================
+    //   ✅ GET AMOUNT
+    // =========================================================
     function getAmount() {
       const val = parseFloat(document.getElementById('adminAmount').value);
       if (isNaN(val) || val <= 0) {
@@ -1670,6 +1746,28 @@
       return val;
     }
 
+    // =========================================================
+    //   ✅ SAVE USER TO DB (LocalStorage + Server)
+    // =========================================================
+    function saveUserToDB(user) {
+      // حفظ في localStorage
+      const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+      db[user.email] = user;
+      localStorage.setItem('miningUsersDB', JSON.stringify(db));
+
+      // حفظ في currentUser إذا كان هو نفسه
+      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (currentUser && currentUser.email === user.email) {
+        localStorage.setItem('currentUser', JSON.stringify(user));
+      }
+
+      // تحديث allUsers
+      allUsers[user.email] = user;
+    }
+
+    // =========================================================
+    //   ✅ ADMIN: DEPOSIT
+    // =========================================================
     async function adminDeposit() {
       if (!selectedUser) {
         showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
@@ -1711,6 +1809,9 @@
       }
     }
 
+    // =========================================================
+    //   ✅ ADMIN: WITHDRAW
+    // =========================================================
     async function adminWithdraw() {
       if (!selectedUser) {
         showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
@@ -1757,6 +1858,9 @@
       }
     }
 
+    // =========================================================
+    //   ✅ ADMIN: DELETE USER
+    // =========================================================
     async function adminDeleteUser() {
       if (!selectedUser) {
         showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
@@ -1784,6 +1888,7 @@
         if (currentUser && currentUser.email === selectedUser.email) {
           localStorage.removeItem('currentUser');
         }
+        delete allUsers[selectedUser.email];
         selectedUser = null;
         document.getElementById('userInfoDisplay').classList.remove('active');
         document.getElementById('adminActions').classList.remove('active');
@@ -1795,6 +1900,9 @@
       }
     }
 
+    // =========================================================
+    //   ✅ ADMIN: RESET PLAN
+    // =========================================================
     async function resetUserPlan() {
       if (!selectedUser) {
         showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
@@ -1842,37 +1950,18 @@
     }
 
     // =========================================================
-    //  ✅ تصفير التايمر إلى 25 ثانية - FIXED
+    //   ✅ ADMIN: RESET TIMER TO 25 SECONDS
     // =========================================================
     async function resetTimerTo25Seconds() {
-      // ✅ تحديث المستخدم من localStorage للتأكد من البيانات الحديثة
       if (!selectedUser) {
         showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
         return;
       }
 
-      const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-      const freshUser = db[selectedUser.email];
-      if (freshUser) {
-        selectedUser = freshUser;
-        displayUserInfo(selectedUser);
-      }
-
-      // ✅ التحقق من الخطة بشكل صحيح
       const hasPlan = selectedUser.plan && selectedUser.plan !== '—' && selectedUser.plan !== null && selectedUser.plan !== 'null';
 
       if (!hasPlan) {
         showNotification('ℹ️ هذا المستخدم ليس لديه خطة نشطة', 'ℹ️');
-        return;
-      }
-
-      // ✅ التأكد من وجود timerStart
-      if (!selectedUser.timerStart) {
-        selectedUser.timerStart = Date.now() - (24 * 60 * 60 * 1000) + (25 * 1000);
-        saveUserToDB(selectedUser);
-        displayUserInfo(selectedUser);
-        loadUsers();
-        showNotification('✅ تم إنشاء تايمر جديد وتصفيره إلى 25 ثانية', '⏱️');
         return;
       }
 
@@ -1895,7 +1984,6 @@
           cancelText: 'إلغاء'
         });
 
-        // ✅ تصفير التايمر إلى 25 ثانية
         selectedUser.timerStart = Date.now() - (24 * 60 * 60 * 1000) + (25 * 1000);
 
         if (!selectedUser.transactions) selectedUser.transactions = [];
@@ -1919,6 +2007,9 @@
       }
     }
 
+    // =========================================================
+    //   ✅ ADMIN: VIEW TRANSACTIONS
+    // =========================================================
     async function viewTransactions() {
       if (!selectedUser) {
         showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
@@ -1978,16 +2069,9 @@
       };
     }
 
-    function saveUserToDB(user) {
-      const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-      db[user.email] = user;
-      localStorage.setItem('miningUsersDB', JSON.stringify(db));
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      if (currentUser && currentUser.email === user.email) {
-        localStorage.setItem('currentUser', JSON.stringify(user));
-      }
-    }
-
+    // =========================================================
+    //   ✅ KEYBOARD SHORTCUTS
+    // =========================================================
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Enter' && document.getElementById('adminUserId') === document.activeElement) {
         searchUser();
@@ -1999,6 +2083,9 @@
       }
     });
 
+    // =========================================================
+    //   ✅ INIT
+    // =========================================================
     if (currentAdmin) {
       document.getElementById('adminLogin').style.display = 'none';
       document.getElementById('adminPanel').classList.add('active');
@@ -2006,6 +2093,7 @@
     }
 
     console.log('🛡️ SUPER PANEL | KBS ✕ RT7');
+    console.log('🌐 جلب المستخدمين من الخادم عبر:', getApiUrl('/admin/users'));
   </script>
 
 </body>
