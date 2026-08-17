@@ -1150,6 +1150,11 @@
         <div class="stat-number" id="adminActivePlans">0</div>
         <div class="stat-label">الخطط النشطة</div>
       </div>
+      <div class="admin-stat-premium" onclick="loadOnlineUsers(); playSound('click')">
+        <div class="stat-icon">🟢</div>
+        <div class="stat-number cyan" id="onlineUsersCount">0</div>
+        <div class="stat-label">المتصلون الآن</div>
+      </div>
     </div>
 
     <div class="admin-grid-premium">
@@ -1475,83 +1480,113 @@
     //   ✅ LOAD USERS (FIXED)
     // =========================================================
     async function loadUsers() {
+      try {
+        const apiUrl = getApiUrl('/admin/users');
+        const response = await fetch(apiUrl);
+        const data = await response.json();
 
-  try {
+        let serverUsers = {};
+        if (data.success && data.users && data.users.length > 0) {
+          // ✅ الإصلاح: قراءة data.users مباشرة (كما يرسلها السيرفر الآن)
+          data.users.forEach(user => {
+            serverUsers[user.email] = user;
+          });
+          console.log('✅ تم جلب ' + data.users.length + ' مستخدم من الخادم');
+        } else {
+          console.warn('⚠️ فشل جلب المستخدمين من الخادم أو لا يوجد مستخدمين');
+          console.log('📥 بيانات الخادم:', data);
+        }
 
-    const response = await fetch('/api/admin/users');
+        let localUsers = {};
+        try {
+          localUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+          console.log('📦 تم جلب ' + Object.keys(localUsers).length + ' مستخدم من localStorage');
+        } catch (e) {
+          console.warn('⚠️ فشل قراءة localStorage');
+        }
 
-    const data = await response.json();
+        // دمج البيانات (الخادم أولاً، ثم المحلي)
+        const merged = { ...localUsers, ...serverUsers };
+        Object.keys(localUsers).forEach(email => {
+          if (!serverUsers[email]) {
+            merged[email] = localUsers[email];
+          }
+        });
 
-    console.log("📥 Users API:", data);
+        allUsers = merged;
+        console.log('📊 إجمالي المستخدمين بعد الدمج:', Object.keys(allUsers).length);
 
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || "فشل جلب المستخدمين");
+        updateStats();
+        renderUserList();
+
+      } catch (error) {
+        console.warn('⚠️ خطأ في الاتصال بالخادم، استخدام localStorage فقط:', error);
+        try {
+          allUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+        } catch {
+          allUsers = {};
+        }
+        updateStats();
+        renderUserList();
+        showNotification('⚠️ تم استخدام البيانات المحلية (الخادم غير متصل)', '⚠️');
+      }
     }
 
-    const serverUsers = {};
+    // =========================================================
+    //   🟢 ONLINE USERS
+    // =========================================================
+    async function loadOnlineUsers() {
+      try {
+        const apiUrl = getApiUrl('/online');
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          cache: 'no-store'
+        });
 
-    data.users.forEach(user => {
+        const data = await response.json();
 
-      const key =
-        user.email ||
-        user.userId ||
-        user._id;
+        if (!data.success) {
+          console.warn('⚠️ فشل جلب المتصلين:', data);
+          return;
+        }
 
-      serverUsers[key] = {
-        ...user,
+        const count = document.getElementById('onlineUsersCount');
+        if (count) {
+          count.textContent = Number(data.count || (Array.isArray(data.users) ? data.users.length : 0));
+        }
 
-        userId:
-          user.userId ||
-          user._id,
+        // تحديث حالة المتصل لكل مستخدم في القائمة
+        const onlineIds = new Set(
+          (Array.isArray(data.users) ? data.users : []).map(user => String(user.userId))
+        );
 
-        _id:
-          user._id
-      };
+        document.querySelectorAll('.user-item-premium').forEach(item => {
+          const idElement = item.querySelector('.user-id');
+          if (!idElement) return;
 
-    });
+          const text = idElement.textContent || '';
+          const match = text.match(/[🆔\s]*(\d+)/);
+          if (!match) return;
 
-    allUsers = serverUsers;
+          const userId = match[1];
+          const existing = item.querySelector('.online-status-dot');
+          if (existing) existing.remove();
 
-    console.log(
-      "✅ عدد المستخدمين:",
-      Object.keys(allUsers).length
-    );
+          if (onlineIds.has(userId)) {
+            const dot = document.createElement('span');
+            dot.className = 'online-status-dot';
+            dot.title = 'متصل الآن';
+            dot.textContent = '🟢';
+            dot.style.cssText = 'margin-inline-start:8px;font-size:11px;';
+            idElement.appendChild(dot);
+          }
+        });
 
-    updateStats();
-    renderUserList();
-
-  } catch (error) {
-
-    console.error(
-      "❌ خطأ جلب المستخدمين:",
-      error
-    );
-
-    allUsers = {};
-
-    updateStats();
-    renderUserList();
-
-    showNotification(
-      "❌ فشل الاتصال بالسيرفر",
-      "❌"
-    );
-  }
-}
-<div class="admin-stat-premium">
-  <div class="stat-icon">🟢</div>
-
-  <div
-    class="stat-number cyan"
-    id="onlineUsersCount"
-  >
-    0
-  </div>
-
-  <div class="stat-label">
-    المتصلون الآن
-  </div>
-</div>
+        return data.users || [];
+      } catch (error) {
+        console.warn('⚠️ فشل الاتصال بخدمة المتصلين:', error);
+      }
+    }
 
     async function syncWithServer() {
       showNotification('🔄 جاري المزامنة مع الخادم...', '🔄');
@@ -1626,7 +1661,7 @@
         return bDate.localeCompare(aDate);
       });
       container.innerHTML = sorted.map(user => `
-        <div class="user-item-premium" onclick="selectUser('${user.userId || user._id || user.email || user.email}')">
+        <div class="user-item-premium" onclick="selectUser('${user.userId || user._id || user.email}')">
           <span class="user-id">🆔 ${user.userId || user._id || '—'}</span>
           <span class="user-name">${user.name || 'غير معروف'}</span>
           <span class="user-balance">$${Number(user.balance || 0).toFixed(2)}</span>
@@ -2214,61 +2249,20 @@
       document.getElementById('adminLogin').style.display = 'none';
       document.getElementById('adminPanel').classList.add('active');
       loadUsers();
+      loadOnlineUsers();
+
+      // تحديث المتصلين كل 10 ثواني
+      setInterval(() => {
+        if (currentAdmin) {
+          loadOnlineUsers();
+        }
+      }, 10000);
     }
 
     console.log('🛡️ SUPER PANEL | KBS ✕ RT7');
     console.log('🌐 جلب المستخدمين من الخادم عبر:', getApiUrl('/admin/users'));
   </script>
-<script>
 
-async function loadOnlineUsers() {
-
-  try {
-
-    const response =
-      await fetch("/api/online");
-
-    const data =
-      await response.json();
-
-    if (!data.success) {
-      return;
-    }
-
-    const count =
-      document.getElementById(
-        "onlineUsersCount"
-      );
-
-    if (count) {
-      count.textContent =
-        data.count;
-    }
-
-    console.log(
-      "🟢 المتصلون الآن:",
-      data.users
-    );
-
-  } catch (error) {
-
-    console.error(
-      "❌ Online API:",
-      error
-    );
-
-  }
-}
-
-
-loadOnlineUsers();
-
-setInterval(
-  loadOnlineUsers,
-  10000
-);
-
-</script>
 </body>
 
 </html>
