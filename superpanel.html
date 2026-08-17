@@ -81,23 +81,13 @@
     }
 
     @keyframes adminBorderRotate {
-      0%,
-      100% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
     }
 
     @keyframes adminPulseBorder {
-      0%,
-      100% {
-        box-shadow: 0 30px 100px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 255, 157, 0.1);
-      }
-      50% {
-        box-shadow: 0 30px 100px rgba(0, 0, 0, 0.6), 0 0 100px rgba(0, 255, 157, 0.2);
-      }
+      0%, 100% { box-shadow: 0 30px 100px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 255, 157, 0.1); }
+      50% { box-shadow: 0 30px 100px rgba(0, 0, 0, 0.6), 0 0 100px rgba(0, 255, 157, 0.2); }
     }
 
     .admin-login-premium .admin-logo {
@@ -107,13 +97,8 @@
     }
 
     @keyframes adminFloat {
-      0%,
-      100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-10px);
-      }
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
 
     .admin-login-premium h1 {
@@ -214,14 +199,8 @@
     }
 
     @keyframes adminFadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .admin-header-premium {
@@ -770,14 +749,8 @@
     }
 
     @keyframes adminNotifIn {
-      from {
-        opacity: 0;
-        transform: translateX(-50%) translateY(-30px) scale(0.95);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0) scale(1);
-      }
+      from { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(0.95); }
+      to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
     }
 
     .admin-modal-overlay {
@@ -797,12 +770,8 @@
     }
 
     @keyframes modalOverlayIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     .admin-modal {
@@ -818,14 +787,8 @@
     }
 
     @keyframes modalIn {
-      from {
-        opacity: 0;
-        transform: scale(0.9) translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-      }
+      from { opacity: 0; transform: scale(0.9) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
     }
 
     .admin-modal .modal-icon {
@@ -1053,79 +1016,32 @@
     }
 
     @media (max-width: 1050px) {
-      .admin-stats-premium {
-        grid-template-columns: repeat(2, 1fr);
-      }
-      .admin-grid-premium {
-        grid-template-columns: 1fr;
-      }
+      .admin-stats-premium { grid-template-columns: repeat(2, 1fr); }
+      .admin-grid-premium { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 650px) {
-      .admin-stats-premium {
-        grid-template-columns: 1fr;
-      }
-      .action-grid-premium {
-        grid-template-columns: 1fr 1fr;
-      }
-      .action-btn-premium.full {
-        grid-column: 1 / -1;
-      }
-      .user-info-premium .info-grid {
-        grid-template-columns: 1fr;
-      }
-      .admin-login-premium {
-        margin: 30px 15px;
-        padding: 30px 20px;
-      }
-      .admin-header-premium {
-        flex-direction: column;
-        text-align: center;
-        padding: 18px;
-      }
-      .admin-header-premium .admin-title {
-        flex-direction: column;
-      }
-      .admin-card-premium {
-        padding: 18px;
-      }
-      .amount-input-premium {
-        flex-direction: column;
-      }
-      .amount-input-premium .quick-btns {
-        width: 100%;
-        justify-content: center;
-      }
-      .admin-login-premium h1 {
-        font-size: 28px;
-      }
-      .admin-login-premium .subtitle {
-        font-size: 13px;
-        letter-spacing: 2px;
-      }
-      .admin-header-premium .admin-title h1 {
-        font-size: 24px;
-      }
-      .admin-header-premium .admin-title small {
-        font-size: 12px;
-      }
+      .admin-stats-premium { grid-template-columns: 1fr; }
+      .action-grid-premium { grid-template-columns: 1fr 1fr; }
+      .action-btn-premium.full { grid-column: 1 / -1; }
+      .user-info-premium .info-grid { grid-template-columns: 1fr; }
+      .admin-login-premium { margin: 30px 15px; padding: 30px 20px; }
+      .admin-header-premium { flex-direction: column; text-align: center; padding: 18px; }
+      .admin-header-premium .admin-title { flex-direction: column; }
+      .admin-card-premium { padding: 18px; }
+      .amount-input-premium { flex-direction: column; }
+      .amount-input-premium .quick-btns { width: 100%; justify-content: center; }
+      .admin-login-premium h1 { font-size: 28px; }
+      .admin-login-premium .subtitle { font-size: 13px; letter-spacing: 2px; }
+      .admin-header-premium .admin-title h1 { font-size: 24px; }
+      .admin-header-premium .admin-title small { font-size: 12px; }
     }
 
     @media (max-width: 450px) {
-      .action-grid-premium {
-        grid-template-columns: 1fr;
-      }
-      .admin-login-premium .login-hint {
-        font-size: 10px;
-      }
-      .admin-modal {
-        padding: 25px 18px;
-      }
-      .admin-modal .modal-actions button {
-        min-width: 80px;
-        padding: 10px 18px;
-        font-size: 12px;
-      }
+      .action-grid-premium { grid-template-columns: 1fr; }
+      .admin-login-premium .login-hint { font-size: 10px; }
+      .admin-modal { padding: 25px 18px; }
+      .admin-modal .modal-actions button { min-width: 80px; padding: 10px 18px; font-size: 12px; }
     }
 
     .glow-pulse {
@@ -1133,13 +1049,8 @@
     }
 
     @keyframes glowPulse {
-      0%,
-      100% {
-        box-shadow: 0 0 20px rgba(0, 255, 157, 0.05);
-      }
-      50% {
-        box-shadow: 0 0 40px rgba(0, 255, 157, 0.15);
-      }
+      0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 157, 0.05); }
+      50% { box-shadow: 0 0 40px rgba(0, 255, 157, 0.15); }
     }
 
     .glow-pulse-gold {
@@ -1147,13 +1058,8 @@
     }
 
     @keyframes glowPulseGold {
-      0%,
-      100% {
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.05);
-      }
-      50% {
-        box-shadow: 0 0 40px rgba(255, 215, 0, 0.15);
-      }
+      0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.05); }
+      50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.15); }
     }
   </style>
 
@@ -1690,8 +1596,8 @@
         return bDate.localeCompare(aDate);
       });
       container.innerHTML = sorted.map(user => `
-        <div class="user-item-premium" onclick="selectUser('${user.userId || user.email}')">
-          <span class="user-id">🆔 ${user.userId || '—'}</span>
+        <div class="user-item-premium" onclick="selectUser('${user.userId || user._id || user.email}')">
+          <span class="user-id">🆔 ${user.userId || user._id || '—'}</span>
           <span class="user-name">${user.name || 'غير معروف'}</span>
           <span class="user-balance">$${Number(user.balance || 0).toFixed(2)}</span>
         </div>
@@ -1699,7 +1605,7 @@
     }
 
     // =========================================================
-    //   ✅ SEARCH USER - FIXED (يبحث بـ ID، البريد، وكود الدعوة)
+    //   ✅ SEARCH USER - FIXED
     // =========================================================
     function searchUser() {
       const identifier = document.getElementById('adminUserId').value.trim();
@@ -1713,10 +1619,10 @@
 
     function selectUser(identifier) {
       const users = Object.values(allUsers);
-      // ✅ البحث بأكثر من طريقة
       const user = users.find(u =>
         u.userId === identifier ||
         u.userId === String(identifier) ||
+        u._id === identifier ||
         u.email === identifier ||
         u.email === identifier.toLowerCase() ||
         u.referralCode === identifier ||
@@ -1735,7 +1641,7 @@
       selectedUser = user;
       displayUserInfo(user);
       document.getElementById('adminActions').classList.add('active');
-      document.getElementById('adminUserId').value = user.userId || '';
+      document.getElementById('adminUserId').value = user.userId || user._id || '';
       playSound('success');
       showNotification(`✅ تم العثور على ${user.name}`, '✅');
     }
@@ -1748,11 +1654,12 @@
         showNotification('⚠️ لا يوجد مستخدم', '⚠️');
         return;
       }
-      navigator.clipboard.writeText(selectedUser.userId || '').then(() => {
-        showNotification(`✅ تم نسخ المعرف: ${selectedUser.userId}`, '📋');
+      const id = selectedUser.userId || selectedUser._id || '';
+      navigator.clipboard.writeText(id).then(() => {
+        showNotification(`✅ تم نسخ المعرف: ${id}`, '📋');
         playSound('click');
       }).catch(() => {
-        showNotification(`✅ ${selectedUser.userId}`, '📋');
+        showNotification(`✅ ${id}`, '📋');
       });
     }
 
@@ -1760,7 +1667,7 @@
     //   ✅ DISPLAY USER INFO
     // =========================================================
     function displayUserInfo(user) {
-      document.getElementById('infoUserId').textContent = user.userId || '—';
+      document.getElementById('infoUserId').textContent = user.userId || user._id || '—';
       document.getElementById('infoName').textContent = user.name || '—';
       document.getElementById('infoEmail').textContent = user.email || '—';
       document.getElementById('infoBalance').textContent = '$' + Number(user.balance || 0).toFixed(2);
@@ -1826,8 +1733,7 @@
 
       allUsers[user.email] = user;
 
-      // ✅ مزامنة مع الخادم
-      const apiUrl = getApiUrl('/admin/user/' + user.userId);
+      const apiUrl = getApiUrl('/admin/user/' + (user.userId || user._id));
       fetch(apiUrl, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -1860,7 +1766,7 @@
           message: `هل أنت متأكد من إيداع <strong>$${amount.toFixed(2)}</strong> في حساب <strong>${selectedUser.name}</strong>؟`,
           details: {
             '👤 المستخدم': selectedUser.name,
-            '🆔 المعرف': selectedUser.userId || '—',
+            '🆔 المعرف': selectedUser.userId || selectedUser._id || '—',
             '💰 المبلغ': '$' + amount.toFixed(2),
             '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
           },
@@ -1909,7 +1815,7 @@
           message: `هل أنت متأكد من سحب <strong>$${amount.toFixed(2)}</strong> من حساب <strong>${selectedUser.name}</strong>؟`,
           details: {
             '👤 المستخدم': selectedUser.name,
-            '🆔 المعرف': selectedUser.userId || '—',
+            '🆔 المعرف': selectedUser.userId || selectedUser._id || '—',
             '💸 المبلغ': '$' + amount.toFixed(2),
             '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
           },
@@ -1951,14 +1857,13 @@
           message: `هل أنت متأكد من حذف حساب <strong>${selectedUser.name}</strong> نهائياً؟<br><span style="color:var(--danger);font-size:13px;">⚠️ هذا الإجراء لا يمكن التراجع عنه!</span>`,
           details: {
             '👤 المستخدم': selectedUser.name,
-            '🆔 المعرف': selectedUser.userId || '—',
+            '🆔 المعرف': selectedUser.userId || selectedUser._id || '—',
             '💰 الرصيد': '$' + Number(selectedUser.balance || 0).toFixed(2),
             '📋 الخطة': selectedUser.plan || '—'
           },
           confirmText: '🗑️ حذف نهائي',
           cancelText: 'إلغاء'
         });
-        // حذف من LocalStorage
         const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
         delete db[selectedUser.email];
         localStorage.setItem('miningUsersDB', JSON.stringify(db));
@@ -1970,8 +1875,7 @@
 
         delete allUsers[selectedUser.email];
 
-        // حذف من الخادم
-        const apiUrl = getApiUrl('/admin/user/' + selectedUser.userId);
+        const apiUrl = getApiUrl('/admin/user/' + (selectedUser.userId || selectedUser._id));
         await fetch(apiUrl, { method: 'DELETE' });
 
         selectedUser = null;
