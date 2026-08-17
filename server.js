@@ -8,12 +8,19 @@ const fs = require("fs");
 
 const app = express();
 
+// ✅ إعدادات الأمان
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
 
-app.use(cors());
+// ✅ CORS - السماح لجميع النطاقات
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json({ limit: "15mb" }));
 app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
@@ -35,10 +42,9 @@ mongoose
   );
 
 // =========================================================
-// Static Files - IMPORTANT: يجب أن يكون قبل تعريف الـ Routes
+// Static Files
 // =========================================================
 
-// ✅ تقديم الملفات الثابتة من المجلد الحالي
 app.use(express.static(__dirname));
 
 // =========================================================
@@ -256,7 +262,7 @@ async function createUniqueReferralCode(userId) {
 }
 
 // =========================================================
-// HEALTH - للتحقق من أن السيرفر يعمل
+// HEALTH
 // =========================================================
 
 app.get("/api/health", async (req, res) => {
