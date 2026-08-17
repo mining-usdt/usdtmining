@@ -268,6 +268,32 @@
         }
       });
     });
+  // =========================================================
+  //  FORCE BIND PLAN BUTTONS - FIX
+  // =========================================================
+  document.addEventListener("DOMContentLoaded", function() {
+    console.log("🔄 Forcing plan button binding...");
+    
+    // ربط الأزرار يدوياً
+    document.querySelectorAll("[data-plan]").forEach(button => {
+      console.log("🔘 Found plan button:", button.dataset.plan);
+      button.addEventListener("click", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const planId = this.dataset.plan;
+        console.log("🟢 Plan button clicked:", planId);
+        
+        if (typeof window.activatePlan === 'function') {
+          console.log("✅ Calling activatePlan for:", planId);
+          window.activatePlan(planId);
+        } else {
+          console.error("❌ activatePlan is undefined!");
+          toast("❌ حدث خطأ في النظام، يرجى تحديث الصفحة");
+        }
+      });
+    });
+  });
+
   </script>
 
 </body>
