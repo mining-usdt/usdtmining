@@ -1749,75 +1749,89 @@ async function adminDeposit() {
     showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
     return;
   }
+
   const amount = getAmount();
   if (!amount) return;
-  
+
   try {
     await showModal({
       icon: '💰',
       title: 'تأكيد الإيداع',
       type: 'success',
-      message: `هل أنت متأكد من إيداع <strong>$${amount.toFixed(2)}</strong> في حساب <strong>${selectedUser.name}</strong>؟`,
+      message: `هل أنت متأكد من إيداع <strong>$${amount.toFixed(2)}</strong> إلى حساب <strong>${selectedUser.name}</strong>؟`,
       details: {
         '👤 المستخدم': selectedUser.name,
-        '🆔 المعرف': selectedUser.userId || selectedUser._id || '—',
+        '🆔 المعرف': selectedUser.userId,
         '💰 المبلغ': '$' + amount.toFixed(2),
         '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
       },
       confirmText: '💰 تأكيد الإيداع',
       cancelText: 'إلغاء'
     });
-    
-    // تحديث الرصيد محلياً
-    selectedUser.balance = Number(selectedUser.balance || 0) + amount;
-    if (!selectedUser.transactions) selectedUser.transactions = [];
-    selectedUser.transactions.unshift({
-      type: '💰 إيداع (أدمن)',
-      amount: amount,
-      date: new Date().toISOString(),
-      status: '✅ مكتمل'
-    });
-    
-    // حفظ محلياً
-    saveUserToDB(selectedUser);
-    
-    // إرسال إلى الخادم
+
     const apiUrl = getApiUrl('/admin/balance');
-    fetch(apiUrl, {
+
+    console.log('📤 إرسال الإيداع:', {
+      userId: selectedUser.userId,
+      email: selectedUser.email,
+      amount: amount,
+      type: 'deposit'
+    });
+
+    const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify({
-        userId: selectedUser.userId,
+        userId: String(selectedUser.userId).trim(),
         email: selectedUser.email,
-        amount: amount,
+        amount: Number(amount),
         type: 'deposit',
         adminName: currentAdmin || 'أدمن'
       })
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success && data.user) {
-        console.log('✅ تم مزامنة الإيداع مع الخادم');
-        selectedUser = data.user;
-        allUsers[data.user.email] = data.user;
-        saveUserToDB(data.user);
-        displayUserInfo(selectedUser);
-        loadUsers();
-        showNotification(`✅ تم إيداع $${amount.toFixed(2)} بنجاح (تمت المزامنة)`, '💰');
-      }
-    })
-    .catch(err => {
-      console.warn('⚠️ فشل مزامنة الإيداع مع الخادم:', err);
-      showNotification(`✅ تم إيداع $${amount.toFixed(2)} محلياً (الخادم غير متصل)`, '💰');
     });
-    
+
+    const data = await response.json();
+
+    console.log('📥 رد السيرفر:', data);
+
+    if (!response.ok || !data.success) {
+      throw new Error(
+        data.message || 'فشل تنفيذ الإيداع'
+      );
+    }
+
+    // تحديث الحساب من بيانات MongoDB التي رجعت من السيرفر
+    selectedUser = data.user;
+
+    if (data.user.email) {
+      allUsers[data.user.email] = data.user;
+    }
+
+    saveUserToDB(data.user);
+
     displayUserInfo(selectedUser);
     loadUsers();
-    playSound('coin');
+
     document.getElementById('adminAmount').value = '';
-    
-  } catch (e) {
-    playSound('click');
+
+    playSound('coin');
+
+    showNotification(
+      `✅ تم إيداع $${amount.toFixed(2)} للحساب بنجاح`,
+      '💰'
+    );
+
+  } catch (error) {
+    console.error('❌ فشل الإيداع:', error);
+
+    showNotification(
+      `❌ لم يتم الإيداع: ${error.message}`,
+      '❌'
+    );
+
+    playSound('error');
   }
 }
 
