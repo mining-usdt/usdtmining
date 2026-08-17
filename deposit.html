@@ -1,0 +1,1530 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <title>إيداع USDT — miningusdt</title>
+
+  <link rel="stylesheet" href="style.css">
+  <script defer src="script.js"></script>
+</head>
+
+<body>
+
+<header class="navbar">
+
+  <div class="container nav-inner">
+
+    <a class="brand" href="index.html">
+      <span class="logo-mark">₮</span>
+
+      <span>
+        mining<span>usdt</span>
+      </span>
+    </a>
+
+    <nav class="nav-links">
+
+      <a href="index.html" data-i18n="home">
+        الرئيسية
+      </a>
+
+      <a href="plans.html" data-i18n="plans">
+        خطط التعدين
+      </a>
+
+      <a href="deposit.html" data-i18n="deposit">
+        الإيداع
+      </a>
+
+      <a href="withdraw.html" data-i18n="withdraw">
+        السحب
+      </a>
+
+      <a href="dashboard.html" data-i18n="profits">
+        الأرباح
+      </a>
+
+      <a href="contact.html" data-i18n="contact">
+        تواصل معنا
+      </a>
+
+    </nav>
+
+    <div class="nav-actions">
+
+      <div class="lang-wrap">
+
+        <button
+          id="globeBtn"
+          class="icon-btn"
+          type="button">
+          🌐
+        </button>
+
+        <div
+          id="langMenu"
+          class="lang-menu">
+
+          <button data-lang="ar" type="button">
+            العربية
+          </button>
+
+          <button data-lang="en" type="button">
+            English
+          </button>
+
+          <button data-lang="tr" type="button">
+            Türkçe
+          </button>
+
+        </div>
+
+      </div>
+
+      <a
+        class="primary-btn"
+        href="dashboard.html"
+        data-i18n="dashboard"
+      >
+        Dashboard
+      </a>
+
+      <button
+        id="mobileToggle"
+        class="icon-btn mobile-toggle"
+        type="button">
+        ☰
+      </button>
+
+    </div>
+
+  </div>
+
+</header>
+
+
+<main class="section">
+
+  <div class="container">
+
+    <div class="deposit-page">
+
+      <!-- =========================
+           HEADER
+      ========================== -->
+
+      <div class="deposit-heading">
+
+        <div class="eyebrow">
+          SECURE DEPOSIT
+        </div>
+
+        <h1 data-i18n="depositTitle">
+          إيداع USDT
+        </h1>
+
+        <p data-i18n="depositSub">
+          اختر طريقة الإيداع واتبع الخطوات لإرسال طلبك.
+        </p>
+
+      </div>
+
+
+      <!-- =========================
+           PROGRESS
+      ========================== -->
+
+      <div class="deposit-progress">
+
+        <div class="progress-item active" id="progress1">
+          <span>1</span>
+          <small data-i18n="stepCurrency">العملة</small>
+        </div>
+
+        <div class="progress-line"></div>
+
+        <div class="progress-item" id="progress2">
+          <span>2</span>
+          <small data-i18n="stepNetwork">الشبكة</small>
+        </div>
+
+        <div class="progress-line"></div>
+
+        <div class="progress-item" id="progress3">
+          <span>3</span>
+          <small data-i18n="stepAmount">المبلغ</small>
+        </div>
+
+        <div class="progress-line"></div>
+
+        <div class="progress-item" id="progress4">
+          <span>4</span>
+          <small data-i18n="stepPayment">الدفع</small>
+        </div>
+
+        <div class="progress-line"></div>
+
+        <div class="progress-item" id="progress5">
+          <span>5</span>
+          <small data-i18n="stepProof">الإثبات</small>
+        </div>
+
+      </div>
+
+
+      <!-- =========================
+           MAIN CARD
+      ========================== -->
+
+      <div class="deposit-card-new">
+
+
+        <!-- STEP 1 -->
+
+        <section
+          class="deposit-screen active"
+          id="screenCurrency">
+
+          <div class="screen-icon">
+            ₮
+          </div>
+
+          <div class="screen-number">
+            <span data-i18n="depositStep">الخطوة</span> 01
+          </div>
+
+          <h2 data-i18n="chooseCurrency">
+            اختر العملة
+          </h2>
+
+          <p data-i18n="selectCurrency">
+            اختر العملة التي تريد استخدامها للإيداع.
+          </p>
+
+
+          <button
+            class="currency-option"
+            id="selectUSDT"
+            type="button">
+
+            <div class="currency-logo">
+              ₮
+            </div>
+
+            <div class="currency-info">
+
+              <strong data-i18n="usdt">
+                USDT
+              </strong>
+
+              <span>
+                Tether USD
+              </span>
+
+            </div>
+
+            <div class="currency-arrow">
+              ←
+            </div>
+
+          </button>
+
+        </section>
+
+
+
+        <!-- STEP 2 -->
+
+        <section
+          class="deposit-screen"
+          id="screenNetwork">
+
+          <div class="screen-icon">
+            ⛓
+          </div>
+
+          <div class="screen-number">
+            <span data-i18n="depositStep">الخطوة</span> 02
+          </div>
+
+          <h2 data-i18n="chooseNetwork">
+            اختر الشبكة
+          </h2>
+
+          <p data-i18n="selectNetwork">
+            اختر الشبكة التي ستستخدمها لإرسال USDT.
+          </p>
+
+
+          <div class="network-options">
+
+            <button
+              class="network-option"
+              data-network="TRC20"
+              type="button">
+
+              <div class="network-symbol">
+                T
+              </div>
+
+              <div>
+
+                <strong data-i18n="trc20">
+                  TRC20
+                </strong>
+
+                <span data-i18n="tronNetwork">
+                  Tron Network
+                </span>
+
+              </div>
+
+              <span class="network-arrow">
+                ←
+              </span>
+
+            </button>
+
+
+            <button
+              class="network-option"
+              data-network="BEP20"
+              type="button">
+
+              <div class="network-symbol">
+                B
+              </div>
+
+              <div>
+
+                <strong data-i18n="bep20">
+                  BEP20
+                </strong>
+
+                <span data-i18n="bnbNetwork">
+                  BNB Smart Chain
+                </span>
+
+              </div>
+
+              <span class="network-arrow">
+                ←
+              </span>
+
+            </button>
+
+          </div>
+
+        </section>
+
+
+
+        <!-- STEP 3 -->
+
+        <section
+          class="deposit-screen"
+          id="screenAmount">
+
+          <div class="screen-icon">
+            $
+          </div>
+
+          <div class="screen-number">
+            <span data-i18n="depositStep">الخطوة</span> 03
+          </div>
+
+          <h2 data-i18n="enterDepositAmount">
+            حدد مبلغ الإيداع
+          </h2>
+
+          <p data-i18n="enterAmount">
+            أدخل قيمة USDT التي تريد إيداعها.
+          </p>
+
+
+          <div class="amount-box">
+
+            <span data-i18n="usdt">
+              USDT
+            </span>
+
+            <input
+              id="amountInput"
+              type="number"
+              min="1"
+              step="0.01"
+              placeholder="0.00"
+              autocomplete="off">
+
+          </div>
+
+
+          <div class="quick-amounts">
+
+            <button type="button" data-amount="20">
+              20
+            </button>
+
+            <button type="button" data-amount="50">
+              50
+            </button>
+
+            <button type="button" data-amount="100">
+              100
+            </button>
+
+            <button type="button" data-amount="500">
+              500
+            </button>
+
+            <button type="button" data-amount="1000">
+              1000
+            </button>
+
+          </div>
+
+
+          <button
+            class="deposit-main-btn"
+            id="continueAmount"
+            type="button">
+
+            <span data-i18n="continue">متابعة</span>
+
+            <span>
+              ←
+            </span>
+
+          </button>
+
+        </section>
+
+
+
+        <!-- STEP 4 -->
+
+        <section
+          class="deposit-screen"
+          id="screenPayment">
+
+          <div class="screen-icon payment-icon">
+            ₮
+          </div>
+
+          <div class="screen-number">
+            <span data-i18n="depositStep">الخطوة</span> 04
+          </div>
+
+          <h2 data-i18n="paymentInformation">
+            معلومات الدفع
+          </h2>
+
+          <p data-i18n="paymentInfo">
+            استخدم العنوان التالي لإتمام عملية التحويل.
+          </p>
+
+
+          <div class="payment-summary">
+
+            <div>
+              <span data-i18n="currency">
+                العملة
+              </span>
+
+              <strong data-i18n="usdt">
+                USDT
+              </strong>
+            </div>
+
+            <div>
+              <span data-i18n="network">
+                الشبكة
+              </span>
+
+              <strong id="paymentNetwork">
+                —
+              </strong>
+            </div>
+
+            <div>
+              <span data-i18n="amountLabel">
+                المبلغ
+              </span>
+
+              <strong>
+                <span id="paymentAmount">
+                  0.00
+                </span>
+                USDT
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div class="address-section">
+
+            <label data-i18n="copyAddress">
+              عنوان الإيداع
+            </label>
+
+            <div class="address-container">
+
+              <code id="paymentAddress">
+                —
+              </code>
+
+              <button
+                id="copyPaymentAddress"
+                type="button"
+                data-i18n="copyAddress">
+
+                نسخ
+
+              </button>
+
+            </div>
+
+            <div
+              class="copy-status"
+              id="copyStatus">
+            </div>
+
+          </div>
+
+
+          <div class="payment-warning">
+
+            <span class="warning-symbol">
+              !
+            </span>
+
+            <div>
+
+              <strong data-i18n="warningNetwork">
+                تحقق من الشبكة قبل التحويل
+              </strong>
+
+              <p data-i18n="warningNetworkSub">
+                تأكد من أن الشبكة المختارة مطابقة للشبكة التي تستخدمها في محفظتك.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <button
+            class="deposit-main-btn"
+            id="paymentDone"
+            type="button">
+
+            <span data-i18n="paymentDone">تم الدفع</span>
+
+            <span>
+              ←
+            </span>
+
+          </button>
+
+        </section>
+
+
+
+        <!-- STEP 5 -->
+
+        <section
+          class="deposit-screen"
+          id="screenProof">
+
+          <div class="screen-icon">
+            ✓
+          </div>
+
+          <div class="screen-number">
+            <span data-i18n="depositStep">الخطوة</span> 05
+          </div>
+
+          <h2 data-i18n="paymentProofTitle">
+            إثبات الدفع
+          </h2>
+
+          <p data-i18n="paymentProof">
+            ارفع صورة الإيداع لإرسال طلبك للمراجعة.
+          </p>
+
+
+          <div class="proof-note">
+
+            <div class="proof-note-icon">
+              📷
+            </div>
+
+            <div>
+
+              <strong data-i18n="uploadProof">
+                ارفع صورة الإيداع
+              </strong>
+
+              <span data-i18n="uploadHint">
+                يرجى رفع لقطة شاشة واضحة للعملية.
+              </span>
+
+            </div>
+
+          </div>
+
+
+          <label
+            class="upload-area"
+            for="proofFile">
+
+            <div class="upload-icon">
+              ↑
+            </div>
+
+            <strong data-i18n="selectImage">
+              اضغط هنا لاختيار الصورة
+            </strong>
+
+            <span data-i18n="uploadHint">
+              JPG / JPEG / PNG
+            </span>
+
+          </label>
+
+
+          <input
+            id="proofFile"
+            type="file"
+            accept="image/png,image/jpeg,image/jpg"
+            hidden>
+
+
+          <div
+            class="proof-preview"
+            id="proofPreview"
+            style="display:none;">
+
+            <img
+              id="proofImage"
+              alt="إثبات الإيداع">
+
+            <button
+              id="removeProof"
+              type="button"
+              data-i18n="removeImage">
+
+              حذف الصورة
+
+            </button>
+
+          </div>
+
+
+          <button
+            class="deposit-main-btn"
+            id="confirmProof"
+            type="button"
+            disabled
+            data-i18n="confirmDeposit">
+
+            تأكيد الإيداع
+
+            <span>
+              ✓
+            </span>
+
+          </button>
+
+        </section>
+
+
+
+        <!-- SUCCESS -->
+
+        <section
+          class="deposit-screen success-screen"
+          id="screenSuccess">
+
+          <div class="success-circle">
+            ✓
+          </div>
+
+          <div class="screen-number">
+            <span data-i18n="depositSuccess">تم استلام الطلب</span>
+          </div>
+
+          <h2 data-i18n="successTitle">
+            تم إرسال طلب الإيداع بنجاح
+          </h2>
+
+          <p data-i18n="successSub">
+            تم استلام بيانات العملية والصورة المرفقة.
+            سيتم مراجعة طلبك والتحقق من تفاصيل العملية قبل تحديث حالة الحساب.
+          </p>
+
+
+          <div class="success-details">
+
+            <div>
+              <span data-i18n="network">
+                الشبكة
+              </span>
+
+              <strong id="successNetwork">
+                —
+              </strong>
+            </div>
+
+            <div>
+              <span data-i18n="amountLabel">
+                المبلغ
+              </span>
+
+              <strong>
+                <span id="successAmount">
+                  0.00
+                </span>
+                USDT
+              </strong>
+            </div>
+
+            <div>
+              <span data-i18n="statusLabel">
+                الحالة
+              </span>
+
+              <strong class="pending" data-i18n="pending">
+                قيد المراجعة
+              </strong>
+            </div>
+
+          </div>
+
+
+          <div class="review-message">
+
+            <span>
+              🔐
+            </span>
+
+            <div>
+
+              <strong data-i18n="reviewMessage">
+                سيتم مراجعة طلبك
+              </strong>
+
+              <p data-i18n="reviewSub">
+                يرجى الانتظار حتى يتم التحقق من العملية.
+                لا تقم بإرسال طلب آخر لنفس العملية.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <a
+            href="dashboard.html"
+            class="deposit-main-btn success-btn"
+            data-i18n="backToDashboard">
+
+            العودة إلى لوحة التحكم
+
+          </a>
+
+        </section>
+
+
+      </div>
+
+
+      <!-- =========================
+           SIDE INFO
+      ========================== -->
+
+      <div class="deposit-features">
+
+        <div class="feature-box">
+
+          <div class="feature-icon">
+            🔒
+          </div>
+
+          <div>
+            <strong data-i18n="featuresSecure">
+              حماية عالية
+            </strong>
+
+            <span data-i18n="featuresSecureSub">
+              يتم التعامل مع طلبك ضمن خطوات واضحة.
+            </span>
+          </div>
+
+        </div>
+
+
+        <div class="feature-box">
+
+          <div class="feature-icon">
+            ⚡
+          </div>
+
+          <div>
+            <strong data-i18n="featuresSimple">
+              خطوات بسيطة
+            </strong>
+
+            <span data-i18n="featuresSimpleSub">
+              اختر الشبكة والمبلغ ثم أرسل الإثبات.
+            </span>
+          </div>
+
+        </div>
+
+
+        <div class="feature-box">
+
+          <div class="feature-icon">
+            ✓
+          </div>
+
+          <div>
+            <strong data-i18n="featuresReview">
+              مراجعة الطلب
+            </strong>
+
+            <span data-i18n="featuresReviewSub">
+              يتم التحقق من بيانات العملية قبل تحديث الحالة.
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</main>
+
+
+<div id="toast" class="toast"></div>
+
+
+<footer class="footer">
+
+  <div class="container">
+
+    <div class="copyright" data-i18n="copyright">
+      © 2026 miningusdt
+    </div>
+
+  </div>
+
+</footer>
+
+
+<!-- =========================================
+     DEPOSIT PAGE SCRIPT
+========================================= -->
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+  const screens = {
+
+    currency:
+      document.getElementById("screenCurrency"),
+
+    network:
+      document.getElementById("screenNetwork"),
+
+    amount:
+      document.getElementById("screenAmount"),
+
+    payment:
+      document.getElementById("screenPayment"),
+
+    proof:
+      document.getElementById("screenProof"),
+
+    success:
+      document.getElementById("screenSuccess")
+
+  };
+
+
+  const progress = [
+
+    document.getElementById("progress1"),
+    document.getElementById("progress2"),
+    document.getElementById("progress3"),
+    document.getElementById("progress4"),
+    document.getElementById("progress5")
+
+  ];
+
+
+  const lines =
+    document.querySelectorAll(".progress-line");
+
+
+  const addresses = {
+
+    TRC20:
+      "TGCFrW81nFN4XSiRY7XN9anV1vRZAt2Z21",
+
+    BEP20:
+      "0x3db4fcb94be127a636975ea51b701070e3ee9dc1"
+
+  };
+
+
+  let selectedNetwork = null;
+  let selectedAmount = 0;
+  let selectedProof = null;
+
+
+  function showScreen(name, step){
+
+    Object.values(screens).forEach(screen => {
+
+      if(screen){
+        screen.classList.remove("active");
+      }
+
+    });
+
+
+    if(screens[name]){
+      screens[name].classList.add("active");
+    }
+
+
+    progress.forEach((item,index) => {
+
+      if(!item) return;
+
+      item.classList.remove(
+        "active",
+        "done"
+      );
+
+
+      if(index + 1 < step){
+        item.classList.add("done");
+      }
+
+      if(index + 1 === step){
+        item.classList.add("active");
+      }
+
+    });
+
+
+    lines.forEach((line,index) => {
+
+      line.classList.toggle(
+        "active",
+        index + 1 < step
+      );
+
+    });
+
+
+    window.scrollTo({
+      top:0,
+      behavior:"smooth"
+    });
+
+  }
+
+
+  function showToast(message){
+
+    if(typeof window.toast === "function"){
+
+      window.toast(message);
+      return;
+
+    }
+
+
+    const toast =
+      document.getElementById("toast");
+
+    if(!toast) return;
+
+    toast.textContent = message;
+
+    toast.classList.add("show");
+
+    clearTimeout(
+      window.depositToastTimer
+    );
+
+    window.depositToastTimer =
+      setTimeout(() => {
+
+        toast.classList.remove("show");
+
+      },2600);
+
+  }
+
+
+  /* =========================
+     USDT
+  ========================== */
+
+  document
+    .getElementById("selectUSDT")
+    ?.addEventListener(
+      "click",
+      function(){
+
+        showScreen(
+          "network",
+          2
+        );
+
+      }
+    );
+
+
+  /* =========================
+     NETWORK
+  ========================== */
+
+  document
+    .querySelectorAll(
+      ".network-option"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        function(){
+
+          selectedNetwork =
+            this.dataset.network;
+
+
+          document
+            .querySelectorAll(
+              ".network-option"
+            )
+            .forEach(item => {
+
+              item.classList.remove(
+                "selected"
+              );
+
+            });
+
+
+          this.classList.add(
+            "selected"
+          );
+
+
+          showScreen(
+            "amount",
+            3
+          );
+
+        }
+      );
+
+    });
+
+
+  /* =========================
+     QUICK AMOUNTS
+  ========================== */
+
+  document
+    .querySelectorAll(
+      ".quick-amounts button"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        function(){
+
+          const amount =
+            this.dataset.amount;
+
+
+          document
+            .getElementById(
+              "amountInput"
+            )
+            .value = amount;
+
+
+          document
+            .querySelectorAll(
+              ".quick-amounts button"
+            )
+            .forEach(item => {
+
+              item.classList.remove(
+                "selected"
+              );
+
+            });
+
+
+          this.classList.add(
+            "selected"
+          );
+
+        }
+      );
+
+    });
+
+
+  /* =========================
+     AMOUNT
+  ========================== */
+
+  document
+    .getElementById(
+      "continueAmount"
+    )
+    ?.addEventListener(
+      "click",
+      function(){
+
+        const input =
+          document.getElementById(
+            "amountInput"
+          );
+
+
+        const amount =
+          Number(input.value);
+
+
+        if(
+          !amount ||
+          amount <= 0
+        ){
+
+          showToast(
+            t("invalidAmount")
+          );
+
+          input.focus();
+
+          return;
+
+        }
+
+
+        if(!selectedNetwork){
+
+          showToast(
+            t("selectNetworkFirst")
+          );
+
+          return;
+
+        }
+
+
+        selectedAmount =
+          Number(
+            amount.toFixed(2)
+          );
+
+
+        document
+          .getElementById(
+            "paymentNetwork"
+          )
+          .textContent =
+            selectedNetwork;
+
+
+        document
+          .getElementById(
+            "paymentAmount"
+          )
+          .textContent =
+            selectedAmount.toFixed(2);
+
+
+        document
+          .getElementById(
+            "paymentAddress"
+          )
+          .textContent =
+            addresses[
+              selectedNetwork
+            ];
+
+
+        showScreen(
+          "payment",
+          4
+        );
+
+      }
+    );
+
+
+  /* =========================
+     COPY
+  ========================== */
+
+  document
+    .getElementById(
+      "copyPaymentAddress"
+    )
+    ?.addEventListener(
+      "click",
+      async function(){
+
+        if(!selectedNetwork) return;
+
+
+        const address =
+          addresses[
+            selectedNetwork
+          ];
+
+
+        try{
+
+          await navigator.clipboard
+            .writeText(address);
+
+        }catch{
+
+          const textarea =
+            document.createElement(
+              "textarea"
+            );
+
+          textarea.value =
+            address;
+
+          document.body.appendChild(
+            textarea
+          );
+
+          textarea.select();
+
+          document.execCommand(
+            "copy"
+          );
+
+          textarea.remove();
+
+        }
+
+
+        document
+          .getElementById(
+            "copyStatus"
+          )
+          .textContent =
+            t("copiedAddress");
+
+
+        showToast(
+          t("copiedAddress")
+        );
+
+      }
+    );
+
+
+  /* =========================
+     PAYMENT DONE
+  ========================== */
+
+  document
+    .getElementById(
+      "paymentDone"
+    )
+    ?.addEventListener(
+      "click",
+      function(){
+
+        showScreen(
+          "proof",
+          5
+        );
+
+      }
+    );
+
+
+  /* =========================
+     FILE UPLOAD
+  ========================== */
+
+  document
+    .getElementById(
+      "proofFile"
+    )
+    ?.addEventListener(
+      "change",
+      function(){
+
+        const file =
+          this.files?.[0];
+
+
+        if(!file) return;
+
+
+        if(
+          !file.type.startsWith(
+            "image/"
+          )
+        ){
+
+          showToast(
+            t("invalidImage")
+          );
+
+          this.value = "";
+
+          return;
+
+        }
+
+
+        if(
+          file.size >
+          10 * 1024 * 1024
+        ){
+
+          showToast(
+            t("imageTooLarge")
+          );
+
+          this.value = "";
+
+          return;
+
+        }
+
+
+        selectedProof =
+          file;
+
+
+        const reader =
+          new FileReader();
+
+
+        reader.onload =
+          function(event){
+
+            document
+              .getElementById(
+                "proofImage"
+              )
+              .src =
+                event.target.result;
+
+
+            document
+              .getElementById(
+                "proofPreview"
+              )
+              .style.display =
+                "block";
+
+
+            document
+              .getElementById(
+                "confirmProof"
+              )
+              .disabled =
+                false;
+
+          };
+
+
+        reader.readAsDataURL(
+          file
+        );
+
+      }
+    );
+
+
+  /* =========================
+     REMOVE IMAGE
+  ========================== */
+
+  document
+    .getElementById(
+      "removeProof"
+    )
+    ?.addEventListener(
+      "click",
+      function(){
+
+        selectedProof = null;
+
+
+        document
+          .getElementById(
+            "proofFile"
+          )
+          .value = "";
+
+
+        document
+          .getElementById(
+            "proofImage"
+          )
+          .removeAttribute(
+            "src"
+          );
+
+
+        document
+          .getElementById(
+            "proofPreview"
+          )
+          .style.display =
+            "none";
+
+
+        document
+          .getElementById(
+            "confirmProof"
+          )
+          .disabled =
+            true;
+
+      }
+    );
+
+
+  /* =========================
+     CONFIRM
+  ========================== */
+
+  document
+    .getElementById(
+      "confirmProof"
+    )
+    ?.addEventListener(
+      "click",
+      function(){
+
+        if(!selectedProof){
+
+          showToast(
+            t("uploadImageFirst")
+          );
+
+          return;
+
+        }
+
+
+        /*
+          يتم حفظ بيانات الطلب محليًا
+          كطلب مراجعة للواجهة الحالية.
+        */
+
+        const request = {
+
+          id:
+            "DEP-" +
+            Date.now(),
+
+          network:
+            selectedNetwork,
+
+          amount:
+            selectedAmount,
+
+          proofName:
+            selectedProof.name,
+
+          status:
+            "pending",
+
+          createdAt:
+            new Date().toISOString()
+
+        };
+
+
+        const oldRequests =
+          JSON.parse(
+            localStorage.getItem(
+              "depositRequests"
+            ) || "[]"
+          );
+
+
+        oldRequests.unshift(
+          request
+        );
+
+
+        localStorage.setItem(
+          "depositRequests",
+          JSON.stringify(
+            oldRequests
+          )
+        );
+
+
+        document
+          .getElementById(
+            "successNetwork"
+          )
+          .textContent =
+            selectedNetwork;
+
+
+        document
+          .getElementById(
+            "successAmount"
+          )
+          .textContent =
+            selectedAmount.toFixed(2);
+
+
+        showScreen(
+          "success",
+          5
+        );
+
+
+        showToast(
+          t("depositSubmitted")
+        );
+
+      }
+    );
+
+
+});
+
+</script>
+
+</body>
+</html>

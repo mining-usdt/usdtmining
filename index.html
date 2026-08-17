@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>miningusdt</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="script.js"></script>
+</head>
+
+<body>
+
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a class="brand" href="index.html">
+        <span class="logo-mark">₮</span>
+        <span>mining<span>usdt</span></span>
+      </a>
+
+      <nav class="nav-links">
+        <a href="index.html" data-i18n="home">الرئيسية</a>
+        <a href="plans.html" data-i18n="plans">خطط التعدين</a>
+        <a href="deposit.html" data-i18n="deposit">الإيداع</a>
+        <a href="withdraw.html" data-i18n="withdraw">السحب</a>
+        <a href="dashboard.html" data-i18n="profits">الأرباح</a>
+        <a href="contact.html" data-i18n="contact">تواصل معنا</a>
+      </nav>
+
+      <div class="nav-actions">
+        <div class="lang-wrap">
+          <button id="globeBtn" class="icon-btn">🌐</button>
+          <div id="langMenu" class="lang-menu">
+            <button data-lang="ar">العربية</button>
+            <button data-lang="en">English</button>
+            <button data-lang="tr">Türkçe</button>
+          </div>
+        </div>
+
+        <div id="authButtons">
+          <a class="ghost-btn" href="login.html" data-i18n="login">تسجيل الدخول</a>
+          <a class="primary-btn" href="register.html" data-i18n="register">إنشاء حساب</a>
+        </div>
+
+        <button id="mobileToggle" class="icon-btn mobile-toggle">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- شريط المستخدم -->
+    <div class="user-info-bar" id="userInfoBar" style="display:none; background: rgba(0,255,157,0.03); border-bottom: 1px solid rgba(0,255,157,0.06); padding: 8px 0;">
+      <div class="container" style="display:flex;align-items:center;gap:15px;flex-wrap:wrap;">
+        <div class="avatar-small" style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#ff6b35);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#1a0a00;flex-shrink:0;">👤</div>
+        <div>
+          <div style="font-weight:700;font-size:16px;" id="headerUserName">—</div>
+          <div style="color:var(--muted);font-size:12px;font-family:monospace;" id="headerUserId">🆔 —</div>
+        </div>
+        <div style="margin-right:auto;display:flex;gap:10px;">
+          <a href="dashboard.html" class="primary-btn" style="padding:8px 18px;font-size:13px;" data-i18n="dashboard">📊 لوحة التحكم</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- HERO -->
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="reveal">
+          <div class="eyebrow" data-i18n="heroEyebrow">MININGUSDT • منصة رقمية</div>
+          <h1 data-i18n="heroTitle">منصة التعدين الرقمية <span data-i18n="digital">الرقمية</span></h1>
+          <p data-i18n="heroSub">نظام التعدين وإدارة الأرباح في بيئة آمنة.</p>
+          <div class="hero-buttons" id="heroButtons">
+            <a class="primary-btn" href="register.html" data-i18n="start">ابدأ الآن</a>
+            <a class="secondary-btn" href="plans.html" data-i18n="viewPlans">عرض خطط التعدين</a>
+          </div>
+        </div>
+        <div class="hero-art reveal">
+          <div class="orb"></div>
+          <div class="coin"><span>₮</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CRYPTO TICKER -->
+    <section class="crypto-ticker-section">
+      <div class="container">
+        <div class="ticker-wrapper">
+          <div class="ticker-track" id="cryptoTicker"></div>
+        </div>
+      </div>
+    </section>
+
+    <a href="games.html" class="primary-btn games-btn" style="display:block;width:fit-content;margin:20px auto;padding:14px 40px;">
+      🎰 <span data-i18n="games">لعبة حظ</span>
+    </a>
+
+    <!-- PLANS -->
+    <section class="section">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <div class="eyebrow" data-i18n="vipPlans">VIP PLANS</div>
+            <h2 data-i18n="plansTitle">خطط التعدين</h2>
+            <p data-i18n="plansSub">خطط لأغراض الاستثمار.</p>
+          </div>
+        </div>
+        <div class="grid-4" id="plansGrid"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <div class="brand"><span class="logo-mark">₮</span><span>mining<span>usdt</span></span></div>
+          <p class="mini" style="margin-top:12px">منصة تعدين رقمية</p>
+        </div>
+        <div>
+          <h4 data-i18n="footerLinks">روابط</h4>
+          <a href="index.html" data-i18n="home">الرئيسية</a>
+          <a href="plans.html" data-i18n="plans">خطط التعدين</a>
+        </div>
+        <div>
+          <h4 data-i18n="footerAccount">الموقع</h4>
+          <a href="contact.html" data-i18n="contact">تواصل معنا</a>
+          <a href="#" data-i18n="privacy">سياسة الخصوصية</a>
+          <a href="#" data-i18n="terms">الشروط والأحكام</a>
+        </div>
+        <div>
+          <h4 data-i18n="footerSocial">Social</h4>
+          <a href="#" data-i18n="telegram">تيليجرام</a>
+          <a href="#" data-i18n="email">البريد الإلكتروني</a>
+          <a href="#" data-i18n="whatsapp">واتساب</a>
+        </div>
+      </div>
+      <div class="copyright" data-i18n="copyright">© 2026 miningusdt - منصة تعدين رقمية</div>
+    </div>
+  </footer>
+
+  <script>
+    // =========================================================
+    //  INDEX PAGE - FULLY WORKING
+    // =========================================================
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const user = JSON.parse(localStorage.getItem("currentUser"));
+      const authButtons = document.getElementById("authButtons");
+      const heroButtons = document.getElementById("heroButtons");
+      const plansGrid = document.getElementById("plansGrid");
+
+      // شريط المستخدم
+      const userInfoBar = document.getElementById('userInfoBar');
+      const headerUserName = document.getElementById('headerUserName');
+      const headerUserId = document.getElementById('headerUserId');
+
+      if (user) {
+        userInfoBar.style.display = 'block';
+        headerUserName.textContent = user.name || 'مستخدم';
+        headerUserId.textContent = '🆔 ' + (user.userId || '—');
+      } else {
+        userInfoBar.style.display = 'none';
+      }
+
+      const plans = [
+        { id: "VIP 1", amount: 100, rate: 10, days: 30, netProfit: 300, finalBalance: 400, featured: true },
+        { id: "VIP 2", amount: 200, rate: 11, days: 30, netProfit: 660, finalBalance: 860 },
+        { id: "VIP 3", amount: 300, rate: 13, days: 30, netProfit: 1170, finalBalance: 1470 },
+        { id: "VIP 4", amount: 400, rate: 14, days: 30, netProfit: 1680, finalBalance: 2080 },
+        { id: "VIP 5", amount: 500, rate: 15, days: 30, netProfit: 2250, finalBalance: 2750 }
+      ];
+
+      if (user) {
+        authButtons.innerHTML = `
+          <button class="ghost-btn" data-logout data-i18n="logout">تسجيل خروج</button>
+          <a class="primary-btn" href="dashboard.html" data-i18n="dashboard">لوحة التحكم</a>
+        `;
+
+        heroButtons.innerHTML = `
+          <a class="primary-btn" href="dashboard.html" data-i18n="dashboard">لوحة التحكم</a>
+          <a class="secondary-btn" href="plans.html" data-i18n="plans">خطط التعدين</a>
+        `;
+
+        plansGrid.innerHTML = plans.map(p => `
+          <div class="plan ${p.featured ? 'featured' : ''}">
+            ${p.featured ? '<span class="plan-badge">🔥 الأكثر ربحية</span>' : ''}
+            <h3>${p.id}</h3>
+            <div class="plan-price">$${p.amount}</div>
+            <ul>
+              <li>💰 الإيداع: $${p.amount}</li>
+              <li>📈 العائد: ${p.rate}% يوميًا</li>
+              <li>📅 المدة: ${p.days} يومًا</li>
+              <li style="color: var(--gold); font-weight: 700; border-top: 1px solid rgba(255,215,0,0.1); padding-top: 8px; margin-top: 8px;">
+                🎯 أرباحك الصافية: <span style="color: var(--green);">$${p.netProfit.toFixed(2)}</span>
+              </li>
+              <li style="color: var(--gold); font-weight: 700;">
+                💰 الرصيد النهائي: <span style="color: var(--gold);">$${p.finalBalance.toFixed(2)}</span>
+              </li>
+            </ul>
+            <div class="progress"><span style="width:${p.amount === 100 ? 20 : p.amount === 200 ? 40 : p.amount === 300 ? 60 : p.amount === 400 ? 80 : 100}%"></span></div>
+            <button class="primary-btn" data-plan="${p.id}" data-i18n="activate">تفعيل الخطة</button>
+          </div>
+        `).join('');
+
+        // ✅ ربط الأزرار باستخدام Event Delegation
+        document.addEventListener('click', function(e) {
+          const btn = e.target.closest('[data-plan]');
+          if (!btn) return;
+          e.preventDefault();
+          e.stopPropagation();
+          const planId = btn.dataset.plan;
+          console.log("🟢 Button clicked for plan:", planId);
+          if (typeof window.activatePlan === 'function') {
+            window.activatePlan(planId);
+          } else {
+            console.error('❌ activatePlan not found!');
+            toast('❌ حدث خطأ في النظام، يرجى تحديث الصفحة');
+          }
+        });
+
+        document.querySelectorAll('[data-logout]').forEach(btn => {
+          btn.addEventListener('click', function() {
+            if (typeof logout === 'function') logout();
+          });
+        });
+
+      } else {
+        authButtons.innerHTML = `
+          <a class="ghost-btn" href="login.html" data-i18n="login">تسجيل الدخول</a>
+          <a class="primary-btn" href="register.html" data-i18n="register">إنشاء حساب</a>
+        `;
+
+        heroButtons.innerHTML = `
+          <a class="primary-btn" href="register.html" data-i18n="start">ابدأ الآن</a>
+          <a class="secondary-btn" href="plans.html" data-i18n="viewPlans">عرض خطط التعدين</a>
+        `;
+
+        plansGrid.innerHTML = plans.map(p => `
+          <div class="plan ${p.featured ? 'featured' : ''}">
+            ${p.featured ? '<span class="plan-badge">🔥 الأكثر ربحية</span>' : ''}
+            <h3>${p.id}</h3>
+            <div class="plan-price">$${p.amount}</div>
+            <ul>
+              <li>💰 الإيداع: $${p.amount}</li>
+              <li>📈 العائد: ${p.rate}% يوميًا</li>
+              <li>📅 المدة: ${p.days} يومًا</li>
+              <li style="color: var(--gold); font-weight: 700; border-top: 1px solid rgba(255,215,0,0.1); padding-top: 8px; margin-top: 8px;">
+                🎯 أرباحك الصافية: <span style="color: var(--green);">$${p.netProfit.toFixed(2)}</span>
+              </li>
+              <li style="color: var(--gold); font-weight: 700;">
+                💰 الرصيد النهائي: <span style="color: var(--gold);">$${p.finalBalance.toFixed(2)}</span>
+              </li>
+            </ul>
+            <div class="progress"><span style="width:${p.amount === 100 ? 20 : p.amount === 200 ? 40 : p.amount === 300 ? 60 : p.amount === 400 ? 80 : 100}%"></span></div>
+            <a class="secondary-btn" href="register.html" data-i18n="register">إنشاء حساب</a>
+          </div>
+        `).join('');
+      }
+
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.dataset.i18n;
+        if (key && typeof t === 'function') {
+          el.innerHTML = t(key);
+        }
+      });
+    });
+  </script>
+
+</body>
+
+</html>

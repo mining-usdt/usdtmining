@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>🎰 صالة الحظ — miningusdt</title>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    /* =========================================================
+       CASINO LOBBY - FULL PREMIUM STYLE
+    ========================================================= */
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: #03080d;
+      min-height: 100vh;
+      font-family: 'Cairo', sans-serif;
+      color: #f3fffb;
+      overflow-x: hidden;
+    }
+
+    /* Animated Background */
+    .casino-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background:
+        radial-gradient(ellipse at 20% 30%, rgba(255, 215, 0, 0.06), transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(255, 50, 50, 0.04), transparent 40%),
+        radial-gradient(ellipse at 50% 50%, rgba(0, 255, 157, 0.03), transparent 50%),
+        #03080d;
+      animation: casinoBgPulse 8s ease-in-out infinite;
+    }
+
+    @keyframes casinoBgPulse {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    /* Floating particles */
+    .particles-casino {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .particle-casino {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(255, 215, 0, 0.25);
+      border-radius: 50%;
+      animation: floatParticle linear infinite;
+    }
+
+    @keyframes floatParticle {
+      0% {
+        transform: translateY(100vh) scale(0);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-10vh) scale(1);
+        opacity: 0;
+      }
+    }
+
+    /* =========================================================
+       CASINO LOBBY HEADER
+    ========================================================= */
+
+    .casino-header {
+      padding: 20px 0 30px;
+    }
+
+    .casino-header .user-stats {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      padding: 20px 30px;
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(8, 24, 31, 0.92), rgba(3, 10, 15, 0.92));
+      border: 1px solid rgba(255, 215, 0, 0.08);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(20px);
+    }
+
+    .casino-header .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .casino-header .user-info .avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ffd700, #ff6b35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 800;
+      color: #1a0a00;
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.2);
+    }
+
+    .casino-header .user-info .name {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .casino-header .user-info .id {
+      color: var(--muted);
+      font-size: 12px;
+      font-family: monospace;
+    }
+
+    .casino-header .balance-box {
+      text-align: center;
+      padding: 10px 28px;
+      border-radius: 16px;
+      background: rgba(0, 255, 157, 0.05);
+      border: 1px solid rgba(0, 255, 157, 0.08);
+    }
+
+    .casino-header .balance-box .label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .casino-header .balance-box .amount {
+      font-size: 32px;
+      font-weight: 800;
+      color: #ffd700;
+      text-shadow: 0 0 40px rgba(255, 215, 0, 0.1);
+    }
+
+    /* =========================================================
+       CASINO TITLE
+    ========================================================= */
+
+    .casino-title {
+      text-align: center;
+      padding: 30px 0 10px;
+    }
+
+    .casino-title h1 {
+      font-size: 52px;
+      font-weight: 900;
+      background: linear-gradient(135deg, #ffd700, #ff6b35, #ffd700);
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: titleShine 3s ease-in-out infinite;
+      text-shadow: none;
+    }
+
+    @keyframes titleShine {
+      0%,
+      100% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+    }
+
+    .casino-title p {
+      color: var(--muted);
+      font-size: 16px;
+      margin-top: 5px;
+    }
+
+    .casino-title .jackpot-display {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 12px 30px;
+      border-radius: 50px;
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(255, 50, 50, 0.05));
+      border: 2px solid rgba(255, 215, 0, 0.15);
+      font-size: 18px;
+      font-weight: 700;
+      animation: jackpotPulse 2s ease-in-out infinite;
+    }
+
+    .casino-title .jackpot-display .jackpot-amount {
+      color: #ffd700;
+      font-size: 24px;
+      font-weight: 900;
+      text-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+    }
+
+    @keyframes jackpotPulse {
+      0%,
+      100% {
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.05);
+      }
+      50% {
+        box-shadow: 0 0 50px rgba(255, 215, 0, 0.15);
+      }
+    }
+
+    /* =========================================================
+       GAME GRID
+    ========================================================= */
+
+    .game-grid-casino {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      max-width: 1000px;
+      margin: 30px auto 0;
+    }
+
+    .game-card-casino {
+      padding: 30px 20px 25px;
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(8, 24, 31, 0.85), rgba(3, 10, 15, 0.85));
+      border: 2px solid rgba(255, 215, 0, 0.06);
+      text-align: center;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--text);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-card-casino::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 24px;
+      padding: 2px;
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 50, 50, 0.1), rgba(0, 255, 157, 0.1));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      opacity: 0;
+      transition: 0.4s;
+    }
+
+    .game-card-casino:hover::before {
+      opacity: 1;
+    }
+
+    .game-card-casino:hover {
+      transform: translateY(-10px) scale(1.02);
+      border-color: rgba(255, 215, 0, 0.25);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4), 0 0 60px rgba(255, 215, 0, 0.06);
+    }
+
+    .game-card-casino .icon {
+      font-size: 56px;
+      display: block;
+      margin-bottom: 8px;
+      animation: iconFloat 3s ease-in-out infinite;
+    }
+
+    .game-card-casino:nth-child(2) .icon {
+      animation-delay: 0.3s;
+    }
+    .game-card-casino:nth-child(3) .icon {
+      animation-delay: 0.6s;
+    }
+    .game-card-casino:nth-child(4) .icon {
+      animation-delay: 0.9s;
+    }
+    .game-card-casino:nth-child(5) .icon {
+      animation-delay: 1.2s;
+    }
+    .game-card-casino:nth-child(6) .icon {
+      animation-delay: 1.5s;
+    }
+    .game-card-casino:nth-child(7) .icon {
+      animation-delay: 1.8s;
+    }
+
+    @keyframes iconFloat {
+      0%,
+      100% {
+        transform: translateY(0) rotate(0deg);
+      }
+      50% {
+        transform: translateY(-8px) rotate(3deg);
+      }
+    }
+
+    .game-card-casino .game-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffd700;
+      margin-bottom: 4px;
+    }
+
+    .game-card-casino .game-desc {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      margin-bottom: 10px;
+    }
+
+    .game-card-casino .game-badge {
+      display: inline-block;
+      padding: 3px 14px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      background: rgba(255, 215, 0, 0.08);
+      color: #ffd700;
+      border: 1px solid rgba(255, 215, 0, 0.08);
+    }
+
+    .game-card-casino .game-badge.green {
+      background: rgba(0, 255, 157, 0.08);
+      color: #00ff9d;
+      border-color: rgba(0, 255, 157, 0.08);
+    }
+    .game-card-casino .game-badge.red {
+      background: rgba(255, 50, 50, 0.08);
+      color: #ff4444;
+      border-color: rgba(255, 50, 50, 0.08);
+    }
+    .game-card-casino .game-badge.purple {
+      background: rgba(179, 136, 255, 0.08);
+      color: #b388ff;
+      border-color: rgba(179, 136, 255, 0.08);
+    }
+    .game-card-casino .game-badge.cyan {
+      background: rgba(24, 255, 255, 0.08);
+      color: #18ffff;
+      border-color: rgba(24, 255, 255, 0.08);
+    }
+    .game-card-casino .game-badge.pink {
+      background: rgba(255, 64, 129, 0.08);
+      color: #ff4081;
+      border-color: rgba(255, 64, 129, 0.08);
+    }
+    .game-card-casino .game-badge.orange {
+      background: rgba(255, 165, 0, 0.08);
+      color: #ffa500;
+      border-color: rgba(255, 165, 0, 0.08);
+    }
+    .game-card-casino .game-badge.gold {
+      background: rgba(255, 215, 0, 0.12);
+      color: #ffd700;
+      border-color: rgba(255, 215, 0, 0.12);
+    }
+
+    .game-card-casino .play-arrow {
+      display: inline-block;
+      margin-top: 8px;
+      font-size: 24px;
+      transition: 0.3s;
+      opacity: 0.4;
+    }
+
+    .game-card-casino:hover .play-arrow {
+      opacity: 1;
+      transform: translateX(-6px);
+    }
+
+    .game-card-casino .players-count {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 8px;
+      opacity: 0.6;
+    }
+
+    /* =========================================================
+       STATS SECTION
+    ========================================================= */
+
+    .casino-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      max-width: 900px;
+      margin: 30px auto 0;
+    }
+
+    .casino-stat {
+      padding: 16px;
+      border-radius: 16px;
+      background: rgba(8, 24, 31, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      text-align: center;
+      transition: 0.3s;
+    }
+
+    .casino-stat:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 215, 0, 0.1);
+    }
+
+    .casino-stat .stat-icon {
+      font-size: 24px;
+    }
+
+    .casino-stat .stat-number {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffd700;
+    }
+
+    .casino-stat .stat-number.green {
+      color: #00ff9d;
+    }
+    .casino-stat .stat-number.red {
+      color: #ff4444;
+    }
+    .casino-stat .stat-number.cyan {
+      color: #18ffff;
+    }
+    .casino-stat .stat-number.purple {
+      color: #b388ff;
+    }
+
+    .casino-stat .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 850px) {
+      .casino-header .user-stats {
+        flex-direction: column;
+        text-align: center;
+        padding: 16px 18px;
+      }
+      .casino-header .user-info {
+        justify-content: center;
+      }
+      .casino-title h1 {
+        font-size: 36px;
+      }
+      .game-grid-casino {
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .game-card-casino {
+        padding: 22px 14px 18px;
+      }
+      .game-card-casino .icon {
+        font-size: 40px;
+      }
+      .game-card-casino .game-name {
+        font-size: 16px;
+      }
+      .casino-stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .casino-title .jackpot-display {
+        font-size: 14px;
+        padding: 10px 20px;
+      }
+      .casino-title .jackpot-display .jackpot-amount {
+        font-size: 18px;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .game-grid-casino {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .game-card-casino {
+        padding: 18px 10px 14px;
+      }
+      .game-card-casino .icon {
+        font-size: 32px;
+      }
+      .game-card-casino .game-name {
+        font-size: 14px;
+      }
+      .game-card-casino .game-desc {
+        font-size: 10px;
+      }
+      .casino-title h1 {
+        font-size: 28px;
+      }
+      .casino-header .balance-box .amount {
+        font-size: 24px;
+      }
+      .casino-stats {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .casino-stat .stat-number {
+        font-size: 18px;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .game-grid-casino {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .casino-title .jackpot-display {
+        font-size: 12px;
+        padding: 8px 16px;
+      }
+      .casino-title .jackpot-display .jackpot-amount {
+        font-size: 16px;
+      }
+    }
+  </style>
+
+</head>
+
+<body>
+
+  <!-- Background -->
+  <div class="casino-bg"></div>
+
+  <!-- Particles -->
+  <div class="particles-casino" id="casinoParticles"></div>
+
+  <!-- =========================================================
+       NAVBAR
+  ========================================================= -->
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a class="brand" href="index.html">
+        <span class="logo-mark">₮</span>
+        <span>mining<span>usdt</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html" data-i18n="home">الرئيسية</a>
+        <a href="plans.html" data-i18n="plans">خطط التعدين</a>
+        <a href="deposit.html" data-i18n="deposit">الإيداع</a>
+        <a href="withdraw.html" data-i18n="withdraw">السحب</a>
+        <a href="dashboard.html" data-i18n="profits">الأرباح</a>
+        <a href="contact.html" data-i18n="contact">تواصل معنا</a>
+      </nav>
+      <div class="nav-actions">
+        <div class="lang-wrap">
+          <button id="globeBtn" class="icon-btn">🌐</button>
+          <div id="langMenu" class="lang-menu">
+            <button data-lang="ar">العربية</button>
+            <button data-lang="en">English</button>
+            <button data-lang="tr">Türkçe</button>
+          </div>
+        </div>
+        <a class="primary-btn" href="dashboard.html" data-i18n="dashboard">Dashboard</a>
+        <button id="mobileToggle" class="icon-btn mobile-toggle">☰</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- =========================================================
+       CASINO LOBBY
+  ========================================================= -->
+  <main class="casino-header">
+    <div class="container">
+
+      <!-- User Header -->
+      <div class="casino-header">
+        <div class="user-stats">
+          <div class="user-info">
+            <div class="avatar" id="userAvatar">👤</div>
+            <div>
+              <div class="name" id="userName">—</div>
+              <div class="id" id="userId">🆔 —</div>
+            </div>
+          </div>
+          <div class="balance-box">
+            <div class="label">💰 <span data-i18n="balance">رصيدك</span></div>
+            <div class="amount" id="casinoBalance">$0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <div class="casino-title">
+        <h1>🎰 صالة الحظ</h1>
+        <p>اختر لعبتك وابدأ الفوز — الحظ ينتظرك!</p>
+        <div class="jackpot-display">
+          💎 الجاكبوت الكبرى: <span class="jackpot-amount" id="jackpotAmount">$0.00</span>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="casino-stats">
+        <div class="casino-stat">
+          <div class="stat-icon">🎮</div>
+          <div class="stat-number cyan" id="totalGamesPlayed">0</div>
+          <div class="stat-label">إجمالي الألعاب</div>
+        </div>
+        <div class="casino-stat">
+          <div class="stat-icon">🏆</div>
+          <div class="stat-number green" id="totalWins">0</div>
+          <div class="stat-label">مرات الفوز</div>
+        </div>
+        <div class="casino-stat">
+          <div class="stat-icon">💀</div>
+          <div class="stat-number red" id="totalLosses">0</div>
+          <div class="stat-label">مرات الخسارة</div>
+        </div>
+        <div class="casino-stat">
+          <div class="stat-icon">📊</div>
+          <div class="stat-number purple" id="winRate">0%</div>
+          <div class="stat-label">نسبة الفوز</div>
+        </div>
+      </div>
+
+      <!-- Game Grid -->
+      <div class="game-grid-casino">
+
+        <a href="game-coin.html" class="game-card-casino">
+          <span class="icon">🪙</span>
+          <div class="game-name">قلب العملة</div>
+          <div class="game-desc">وجه أم كتابة — ×2</div>
+          <span class="game-badge cyan">⚖️ عادل</span>
+          <span class="play-arrow">→</span>
+        </a>
+
+        <a href="game-dice.html" class="game-card-casino">
+          <span class="icon">🎲</span>
+          <div class="game-name">رمية النرد</div>
+          <div class="game-desc">ارم النرد واربح ×2.5</div>
+          <span class="game-badge red">⚡ متوسط</span>
+          <span class="play-arrow">→</span>
+        </a>
+
+        <a href="game-slots.html" class="game-card-casino">
+          <span class="icon">🎰</span>
+          <div class="game-name">ماكينة الحظ</div>
+          <div class="game-desc">جاكبوت ×4 أو ×1.5</div>
+          <span class="game-badge purple">💎 جاكبوت</span>
+          <span class="play-arrow">→</span>
+        </a>
+
+        <a href="game-roulette.html" class="game-card-casino">
+          <span class="icon">🎡</span>
+          <div class="game-name">عجلة الحظ</div>
+          <div class="game-desc">اختر رقم واربح ×6</div>
+          <span class="game-badge pink">🔥 عالي</span>
+          <span class="play-arrow">→</span>
+        </a>
+
+        <a href="game-guess.html" class="game-card-casino">
+          <span class="icon">🎯</span>
+          <div class="game-name">خمن الرقم</div>
+          <div class="game-desc">اختر رقم 1-6 واربح ×2.5</div>
+          <span class="game-badge green">🔥 سهل</span>
+          <span class="play-arrow">→</span>
+        </a>
+
+        <a href="game-blackjack.html" class="game-card-casino" style="border-color:rgba(255,215,0,0.15);">
+          <span class="icon">🃏</span>
+          <div class="game-name">البلاك جاك</div>
+          <div class="game-desc">قريب من 21 — ×2</div>
+          <span class="game-badge gold">👑 كلاسيك</span>
+          <span class="play-arrow">→</span>
+        </a>
+
+       
+      </div>
+
+      <!-- Back -->
+      <div style="text-align:center;margin-top:30px;">
+        <a href="index.html" class="back-home" style="display:inline-flex;align-items:center;gap:10px;padding:12px 24px;border-radius:14px;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.02);color:var(--text);text-decoration:none;transition:0.3s;">
+          ← <span data-i18n="backHome">العودة للرئيسية</span>
+        </a>
+      </div>
+
+    </div>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="copyright" data-i18n="copyright">© 2026 miningusdt</div>
+    </div>
+  </footer>
+
+  <script>
+    // =========================================================
+    //   CASINO LOBBY SCRIPT
+    // =========================================================
+
+    let user = JSON.parse(localStorage.getItem('currentUser'));
+
+    function updateUserInfo() {
+      user = JSON.parse(localStorage.getItem('currentUser'));
+      if (user) {
+        document.getElementById('userName').textContent = user.name || 'مستخدم';
+        document.getElementById('userId').textContent = '🆔 ' + (user.userId || '—');
+        document.getElementById('userAvatar').textContent = (user.name || 'U')[0].toUpperCase();
+        document.getElementById('casinoBalance').textContent = '$' + Number(user.balance || 0).toFixed(2);
+        updateStats();
+      } else {
+        document.getElementById('userName').textContent = 'زائر';
+        document.getElementById('userId').textContent = '🆔 —';
+        document.getElementById('userAvatar').textContent = '👤';
+        document.getElementById('casinoBalance').textContent = '$0.00';
+      }
+    }
+
+    function updateStats() {
+      if (!user) return;
+      const transactions = user.transactions || [];
+      const gameTx = transactions.filter(t => t.game);
+      const totalGames = gameTx.length;
+      const wins = gameTx.filter(t => t.amount > 0).length;
+      const losses = gameTx.filter(t => t.amount < 0).length;
+      const winRate = totalGames > 0 ? Math.round((wins / totalGames) * 100) : 0;
+
+      document.getElementById('totalGamesPlayed').textContent = totalGames;
+      document.getElementById('totalWins').textContent = wins;
+      document.getElementById('totalLosses').textContent = losses;
+      document.getElementById('winRate').textContent = winRate + '%';
+
+      // حساب الجاكبوت (5% من كل رهان)
+      let jackpot = 0;
+      gameTx.forEach(t => {
+        if (t.amount < 0) {
+          jackpot += Math.abs(t.amount) * 0.05;
+        }
+      });
+      document.getElementById('jackpotAmount').textContent = '$' + jackpot.toFixed(2);
+    }
+
+    // =========================================================
+    //   PARTICLES
+    // =========================================================
+
+    function createParticles() {
+      const container = document.getElementById('casinoParticles');
+      for (let i = 0; i < 20; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle-casino';
+        p.style.left = Math.random() * 100 + '%';
+        p.style.animationDuration = (10 + Math.random() * 20) + 's';
+        p.style.animationDelay = (Math.random() * 10) + 's';
+        p.style.width = (2 + Math.random() * 6) + 'px';
+        p.style.height = p.style.width;
+        p.style.background = ['rgba(255,215,0,0.2)', 'rgba(255,50,50,0.15)', 'rgba(0,255,157,0.15)', 'rgba(179,136,255,0.15)'][
+          Math.floor(Math.random() * 4)
+        ];
+        container.appendChild(p);
+      }
+    }
+
+    // =========================================================
+    //   LANGUAGE MENU
+    // =========================================================
+
+    document.getElementById('globeBtn')?.addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('langMenu').classList.toggle('show');
+    });
+
+    document.querySelectorAll('#langMenu [data-lang]').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const lang = this.dataset.lang;
+        localStorage.setItem('siteLang', lang);
+        document.documentElement.lang = lang;
+        document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        document.getElementById('langMenu').classList.remove('show');
+        location.reload();
+      });
+    });
+
+    document.addEventListener('click', function(e) {
+      const menu = document.getElementById('langMenu');
+      const globe = document.getElementById('globeBtn');
+      if (menu && globe && !menu.contains(e.target) && !globe.contains(e.target)) {
+        menu.classList.remove('show');
+      }
+    });
+
+    document.getElementById('mobileToggle')?.addEventListener('click', function() {
+      document.querySelector('.nav-links').classList.toggle('open');
+    });
+
+    // =========================================================
+    //   INIT
+    // =========================================================
+
+    createParticles();
+    updateUserInfo();
+
+    // تحديث الرصيد كل 30 ثانية
+    setInterval(updateUserInfo, 30000);
+  </script>
+
+</body>
+
+</html>

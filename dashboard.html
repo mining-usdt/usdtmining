@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta
+name="viewport"
+content="width=device-width,initial-scale=1"
+>
+
+<title>
+لوحة التحكم — miningusdt
+</title>
+
+<link
+rel="stylesheet"
+href="style.css"
+>
+
+<script
+defer
+src="script.js"
+></script>
+
+<style>
+  /* =========================================================
+     REFERRAL SECTION STYLES
+  ========================================================= */
+  .referral-section {
+    margin-top: 30px;
+    padding: 28px 30px;
+    border-radius: 24px;
+    background: linear-gradient(145deg, rgba(8, 24, 31, 0.95), rgba(3, 10, 15, 0.95));
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    box-shadow: 0 0 60px rgba(255, 215, 0, 0.05), inset 0 0 60px rgba(255, 215, 0, 0.02);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s;
+  }
+
+  .referral-section::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 24px;
+    padding: 2px;
+    background: linear-gradient(135deg, var(--gold, #ffd700), var(--green, #00ff9d), var(--gold, #ffd700));
+    background-size: 300% 300%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: referralBorderGlow 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes referralBorderGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .referral-section::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 30% 40%, rgba(255, 215, 0, 0.04), transparent 50%);
+    pointer-events: none;
+    animation: referralOrbit 20s linear infinite;
+  }
+
+  @keyframes referralOrbit {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .referral-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 18px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .referral-header .icon {
+    font-size: 36px;
+    animation: referralPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes referralPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+  }
+
+  .referral-header h3 {
+    font-size: 24px;
+    background: linear-gradient(135deg, var(--gold, #ffd700), #ffaa00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+  }
+
+  .referral-header .badge {
+    background: rgba(255, 215, 0, 0.15);
+    color: var(--gold, #ffd700);
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    border: 1px solid rgba(255, 215, 0, 0.15);
+    margin-right: auto;
+  }
+
+  .referral-code-box {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 16px;
+    padding: 16px 22px;
+    border: 1px solid rgba(255, 215, 0, 0.12);
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s;
+    flex-wrap: wrap;
+  }
+
+  .referral-code-box:hover {
+    border-color: rgba(255, 215, 0, 0.35);
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.06);
+  }
+
+  .referral-code-box .code-label {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+  }
+
+  .referral-code-box .code-value {
+    font-size: 28px;
+    font-weight: 800;
+    font-family: 'Courier New', monospace;
+    letter-spacing: 3px;
+    background: linear-gradient(135deg, var(--gold, #ffd700), #ffaa00, var(--gold, #ffd700));
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: codeShine 3s ease-in-out infinite;
+    direction: ltr;
+    flex: 1;
+    min-width: 120px;
+  }
+
+  @keyframes codeShine {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .referral-code-box .copy-btn {
+    padding: 10px 22px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), rgba(255, 215, 0, 0.02));
+    color: var(--gold, #ffd700);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .referral-code-box .copy-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    border-color: var(--gold, #ffd700);
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.15);
+    background: rgba(255, 215, 0, 0.12);
+  }
+
+  .referral-code-box .copy-btn:active {
+    transform: scale(0.95);
+  }
+
+  .referral-code-box .copy-btn.copied {
+    border-color: var(--green);
+    color: var(--green);
+    background: rgba(0, 255, 157, 0.1);
+  }
+
+  .referral-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 18px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .referral-stat {
+    padding: 16px 20px;
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    text-align: center;
+    transition: all 0.3s;
+  }
+
+  .referral-stat:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 215, 0, 0.12);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .referral-stat .stat-number {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--gold, #ffd700);
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.1);
+  }
+
+  .referral-stat .stat-number.green {
+    color: var(--green);
+    text-shadow: 0 0 30px rgba(0, 255, 157, 0.1);
+  }
+
+  .referral-stat .stat-number.blue {
+    color: var(--blue, #32b8ff);
+    text-shadow: 0 0 30px rgba(50, 184, 255, 0.1);
+  }
+
+  .referral-stat .stat-label {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .referral-share {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+
+  .referral-share .share-btn {
+    padding: 10px 18px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    justify-content: center;
+    min-width: 100px;
+  }
+
+  .referral-share .share-btn:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 215, 0, 0.2);
+    background: rgba(255, 215, 0, 0.04);
+  }
+
+  .referral-share .share-btn.telegram {
+    border-color: rgba(0, 136, 204, 0.2);
+  }
+  .referral-share .share-btn.telegram:hover {
+    border-color: #0088cc;
+    background: rgba(0, 136, 204, 0.08);
+  }
+
+  .referral-share .share-btn.whatsapp {
+    border-color: rgba(37, 211, 102, 0.2);
+  }
+  .referral-share .share-btn.whatsapp:hover {
+    border-color: #25d366;
+    background: rgba(37, 211, 102, 0.08);
+  }
+
+  .referral-share .share-btn.twitter {
+    border-color: rgba(29, 161, 242, 0.2);
+  }
+  .referral-share .share-btn.twitter:hover {
+    border-color: #1da1f2;
+    background: rgba(29, 161, 242, 0.08);
+  }
+
+  .referral-share .share-btn.copy-link {
+    border-color: rgba(255, 215, 0, 0.15);
+  }
+  .referral-share .share-btn.copy-link:hover {
+    border-color: var(--gold, #ffd700);
+    background: rgba(255, 215, 0, 0.06);
+  }
+
+  /* =========================================================
+     TIMER CARD STYLES
+  ========================================================= */
+  .timer-card {
+    padding: 22px;
+    min-width: 0;
+    background: linear-gradient(145deg, rgba(8, 24, 31, 0.95), rgba(3, 10, 15, 0.95));
+    border: 1px solid rgba(0, 255, 157, 0.08);
+    border-radius: 20px;
+    text-align: center;
+    transition: all 0.4s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .timer-card::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 20px;
+    padding: 2px;
+    background: linear-gradient(135deg, rgba(0, 255, 157, 0.1), rgba(255, 215, 0, 0.1), rgba(0, 255, 157, 0.1));
+    background-size: 300% 300%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: timerBorderGlow 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes timerBorderGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .timer-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(0, 255, 157, 0.25);
+    box-shadow: 0 0 40px rgba(0, 255, 157, 0.06);
+  }
+
+  .timer-card .timer-label {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+
+  .timer-card .timer-display {
+    font-size: 36px;
+    font-weight: 800;
+    font-family: 'Courier New', monospace;
+    color: var(--gold, #ffd700);
+    text-shadow: 0 0 30px rgba(255, 215, 0, 0.1);
+    letter-spacing: 4px;
+    padding: 8px 0;
+  }
+
+  .timer-card .timer-hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 5px;
+  }
+
+  .timer-card .timer-status {
+    display: inline-block;
+    padding: 3px 14px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 6px;
+  }
+
+  .timer-card .timer-status.active {
+    background: rgba(0, 255, 157, 0.08);
+    color: var(--green);
+    border: 1px solid rgba(0, 255, 157, 0.08);
+  }
+
+  .timer-card .timer-status.inactive {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--muted);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+  }
+
+  /* =========================================================
+     RESPONSIVE
+  ========================================================= */
+
+  @media (max-width: 850px) {
+    .referral-section {
+      padding: 22px 18px;
+    }
+    .referral-stats {
+      grid-template-columns: 1fr 1fr;
+    }
+    .referral-code-box {
+      flex-direction: column;
+      align-items: stretch;
+      text-align: center;
+    }
+    .referral-code-box .code-value {
+      font-size: 22px;
+    }
+    .referral-code-box .copy-btn {
+      justify-content: center;
+    }
+    .referral-share .share-btn {
+      flex: 1 1 calc(50% - 5px);
+    }
+    .timer-card .timer-display {
+      font-size: 28px;
+    }
+  }
+
+  @media (max-width: 550px) {
+    .referral-stats {
+      grid-template-columns: 1fr;
+    }
+    .referral-share .share-btn {
+      flex: 1 1 100%;
+    }
+    .referral-section {
+      padding: 18px 14px;
+    }
+    .referral-header h3 {
+      font-size: 18px;
+    }
+    .timer-card .timer-display {
+      font-size: 24px;
+      letter-spacing: 2px;
+    }
+  }
+
+  /* Gold color variable fallback */
+  :root {
+    --gold: #ffd700;
+  }
+</style>
+
+</head>
+
+
+<body data-page="dashboard">
+
+
+<header class="navbar">
+
+<div class="container nav-inner">
+
+
+<a class="brand" href="index.html">
+
+<span class="logo-mark">
+₮
+</span>
+
+<span>
+mining<span>usdt</span>
+</span>
+
+</a>
+
+
+<nav class="nav-links">
+
+<a href="index.html" data-i18n="home">
+الرئيسية
+</a>
+
+<a href="plans.html" data-i18n="plans">
+خطط التعدين
+</a>
+
+<a href="deposit.html" data-i18n="deposit">
+الإيداع
+</a>
+
+<a href="withdraw.html" data-i18n="withdraw">
+السحب
+</a>
+
+<a href="dashboard.html" data-i18n="profits">
+الأرباح
+</a>
+
+<a href="contact.html" data-i18n="contact">
+تواصل معنا
+</a>
+
+</nav>
+
+
+<div class="nav-actions">
+
+
+<div class="lang-wrap">
+
+<button
+id="globeBtn"
+class="icon-btn"
+>
+🌐
+</button>
+
+<div
+id="langMenu"
+class="lang-menu"
+>
+
+<button data-lang="ar">
+العربية
+</button>
+
+<button data-lang="en">
+English
+</button>
+
+<button data-lang="tr">
+Türkçe
+</button>
+
+</div>
+
+</div>
+
+
+<button
+class="ghost-btn"
+data-logout
+data-i18n="logout"
+>
+تسجيل خروج
+</button>
+
+
+<button
+id="mobileToggle"
+class="icon-btn mobile-toggle"
+>
+☰
+</button>
+
+
+</div>
+
+</div>
+
+</header>
+
+
+
+<main class="section">
+
+<div class="container">
+
+
+<div class="dashboard-head">
+
+
+<div>
+
+<div class="eyebrow">
+MININGUSDT DASHBOARD
+</div>
+
+<h1 data-i18n="dashboardWelcome">
+مرحبًا
+<span id="dashName">
+—
+</span>
+</h1>
+
+<div style="margin-top: 4px; font-size: 13px; color: var(--muted);">
+<span data-i18n="userId">🆔 المعرف</span>: <span id="dashUserId" style="color: var(--green); font-weight: 600; font-family: monospace; direction: ltr; display: inline-block;">—</span>
+</div>
+
+</div>
+
+
+<button
+class="ghost-btn"
+data-logout
+data-i18n="logout"
+>
+تسجيل خروج
+</button>
+
+
+</div>
+
+
+
+<div class="grid-4">
+
+
+<div class="card kpi">
+
+<h4 data-i18n="balance">
+الرصيد
+</h4>
+
+<strong id="dashBalance">
+$0.00
+</strong>
+
+</div>
+
+
+<div class="card kpi">
+
+<h4 data-i18n="profit">
+الأرباح
+</h4>
+
+<strong
+id="dashProfit"
+class="green"
+>
+$0.00
+</strong>
+
+</div>
+
+
+<div class="card kpi">
+
+<h4 data-i18n="currentPlan">
+الخطة الحالية
+</h4>
+
+<strong id="dashPlan">
+—
+</strong>
+
+</div>
+
+
+<div class="card kpi">
+
+<h4 data-i18n="dailyProfit">
+الأرباح اليومية 
+</h4>
+
+<strong id="dashDaily">
+$0.00
+</strong>
+
+</div>
+
+
+</div>
+
+<!-- =========================================================
+     TIMER CARD - 24 HOUR COUNTDOWN
+========================================================= -->
+<div class="timer-card" id="timerCard">
+  <div class="timer-label" data-i18n="nextProfit">⏳ وقت الربح القادم</div>
+  <div class="timer-display" id="profitTimer">24:00:00</div>
+  <div class="timer-hint" data-i18n="timerHint">🔄 سيتم إضافة الربح تلقائيًا عند انتهاء العدّاد</div>
+  <div>
+    <span class="timer-status active" id="timerStatus" data-i18n="timerActive">🟢 نشط</span>
+  </div>
+</div>
+
+
+
+<div
+class="grid-3"
+style="margin-top:18px"
+>
+
+
+<div class="card kpi">
+
+<h4 data-i18n="startDate">
+تاريخ بدء الخطة
+</h4>
+
+<strong id="dashStart">
+—
+</strong>
+
+</div>
+
+
+<div class="card kpi">
+
+<h4 data-i18n="totalProfit">
+إجمالي الأرباح
+</h4>
+
+<strong id="dashTotal">
+$0.00
+</strong>
+
+</div>
+
+
+<div class="card kpi">
+
+<h4 data-i18n="quickActions">
+إجراءات سريعة
+</h4>
+
+
+<div class="form-actions">
+
+  <a
+    class="primary-btn"
+    href="deposit.html"
+    data-i18n="deposit"
+  >
+    إيداع 
+  </a>
+
+  <a
+    class="secondary-btn"
+    href="withdraw.html"
+    data-i18n="withdraw"
+  >
+    سحب 
+  </a>
+
+  <a
+    class="secondary-btn"
+    href="plans.html"
+    data-i18n="plans"
+  >
+    📊 خطط التعدين
+  </a>
+
+</div>
+
+</div>
+
+
+</div>
+
+<!-- =========================================================
+     LIVE CRYPTO PRICES CARD
+========================================================= -->
+<div class="card kpi crypto-live-card" id="cryptoLiveCard">
+  <h4 data-i18n="livePrices">أسعار العملات الحية</h4>
+  <div class="crypto-prices-grid" id="cryptoPricesGrid">
+    <!-- سيتم توليده عبر JavaScript -->
+  </div>
+  <div class="crypto-update-time" id="cryptoUpdateTime">
+    <span data-i18n="lastUpdate">آخر تحديث:</span> <span id="updateTimeValue">—</span>
+  </div>
+</div>
+
+<!-- ========================================================= -->
+<!--            قسم كود الدعوة المميز                           -->
+<!-- ========================================================= -->
+<div class="referral-section" id="referralSection">
+
+  <div class="referral-header">
+    <span class="icon">🎯</span>
+    <h3 data-i18n="referralMyCode">كود الدعوة الخاص بك</h3>
+    <span class="badge">✨ VIP</span>
+  </div>
+
+  <div class="referral-code-box">
+    <span class="code-label" data-i18n="referralCodeLabel">🔗 الكود:</span>
+    <span class="code-value" id="dashReferralCode">—</span>
+    <button class="copy-btn" id="copyReferralBtn">
+      <span>📋</span> <span data-i18n="copy">نسخ</span>
+    </button>
+  </div>
+
+  <p style="color: var(--muted); font-size: 13px; margin-top: 10px; position: relative; z-index: 1;" data-i18n="referralShareHint">
+    💡 شارك هذا الكود مع أصدقائك — تحصل على 20% من كل إيداع يقومون به!
+  </p>
+
+  <div class="referral-stats">
+    <div class="referral-stat">
+      <div class="stat-number" id="referralTotalBonus">$0.00</div>
+      <div class="stat-label" data-i18n="referralTotalBonusLabel">💰 إجمالي العمولات</div>
+    </div>
+    <div class="referral-stat">
+      <div class="stat-number green" id="referralTotalReferrals">0</div>
+      <div class="stat-label" data-i18n="referralTotalReferralsLabel">👥 عدد المدعوين</div>
+    </div>
+    <div class="referral-stat">
+      <div class="stat-number blue" id="referralBonusPerReferral">20%</div>
+      <div class="stat-label" data-i18n="referralBonusPerReferralLabel">🎁 نسبة العمولة</div>
+    </div>
+  </div>
+
+  <div class="referral-share">
+    <button class="share-btn telegram" data-share="telegram">
+      <span>📱</span> <span data-i18n="referralShareTelegram">مشاركة عبر تيليجرام</span>
+    </button>
+    <button class="share-btn whatsapp" data-share="whatsapp">
+      <span>💬</span> <span data-i18n="referralShareWhatsapp">مشاركة عبر واتساب</span>
+    </button>
+    <button class="share-btn twitter" data-share="twitter">
+      <span>🐦</span> <span data-i18n="referralShareTwitter">مشاركة عبر تويتر</span>
+    </button>
+    <button class="share-btn copy-link" data-share="copy">
+      <span>🔗</span> <span data-i18n="referralCopyLink">نسخ الرابط</span>
+    </button>
+  </div>
+
+</div>
+<!-- ========================================================= -->
+
+
+<div
+class="section-head"
+style="margin-top:55px"
+>
+
+<div>
+
+<div class="eyebrow">
+ACTIVITY
+</div>
+
+<h2 data-i18n="activity">
+آخر العمليات
+</h2>
+
+</div>
+
+</div>
+
+
+
+<div class="table-wrap">
+
+<table>
+
+<thead>
+
+<tr>
+
+<th data-i18n="type">
+نوع العملية
+</th>
+
+<th data-i18n="amount">
+المبلغ
+</th>
+
+<th data-i18n="date">
+التاريخ
+</th>
+
+<th data-i18n="status">
+الحالة
+</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="transactionsBody">
+</tbody>
+
+
+</table>
+
+</div>
+
+
+</div>
+
+</main>
+
+
+
+<div id="toast" class="toast"></div>
+
+
+<footer class="footer">
+
+<div class="container">
+
+<div class="footer-grid">
+
+
+<div>
+
+<div class="brand">
+
+<span class="logo-mark">
+₮
+</span>
+
+<span>
+mining<span>usdt</span>
+</span>
+
+</div>
+
+<p class="mini">
+ منصة تعدين رقمية
+</p>
+
+</div>
+
+
+<div>
+
+<h4 data-i18n="footerLinks">
+روابط
+</h4>
+
+<a href="index.html" data-i18n="home">
+الرئيسية
+</a>
+
+<a href="plans.html" data-i18n="plans">
+خطط التعدين
+</a>
+
+</div>
+
+
+<div>
+
+<h4 data-i18n="footerAccount">
+الحساب
+</h4>
+
+<a href="deposit.html" data-i18n="deposit">
+إيداع
+</a>
+
+<a href="withdraw.html" data-i18n="withdraw">
+سحب
+</a>
+
+</div>
+
+
+<div>
+
+<h4 data-i18n="footerSocial">
+Social
+</h4>
+
+<a href="#" data-i18n="telegram">
+Telegram
+</a>
+
+<a href="#" data-i18n="email">
+Email
+</a>
+
+</div>
+
+
+</div>
+
+
+<div class="copyright" data-i18n="copyright">
+© 2026 miningusdt - منصة تعدين رقمية
+</div>
+
+</div>
+
+</footer>
+
+<script>
+  // =========================================================
+  //   DASHBOARD PAGE - TIMER STATUS UPDATE
+  // =========================================================
+  document.addEventListener("DOMContentLoaded", function() {
+    // تحديث حالة المؤقت كل ثانية
+    setInterval(function() {
+      const timerEl = document.getElementById('profitTimer');
+      const statusEl = document.getElementById('timerStatus');
+      if (!timerEl) return;
+      
+      const time = timerEl.textContent;
+      if (time === '--:--:--') {
+        if (statusEl) {
+          statusEl.textContent = '⏸ غير نشط';
+          statusEl.className = 'timer-status inactive';
+        }
+      } else if (time === '00:00:00') {
+        if (statusEl) {
+          statusEl.textContent = '🔄 جاري الإضافة...';
+          statusEl.className = 'timer-status active';
+          statusEl.style.color = 'var(--gold)';
+        }
+      } else {
+        if (statusEl) {
+          statusEl.textContent = '🟢 نشط';
+          statusEl.className = 'timer-status active';
+          statusEl.style.color = '';
+        }
+      }
+    }, 1000);
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>🎡 عجلة الحظ — miningusdt</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { background: #03080d; overflow-x: hidden; }
+    .game-page { position: relative; min-height: 100vh; padding: 30px 0 60px; }
+    .game-page::before { content: ''; position: fixed; inset: 0; z-index: -1; background: radial-gradient(ellipse at 30% 40%, rgba(255,64,129,0.05), transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(255,215,0,0.04), transparent 40%), #03080d; animation: bgPulse 6s ease-in-out infinite; }
+    @keyframes bgPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+    .particles { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+    .particle { position: absolute; width: 4px; height: 4px; background: rgba(255,64,129,0.2); border-radius: 50%; animation: floatParticle linear infinite; }
+    @keyframes floatParticle { 0% { transform: translateY(100vh) scale(0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-10vh) scale(1); opacity: 0; } }
+    .particle:nth-child(1) { left: 10%; animation-duration: 12s; }
+    .particle:nth-child(2) { left: 25%; animation-duration: 15s; animation-delay: 2s; width: 6px; height: 6px; background: rgba(255,215,0,0.12); }
+    .particle:nth-child(3) { left: 40%; animation-duration: 10s; animation-delay: 4s; background: rgba(255,64,129,0.15); }
+    .particle:nth-child(4) { left: 55%; animation-duration: 18s; animation-delay: 1s; }
+    .particle:nth-child(5) { left: 70%; animation-duration: 14s; animation-delay: 3s; width: 5px; height: 5px; background: rgba(255,215,0,0.1); }
+    .particle:nth-child(6) { left: 85%; animation-duration: 11s; animation-delay: 5s; }
+    .particle:nth-child(7) { left: 45%; animation-duration: 16s; animation-delay: 2s; width: 7px; height: 7px; background: rgba(255,64,129,0.12); }
+    .particle:nth-child(8) { left: 65%; animation-duration: 13s; animation-delay: 4s; }
+
+    .game-container { max-width: 600px; margin: 0 auto; }
+    .game-card-main { padding: 35px 30px 40px; border-radius: 30px; background: rgba(8,24,31,0.88); backdrop-filter: blur(20px); border: 2px solid rgba(255,215,0,0.08); box-shadow: 0 30px 80px rgba(0,0,0,0.4); position: relative; overflow: hidden; }
+    .game-card-main::before { content: ''; position: absolute; inset: -2px; border-radius: 30px; padding: 2px; background: linear-gradient(135deg, rgba(255,64,129,0.1), rgba(255,215,0,0.05)); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+    .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    .game-header .back-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02); color: var(--text); text-decoration: none; transition: 0.3s; font-size: 14px; }
+    .game-header .back-btn:hover { border-color: var(--green); color: var(--green); }
+    .game-header .balance-small { padding: 8px 18px; border-radius: 12px; background: rgba(0,255,157,0.04); border: 1px solid rgba(0,255,157,0.06); text-align: center; }
+    .game-header .balance-small .label { font-size: 10px; color: var(--muted); }
+    .game-header .balance-small .amount { font-size: 18px; font-weight: 800; color: var(--gold); }
+    .game-icon-big { text-align: center; font-size: 72px; display: block; margin-bottom: 5px; animation: iconFloat 3s ease-in-out infinite; }
+    @keyframes iconFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+    .game-title-main { text-align: center; font-size: 32px; font-weight: 900; color: var(--gold); margin-bottom: 5px; }
+    .game-desc-main { text-align: center; color: var(--muted); font-size: 14px; margin-bottom: 20px; line-height: 1.8; }
+    .game-result { padding: 18px; border-radius: 16px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.04); margin: 12px 0 18px; text-align: center; font-size: 20px; font-weight: 700; min-height: 65px; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; transition: 0.3s; }
+    .game-result.win { border-color: var(--green); color: var(--green); background: rgba(0,255,157,0.06); box-shadow: 0 0 40px rgba(0,255,157,0.06); }
+    .game-result.lose { border-color: #ff4444; color: #ff4444; background: rgba(255,50,50,0.06); box-shadow: 0 0 40px rgba(255,50,50,0.06); }
+    .game-bet-input { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
+    .game-bet-input label { color: var(--muted); font-size: 13px; font-weight: 600; }
+    .game-bet-input input { width: 120px; padding: 12px 16px; border-radius: 12px; border: 2px solid rgba(255,215,0,0.08); background: rgba(6,16,23,0.8); color: white; outline: none; font-size: 16px; transition: 0.3s; }
+    .game-bet-input input:focus { border-color: var(--gold); box-shadow: 0 0 30px rgba(255,215,0,0.06); }
+    .quick-bets { display: flex; gap: 5px; flex-wrap: wrap; }
+    .quick-bets button { padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,215,0,0.08); background: rgba(255,215,0,0.04); color: var(--muted); font-size: 12px; cursor: pointer; transition: 0.2s; font-weight: 600; }
+    .quick-bets button:hover { border-color: var(--gold); color: var(--gold); background: rgba(255,215,0,0.08); }
+    .game-input-group { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin: 10px 0; }
+    .game-input-group input { flex: 1; min-width: 100px; padding: 14px 18px; border-radius: 14px; border: 2px solid rgba(255,215,0,0.08); background: rgba(6,16,23,0.8); color: white; font-size: 18px; text-align: center; outline: none; transition: 0.3s; }
+    .game-input-group input:focus { border-color: var(--gold); box-shadow: 0 0 30px rgba(255,215,0,0.06); }
+    .game-btn-play { width: 100%; padding: 18px; border-radius: 16px; border: none; font-weight: 800; font-size: 20px; cursor: pointer; transition: all 0.3s; background: linear-gradient(135deg, #ff4081, #e91e63); color: white; box-shadow: 0 0 40px rgba(255,64,129,0.1); margin-top: 10px; }
+    .game-btn-play:hover { transform: translateY(-3px); box-shadow: 0 0 60px rgba(255,64,129,0.2); }
+    .game-btn-play:active { transform: scale(0.96); }
+    .game-btn-play:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+    .game-history { margin-top: 15px; max-height: 120px; overflow-y: auto; font-size: 12px; color: var(--muted); border-top: 1px solid rgba(255,255,255,0.03); padding-top: 12px; }
+    .game-history::-webkit-scrollbar { width: 3px; }
+    .game-history::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
+    .game-history .history-item { display: flex; justify-content: space-between; padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.02); border-radius: 4px; }
+    .game-history .history-item.win { color: var(--green); }
+    .game-history .history-item.lose { color: #ff4444; }
+    .game-badge-top { display: inline-block; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; background: rgba(255,64,129,0.08); color: #ff4081; border: 1px solid rgba(255,64,129,0.08); margin-bottom: 10px; }
+
+    .roulette-wheel { text-align: center; font-size: 60px; padding: 15px 0; animation: wheelSpin 0.5s ease; }
+    @keyframes wheelSpin { 0% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(180deg) scale(1.2); } 100% { transform: rotate(360deg) scale(1); } }
+
+    @media (max-width: 620px) {
+      .game-card-main { padding: 25px 18px 30px; }
+      .game-title-main { font-size: 26px; }
+      .game-icon-big { font-size: 56px; }
+      .game-result { font-size: 17px; min-height: 55px; padding: 14px; }
+      .game-bet-input { flex-direction: column; align-items: stretch; }
+      .game-bet-input input { width: 100%; }
+      .quick-bets { justify-content: center; }
+      .game-input-group { flex-direction: column; }
+      .game-input-group input { width: 100%; }
+      .game-btn-play { font-size: 17px; padding: 15px; }
+      .game-header { flex-direction: column; align-items: stretch; text-align: center; }
+      .game-header .back-btn { justify-content: center; }
+      .roulette-wheel { font-size: 44px; }
+    }
+    @media (max-width: 400px) { .game-title-main { font-size: 22px; } .game-icon-big { font-size: 44px; } .roulette-wheel { font-size: 36px; } }
+  </style>
+</head>
+
+<body>
+
+<div class="particles">
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div>
+</div>
+
+<header class="navbar">
+  <div class="container nav-inner">
+    <a class="brand" href="index.html"><span class="logo-mark">₮</span><span>mining<span>usdt</span></span></a>
+    <nav class="nav-links">
+      <a href="index.html" data-i18n="home">الرئيسية</a><a href="plans.html" data-i18n="plans">خطط التعدين</a>
+      <a href="deposit.html" data-i18n="deposit">الإيداع</a><a href="withdraw.html" data-i18n="withdraw">السحب</a>
+      <a href="dashboard.html" data-i18n="profits">الأرباح</a><a href="contact.html" data-i18n="contact">تواصل معنا</a>
+    </nav>
+    <div class="nav-actions">
+      <div class="lang-wrap"><button id="globeBtn" class="icon-btn">🌐</button><div id="langMenu" class="lang-menu"><button data-lang="ar">العربية</button><button data-lang="en">English</button><button data-lang="tr">Türkçe</button></div></div>
+      <a class="primary-btn" href="dashboard.html" data-i18n="dashboard">Dashboard</a>
+      <button id="mobileToggle" class="icon-btn mobile-toggle">☰</button>
+    </div>
+  </div>
+</header>
+
+<main class="game-page">
+  <div class="container game-container">
+    <div class="game-card-main">
+      <div class="game-header">
+        <a href="games.html" class="back-btn-floating">← <span data-i18n="backGames">العودة للألعاب</span></a>
+        <div class="balance-small"><div class="label">💰 <span data-i18n="balance">رصيدك</span></div><div class="amount" id="gameBalance">$0.00</div></div>
+      </div>
+      <span class="game-icon-big">🎡</span>
+      <div class="game-title-main" data-i18n="gameRouletteTitle">عجلة الحظ</div>
+      <div style="text-align:center;"><span class="game-badge-top" data-i18n="badgeHigh">🔥 عالي — ×8</span></div>
+      <div class="game-desc-main" data-i18n="gameRouletteDesc">اختر رقم من 0 إلى 11 — إذا ظهر رقمك تربح 8 أضعاف رهانك!</div>
+
+      <div class="roulette-wheel" id="rouletteWheel">🎡</div>
+
+      <div class="game-result" id="rouletteResult">🎡 اختر رقمك وابدأ!</div>
+
+      <div class="game-bet-input">
+        <label>💰 <span data-i18n="betAmount">الرهان:</span></label>
+        <input type="number" id="rouletteBet" value="10" min="1" step="1">
+        <div class="quick-bets">
+          <button onclick="setBet('roulette', 5)">$5</button>
+          <button onclick="setBet('roulette', 10)">$10</button>
+          <button onclick="setBet('roulette', 25)">$25</button>
+          <button onclick="setBet('roulette', 50)">$50</button>
+        </div>
+      </div>
+
+      <div class="game-input-group">
+        <input type="number" id="rouletteInput" min="0" max="11" placeholder="0-11" value="5">
+      </div>
+
+      <button class="game-btn-play" id="rouletteBtn">🎡 <span data-i18n="rouletteBtn">دور العجلة!</span></button>
+
+      <div class="game-history" id="rouletteHistory">
+        <div style="text-align:center;color:var(--muted);padding:8px;" data-i18n="noHistory">لا توجد سجلات بعد</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="toast" class="toast"></div>
+
+<footer class="footer"><div class="container"><div class="copyright" data-i18n="copyright">© 2026 miningusdt</div></div></footer>
+
+<script src="script.js"></script>
+
+<script>
+  // =========================================================
+  //   GAME: ROULETTE - MODIFIED (8.33% win, 8x)
+  // =========================================================
+
+  let user = JSON.parse(localStorage.getItem('currentUser'));
+
+  function updateBalance() {
+    user = JSON.parse(localStorage.getItem('currentUser'));
+    if (user) {
+      document.getElementById('gameBalance').textContent = '$' + Number(user.balance || 0).toFixed(2);
+    } else {
+      document.getElementById('gameBalance').textContent = '$0.00';
+    }
+  }
+
+  function setBet(game, amount) {
+    document.getElementById('rouletteBet').value = amount;
+  }
+
+  function toast(message) {
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = message;
+    el.classList.add('show');
+    clearTimeout(window.toastTimer);
+    window.toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+  }
+
+  function saveUserAndUpdate(userData) {
+    const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+    db[userData.email] = userData;
+    localStorage.setItem('miningUsersDB', JSON.stringify(db));
+    localStorage.setItem('currentUser', JSON.stringify(userData));
+    updateBalance();
+  }
+
+  document.getElementById('rouletteBtn').addEventListener('click', function() {
+    const userData = JSON.parse(localStorage.getItem('currentUser'));
+    if (!userData) {
+      toast('يرجى تسجيل الدخول أولاً');
+      return;
+    }
+    const bet = parseInt(document.getElementById('rouletteBet').value) || 0;
+    const guess = parseInt(document.getElementById('rouletteInput').value) || 0;
+    if (bet <= 0) {
+      toast('أدخل رهان صحيح');
+      return;
+    }
+    if (guess < 0 || guess > 11) {
+      toast('اختر رقم بين 0 و 11');
+      return;
+    }
+    if (Number(userData.balance || 0) < bet) {
+      toast('❌ رصيد غير كافٍ');
+      return;
+    }
+
+    // ✅ نظام جديد: 12 رقم بدل 10
+    const result = Math.floor(Math.random() * 12);
+    const win = guess === result;
+    const winAmount = win ? bet * 8 : 0;
+
+    const wheel = document.getElementById('rouletteWheel');
+    wheel.style.animation = 'none';
+    setTimeout(() => { wheel.style.animation = 'wheelSpin 0.5s ease'; }, 10);
+    setTimeout(() => { wheel.textContent = result + '️⃣'; }, 500);
+    setTimeout(() => { wheel.style.animation = ''; }, 600);
+
+    userData.balance = Number(userData.balance || 0) - bet + (win ? winAmount : 0);
+    if (!userData.transactions) userData.transactions = [];
+    userData.transactions.unshift({
+      type: win ? '🎡 فوز عجلة' : '🎡 خسارة عجلة',
+      amount: win ? winAmount : -bet,
+      date: new Date().toISOString(),
+      status: 'مكتمل',
+      game: 'roulette',
+      guess: guess,
+      result: result
+    });
+    saveUserAndUpdate(userData);
+
+    const resultEl = document.getElementById('rouletteResult');
+    if (win) {
+      resultEl.className = 'game-result win';
+      resultEl.innerHTML = '🎉 فوز! ظهر الرقم ' + result + ' — ربحت $' + winAmount.toFixed(2) + ' (×8) 🎉';
+    } else {
+      resultEl.className = 'game-result lose';
+      resultEl.innerHTML = '😞 خسرت! ظهر الرقم ' + result + ' — خسرت $' + bet.toFixed(2);
+    }
+
+    const historyEl = document.getElementById('rouletteHistory');
+    const history = (userData.transactions || []).filter(t => t.game === 'roulette').slice(0, 8);
+    if (history.length) {
+      historyEl.innerHTML = history.map(t => '<div class="history-item ' + (t.amount > 0 ? 'win' : 'lose') + '"><span>' + t.type + '</span><span>' + (t.amount > 0 ? '+' : '') + '$' + Number(t.amount).toFixed(2) + '</span></div>').join('');
+    } else {
+      historyEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:8px;">لا توجد سجلات بعد</div>';
+    }
+
+    this.disabled = true;
+    setTimeout(() => this.disabled = false, 800);
+  });
+
+  document.getElementById('globeBtn')?.addEventListener('click', function(e) { e.stopPropagation(); document.getElementById('langMenu').classList.toggle('show'); });
+  document.querySelectorAll('#langMenu [data-lang]').forEach(btn => { btn.addEventListener('click', function() { const lang = this.dataset.lang; localStorage.setItem('siteLang', lang); document.documentElement.lang = lang; document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'; document.getElementById('langMenu').classList.remove('show'); location.reload(); }); });
+  document.addEventListener('click', function(e) { const menu = document.getElementById('langMenu'); const globe = document.getElementById('globeBtn'); if (menu && globe && !menu.contains(e.target) && !globe.contains(e.target)) { menu.classList.remove('show'); } });
+  document.getElementById('mobileToggle')?.addEventListener('click', function() { document.querySelector('.nav-links').classList.toggle('open'); });
+  updateBalance();
+</script>
+
+</body>
+</html>
