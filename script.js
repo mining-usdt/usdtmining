@@ -1587,12 +1587,16 @@ function ensureAuth() {
    ✅ PLAN ACTIVATION - FIXED (يستخدم السيرفر للحصول على الرصيد)
 ========================================================= */
 
-async function activatePlan(planId) {
+/* =========================================================
+   ✅ PLAN ACTIVATION - FIXED (V2)
+========================================================= */
 
+async function activatePlan(planId) {
   console.log("🟢 activatePlan:", planId);
 
-  const user = getCurrentUser();
-
+  // ✅ جلب المستخدم من localStorage أولاً
+  let user = JSON.parse(localStorage.getItem("currentUser"));
+  
   if (!user) {
     toast("⚠️ يجب تسجيل الدخول أولاً");
     setTimeout(() => {
@@ -1601,16 +1605,34 @@ async function activatePlan(planId) {
     return;
   }
 
-  const userId = user.userId || user._id;
+  // ✅ محاولة جلب أحدث بيانات المستخدم من الخادم
+  try {
+    const apiUrl = `/api/admin/user/${encodeURIComponent(user.userId || user._id || user.email)}`;
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+    
+    if (data.success && data.user) {
+      user = data.user;
+      // تحديث localStorage بالبيانات الجديدة
+      localStorage.setItem("currentUser", JSON.stringify(user));
+      const db = getUsers();
+      db[user.email] = user;
+      localStorage.setItem("miningUsersDB", JSON.stringify(db));
+    }
+  } catch (error) {
+    console.warn("⚠️ فشل جلب بيانات المستخدم من الخادم:", error);
+  }
 
+  const userId = user.userId || user._id || user.id;
+  
   if (!userId) {
     console.error("❌ لا يوجد userId:", user);
-    toast("❌ معرف المستخدم غير موجود");
+    toast("❌ معرف المستخدم غير موجود، يرجى تسجيل الخروج والدخول مرة أخرى");
     return;
   }
 
   const plan = PLANS.find(item => item.id === planId);
-
+  
   if (!plan) {
     toast("❌ الخطة غير موجودة");
     return;
@@ -1619,75 +1641,219 @@ async function activatePlan(planId) {
   console.log("👤 User ID:", userId);
   console.log("📦 Plan:", plan);
 
+  // ✅ التحقق من الرصيد من الخادم مباشرة
   try {
-
-    const response = await fetch(
-      `/api/admin/user/${encodeURIComponent(userId)}`
-    );
-
-    const data = await response.json();
-
-    console.log("📥 بيانات المستخدم:", data);
-
-    if (!response.ok || !data.success || !data.user) {
+    const checkResponse = await fetch(`/api/admin/user/${encodeURIComponent(userId)}`);
+    const checkData = await checkResponse.json();
+    
+    if (!checkData.success || !checkData.user) {
       toast("❌ لم يتم العثور على المستخدم في السيرفر");
       return;
     }
 
-    const freshUser = data.user;
-
-    localStorage.setItem(
-      "currentUser",
-      JSON.stringify(freshUser)
-    );
-
-    const db = getUsers();
-    db[freshUser.email] = freshUser;
-
-    localStorage.setItem(
-      "miningUsersDB",
-      JSON.stringify(db)
-    );
-
+    const freshUser = checkData.user;
     const balance = Number(freshUser.balance || 0);
 
     if (balance < Number(plan.amount)) {
-
-      toast(
-        `⚠️ الرصيد غير كافٍ — رصيدك: $${balance.toFixed(2)} — المطلوب: $${plan.amount}`
-      );
-
+      toast(`⚠️ الرصيد غير كافٍ — رصيدك: $${balance.toFixed(2)} — المطلوب: $${plan.amount}`);
       return;
     }
 
+    // ✅ تحديث localStorage بأحدث البيانات
+    localStorage.setItem("currentUser", JSON.stringify(freshUser));
+    const db = getUsers();
+    db[freshUser.email] = freshUser;
+    localStorage.setItem("miningUsersDB", JSON.stringify(db));
+
     showConfirmDialog(
       "🛒 تأكيد شراء الخطة",
-
       `هل أنت متأكد من شراء خطة <strong>${plan.id}</strong>
       بمبلغ <strong>$${plan.amount}</strong>؟<br><br>
       📈 العائد اليومي: <strong>${plan.rate}%</strong><br>
       📅 المدة: <strong>${plan.days} يوم</strong><br>
       💰 الربح المتوقع: <strong>$${plan.netProfit.toFixed(2)}</strong>`,
-
       "✅ نعم، قم بالشراء",
-
       "❌ لا، إلغاء",
-
-      function () {
+      function() {
         executePlanActivation(plan, freshUser);
       },
-
-      function () {
+      function() {
         toast("❌ تم إلغاء شراء الخطة");
       }
     );
 
   } catch (error) {
-
     console.error("❌ خطأ تفعيل الخطة:", error);
-
     toast("❌ فشل الاتصال بالسيرفر");
   }
+}
+
+/* =========================================================
+   ✅ REGISTER - FIXED (مع دعم الخادم بالكامل)
+========================================================= */
+
+function setupRegister() {
+  const form = document.getElementById("registerForm");
+
+  if (!form) {
+    console.warn('⚠️ نموذج التسجيل غير موجود');
+    return;
+  }
+
+  console.log('✅ تم العثور على نموذج التسجيل');
+
+  form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const name = document.getElementById("regName")?.value.trim();
+    const email = document.getElementById("regEmail")?.value.trim().toLowerCase();
+    const password = document.getElementById("regPassword")?.value;
+    const confirm = document.getElementById("regConfirm")?.value;
+    const referralCode = document.getElementById("regReferral")?.value.trim().toUpperCase();
+
+    if (!name || name.length < 2) {
+      toast('⚠️ أدخل اسم صحيح');
+      return;
+    }
+
+    if (!email || !email.includes('@')) {
+      toast('⚠️ أدخل بريد إلكتروني صحيح');
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      toast('⚠️ كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      return;
+    }
+
+    if (password !== confirm) {
+      toast(t("wrongConfirm"));
+      return;
+    }
+
+    // ✅ إرسال طلب التسجيل إلى الخادم
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: name,
+          email: email,
+          password: password,
+          referralCode: referralCode || null
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        toast(data.message || '❌ فشل إنشاء الحساب');
+        return;
+      }
+
+      // ✅ حفظ المستخدم في localStorage
+      localStorage.setItem("currentUser", JSON.stringify(data.data));
+      const db = getUsers();
+      db[data.data.email] = data.data;
+      localStorage.setItem("miningUsersDB", JSON.stringify(db));
+
+      toast(t("registered"));
+      
+      // ✅ إشعار خاص بكود الدعوة إذا تم استخدامه
+      if (referralCode) {
+        toast('🎉 تم التسجيل باستخدام كود الدعوة!');
+      }
+
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 1500);
+
+    } catch (error) {
+      console.error('❌ خطأ في التسجيل:', error);
+      toast('❌ فشل الاتصال بالخادم');
+    }
+  });
+}
+
+/* =========================================================
+   ✅ DEPOSIT FORM - FIXED (مع نظام العمولة)
+========================================================= */
+
+function setupDepositForm() {
+  const form = document.getElementById("depositForm");
+
+  if (!form) {
+    return;
+  }
+
+  form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    if (!ensureAuth()) {
+      return;
+    }
+
+    const input = document.getElementById("depositAmount");
+    const amount = Number(input?.value || 0);
+
+    if (!amount || amount <= 0) {
+      toast(t("invalidAmount"));
+      return;
+    }
+
+    const user = JSON.parse(localStorage.getItem("currentUser"));
+    if (!user) {
+      toast("⚠️ يرجى تسجيل الدخول أولاً");
+      return;
+    }
+
+    // ✅ إرسال طلب الإيداع إلى الخادم
+    try {
+      const response = await fetch('/api/admin/balance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.userId || user._id,
+          email: user.email,
+          amount: amount,
+          type: 'deposit',
+          adminName: user.name || 'مستخدم'
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        toast(data.message || '❌ فشل الإيداع');
+        return;
+      }
+
+      // ✅ تحديث المستخدم بالبيانات الجديدة
+      const updatedUser = data.user;
+      localStorage.setItem("currentUser", JSON.stringify(updatedUser));
+      const db = getUsers();
+      db[updatedUser.email] = updatedUser;
+      localStorage.setItem("miningUsersDB", JSON.stringify(db));
+
+      toast(t("depositDone"));
+
+      form.reset();
+
+      const balance = document.getElementById("depositBalance");
+      if (balance) {
+        balance.textContent = money(updatedUser.balance);
+      }
+
+      // ✅ إشعار العمولة إذا كان المستخدم مدعو
+      if (user.referredBy) {
+        toast('🎉 تم إضافة 20% عمولة للداعي!');
+      }
+
+    } catch (error) {
+      console.error('❌ خطأ في الإيداع:', error);
+      toast('❌ فشل الاتصال بالخادم');
+    }
+  });
 }
 
 /* =========================================================
