@@ -15,7 +15,7 @@ app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 // =========================================================
 
 const MONGODB_URI =
-  "mongodb+srv://kabusbaba:Ahmed123456@cluster0.zh0a3gc.mongodb.net/miningusdt?retryWrites=true&w=majority";
+  "mongodb+srv://kabusbaba:Kabus123456@cluster0.zh0a3gc.mongodb.net/miningusdt?retryWrites=true&w=majority";
 
 mongoose
   .connect(MONGODB_URI)
