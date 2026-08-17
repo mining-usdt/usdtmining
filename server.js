@@ -5,247 +5,195 @@ const path = require("path");
 
 const app = express();
 
-// =========================================================
-// إعدادات السيرفر
-// =========================================================
+/* =========================================================
+   BASIC SERVER SETTINGS
+========================================================= */
 
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 
-// =========================================================
-// MongoDB
-// =========================================================
-// مهم:
-// ضع MONGODB_URI داخل Render > Environment Variables
-//
-// مثال:
-// MONGODB_URI=mongodb+srv://USERNAME:PASSWORD@cluster0.xxxxx.mongodb.net/miningusdt
-//
-// لا تضع كلمة المرور داخل هذا الملف.
-// =========================================================
+/* =========================================================
+   MONGODB
+========================================================= */
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
-let mongoConnected = false;
-
-async function connectMongoDB() {
-  if (!MONGODB_URI) {
-    console.error("❌ MONGODB_URI غير موجود في Environment Variables");
-    return;
-  }
-
-  try {
-    await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 45000,
-    });
-
-    mongoConnected = true;
-    console.log("✅ MongoDB Connected");
-  } catch (error) {
-    mongoConnected = false;
-    console.error("❌ MongoDB Error:", error.message);
-  }
+if (!MONGODB_URI) {
+  console.error("❌ MONGODB_URI is missing from Render Environment Variables.");
+  process.exit(1);
 }
 
-// مراقبة حالة MongoDB
-mongoose.connection.on("connected", () => {
-  mongoConnected = true;
-  console.log("✅ MongoDB connection established");
-});
+mongoose
+  .connect(MONGODB_URI)
+  .then(() => {
+    console.log("✅ MongoDB Connected");
+  })
+  .catch((error) => {
+    console.error("❌ MongoDB Connection Error:", error);
+    process.exit(1);
+  });
 
-mongoose.connection.on("disconnected", () => {
-  mongoConnected = false;
-  console.log("⚠️ MongoDB disconnected");
-});
-
-mongoose.connection.on("error", (error) => {
-  mongoConnected = false;
-  console.error("❌ MongoDB connection error:", error.message);
-});
-
-// =========================================================
-// الملفات الثابتة
-// =========================================================
-// index.html عندك موجود في جذر المشروع وليس public/
-// لذلك نستخدم __dirname مباشرة.
-//
-// مثال هيكل المشروع:
-//
-// project/
-// ├── server.js
-// ├── package.json
-// ├── index.html
-// ├── login.html
-// ├── register.html
-// ├── dashboard.html
-// ├── plans.html
-// ├── style.css
-// ├── script.js
-// └── ...
-// =========================================================
+/* =========================================================
+   STATIC WEBSITE FILES
+   Your HTML/CSS/JS files are in the project root.
+========================================================= */
 
 app.use(express.static(__dirname));
 
-// الصفحة الرئيسية
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// =========================================================
-// Middleware للتأكد من اتصال MongoDB للـ API
-// =========================================================
+/* =========================================================
+   USER MODEL
+========================================================= */
 
-function requireMongo(req, res, next) {
-  if (!mongoConnected || mongoose.connection.readyState !== 1) {
-    return res.status(503).json({
-      success: false,
-      message: "❌ قاعدة البيانات غير متصلة حاليًا، حاول مرة أخرى بعد قليل."
-    });
-  }
-
-  next();
-}
-
-// =========================================================
-// نموذج المستخدم User Model
-// =========================================================
-
-const UserSchema = new mongoose.Schema({
-  userId: {
-    type: String,
-    unique: true,
-    required: true
-  },
-
-  name: {
-    type: String,
-    required: true
-  },
-
-  email: {
-    type: String,
-    unique: true,
-    required: true
-  },
-
-  password: {
-    type: String,
-    required: true
-  },
-
-  balance: {
-    type: Number,
-    default: 0
-  },
-
-  profit: {
-    type: Number,
-    default: 0
-  },
-
-  plan: {
-    type: String,
-    default: null
-  },
-
-  planAmount: {
-    type: Number,
-    default: 0
-  },
-
-  planRate: {
-    type: Number,
-    default: 0
-  },
-
-  planDays: {
-    type: Number,
-    default: 0
-  },
-
-  planStart: {
-    type: Date,
-    default: null
-  },
-
-  timerStart: {
-    type: Number,
-    default: null
-  },
-
-  lastProfitDate: {
-    type: String,
-    default: null
-  },
-
-  referralCode: {
-    type: String,
-    unique: true,
-    required: true
-  },
-
-  referredBy: {
-    type: String,
-    default: null
-  },
-
-  referralBonus: {
-    type: Number,
-    default: 0
-  },
-
-  referredUsers: [
-    {
-      email: String,
-      name: String,
-      joinedAt: Date,
-      totalDeposits: {
-        type: Number,
-        default: 0
-      },
-      commissionEarned: {
-        type: Number,
-        default: 0
-      }
-    }
-  ],
-
-  transactions: [
-    {
+const UserSchema = new mongoose.Schema(
+  {
+    userId: {
       type: String,
-      amount: Number,
-      date: Date,
-      status: String,
-      note: String,
-      game: String,
-      address: String,
-      network: String,
-      bet: Number,
-      playerTotal: Number,
-      dealerTotal: Number,
-      guess: Number,
-      target: Number,
-      dice: [Number],
-      sum: Number,
-      symbols: [String],
-      choice: String,
-      result: String
-    }
-  ],
+      unique: true,
+      required: true,
+      index: true
+    },
 
-  createdAt: {
-    type: Date,
-    default: Date.now
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+
+    email: {
+      type: String,
+      unique: true,
+      required: true,
+      lowercase: true,
+      trim: true,
+      index: true
+    },
+
+    password: {
+      type: String,
+      required: true
+    },
+
+    balance: {
+      type: Number,
+      default: 0
+    },
+
+    profit: {
+      type: Number,
+      default: 0
+    },
+
+    plan: {
+      type: String,
+      default: null
+    },
+
+    planAmount: {
+      type: Number,
+      default: 0
+    },
+
+    planRate: {
+      type: Number,
+      default: 0
+    },
+
+    planDays: {
+      type: Number,
+      default: 0
+    },
+
+    planStart: {
+      type: Date,
+      default: null
+    },
+
+    timerStart: {
+      type: Number,
+      default: null
+    },
+
+    lastProfitDate: {
+      type: String,
+      default: null
+    },
+
+    referralCode: {
+      type: String,
+      unique: true,
+      required: true,
+      index: true
+    },
+
+    referredBy: {
+      type: String,
+      default: null
+    },
+
+    referralBonus: {
+      type: Number,
+      default: 0
+    },
+
+    referredUsers: [
+      {
+        email: String,
+        name: String,
+        joinedAt: Date,
+        totalDeposits: {
+          type: Number,
+          default: 0
+        },
+        commissionEarned: {
+          type: Number,
+          default: 0
+        }
+      }
+    ],
+
+    transactions: [
+      {
+        type: String,
+        amount: Number,
+        date: Date,
+        status: String,
+        note: String,
+        game: String,
+        address: String,
+        network: String,
+        bet: Number,
+        playerTotal: Number,
+        dealerTotal: Number,
+        guess: Number,
+        target: Number,
+        dice: [Number],
+        sum: Number,
+        symbols: [String],
+        choice: String,
+        result: String
+      }
+    ],
+
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  },
+  {
+    minimize: false
   }
-});
+);
 
 const User = mongoose.model("User", UserSchema);
 
-// =========================================================
-// دوال مساعدة
-// =========================================================
+/* =========================================================
+   HELPER FUNCTIONS
+========================================================= */
 
 function generateUniqueUserId() {
   return Math.floor(
@@ -267,31 +215,69 @@ function generateReferralCode(userId) {
   return code + userId.slice(-4);
 }
 
-// =========================================================
-// Health Check
-// =========================================================
+async function createUniqueUserId() {
+  let userId;
+  let exists = true;
 
-app.get("/health", (req, res) => {
+  while (exists) {
+    userId = generateUniqueUserId();
+
+    exists = await User.exists({
+      userId
+    });
+  }
+
+  return userId;
+}
+
+async function createUniqueReferralCode(userId) {
+  let referralCode;
+  let exists = true;
+
+  while (exists) {
+    referralCode = generateReferralCode(userId);
+
+    exists = await User.exists({
+      referralCode
+    });
+  }
+
+  return referralCode;
+}
+
+/* =========================================================
+   HEALTH CHECK
+========================================================= */
+
+app.get("/api/health", async (req, res) => {
+  const mongoConnected =
+    mongoose.connection.readyState === 1;
+
   res.json({
     success: true,
     server: "online",
-    mongodb: mongoConnected ? "connected" : "disconnected",
-    time: new Date().toISOString()
+    mongodb: mongoConnected ? "connected" : "disconnected"
   });
 });
 
-// =========================================================
-// تسجيل مستخدم جديد
-// =========================================================
+/* =========================================================
+   REGISTER
+========================================================= */
 
-app.post("/register", requireMongo, async (req, res) => {
+app.post("/register", async (req, res) => {
   try {
-    const {
-      name,
-      email,
-      password,
-      referralCode
-    } = req.body;
+    const name = String(req.body.name || "").trim();
+    const email = String(req.body.email || "")
+      .trim()
+      .toLowerCase();
+
+    const password = String(req.body.password || "");
+
+    const referralCode = String(
+      req.body.referralCode || ""
+    )
+      .trim()
+      .toUpperCase();
 
     if (!name || !email || !password) {
       return res.status(400).json({
@@ -300,10 +286,8 @@ app.post("/register", requireMongo, async (req, res) => {
       });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
-
     const existingUser = await User.findOne({
-      email: normalizedEmail
+      email
     });
 
     if (existingUser) {
@@ -313,63 +297,61 @@ app.post("/register", requireMongo, async (req, res) => {
       });
     }
 
-    // إنشاء User ID فريد
-    let userId;
-    let isUnique = false;
+    /* -----------------------------------------------------
+       Generate ONE ID on the server.
+       MongoDB becomes the source of truth.
+    ----------------------------------------------------- */
 
-    while (!isUnique) {
-      userId = generateUniqueUserId();
+    const userId = await createUniqueUserId();
 
-      const existing = await User.findOne({
-        userId
-      });
-
-      if (!existing) {
-        isUnique = true;
-      }
-    }
-
-    // إنشاء Referral Code فريد
-    let referralCodeGenerated;
-    let isReferralUnique = false;
-
-    while (!isReferralUnique) {
-      referralCodeGenerated = generateReferralCode(userId);
-
-      const existing = await User.findOne({
-        referralCode: referralCodeGenerated
-      });
-
-      if (!existing) {
-        isReferralUnique = true;
-      }
-    }
+    const referralCodeGenerated =
+      await createUniqueReferralCode(userId);
 
     const newUser = new User({
       userId,
-      name: name.trim(),
-      email: normalizedEmail,
+      name,
+      email,
       password,
-      referralCode: referralCodeGenerated,
-      referredBy: null,
+
       balance: 0,
       profit: 0,
-      transactions: [],
-      referredUsers: []
+
+      plan: null,
+      planAmount: 0,
+      planRate: 0,
+      planDays: 0,
+      planStart: null,
+
+      timerStart: null,
+      lastProfitDate: null,
+
+      referralCode: referralCodeGenerated,
+      referredBy: null,
+      referralBonus: 0,
+
+      referredUsers: [],
+      transactions: []
     });
 
-    // نظام الإحالة
+    /* -----------------------------------------------------
+       Referral
+    ----------------------------------------------------- */
+
     if (referralCode) {
       const referrer = await User.findOne({
-        referralCode: referralCode.trim()
+        referralCode
       });
 
       if (referrer) {
         newUser.referredBy = referrer.email;
 
+        if (!Array.isArray(referrer.referredUsers)) {
+          referrer.referredUsers = [];
+        }
+
         referrer.referredUsers.push({
-          email: normalizedEmail,
-          name: name.trim(),
+          email,
+          name,
           joinedAt: new Date(),
           totalDeposits: 0,
           commissionEarned: 0
@@ -381,11 +363,7 @@ app.post("/register", requireMongo, async (req, res) => {
 
     await newUser.save();
 
-    console.log(
-      `✅ New user registered: ${newUser.email}`
-    );
-
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "✅ تم إنشاء الحساب بنجاح",
 
@@ -393,33 +371,55 @@ app.post("/register", requireMongo, async (req, res) => {
         userId: newUser.userId,
         name: newUser.name,
         email: newUser.email,
+
         balance: newUser.balance,
         profit: newUser.profit,
+
+        plan: newUser.plan,
+        planAmount: newUser.planAmount,
+        planRate: newUser.planRate,
+        planDays: newUser.planDays,
+        planStart: newUser.planStart,
+
+        timerStart: newUser.timerStart,
+
         referralCode: newUser.referralCode,
-        referredBy: newUser.referredBy
+        referredBy: newUser.referredBy,
+        referralBonus: newUser.referralBonus,
+
+        referredUsers: newUser.referredUsers,
+        transactions: newUser.transactions
       }
     });
 
   } catch (error) {
     console.error("❌ Register error:", error);
 
-    res.status(500).json({
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ البريد أو المعرف مستخدم بالفعل"
+      });
+    }
+
+    return res.status(500).json({
       success: false,
       message: "❌ حدث خطأ في الخادم"
     });
   }
 });
 
-// =========================================================
-// تسجيل الدخول
-// =========================================================
+/* =========================================================
+   LOGIN
+========================================================= */
 
-app.post("/login", requireMongo, async (req, res) => {
+app.post("/login", async (req, res) => {
   try {
-    const {
-      email,
-      password
-    } = req.body;
+    const email = String(req.body.email || "")
+      .trim()
+      .toLowerCase();
+
+    const password = String(req.body.password || "");
 
     if (!email || !password) {
       return res.status(400).json({
@@ -428,10 +428,8 @@ app.post("/login", requireMongo, async (req, res) => {
       });
     }
 
-    const normalizedEmail = email.trim().toLowerCase();
-
     const user = await User.findOne({
-      email: normalizedEmail
+      email
     });
 
     if (!user) {
@@ -448,9 +446,7 @@ app.post("/login", requireMongo, async (req, res) => {
       });
     }
 
-    console.log(`✅ User logged in: ${user.email}`);
-
-    res.json({
+    return res.json({
       success: true,
       message: "✅ تم تسجيل الدخول بنجاح",
 
@@ -458,43 +454,50 @@ app.post("/login", requireMongo, async (req, res) => {
         userId: user.userId,
         name: user.name,
         email: user.email,
+
         balance: user.balance,
         profit: user.profit,
+
         plan: user.plan,
         planAmount: user.planAmount,
         planRate: user.planRate,
         planDays: user.planDays,
         planStart: user.planStart,
+
         timerStart: user.timerStart,
+
         referralCode: user.referralCode,
-        referralBonus: user.referralBonus,
         referredBy: user.referredBy,
+        referralBonus: user.referralBonus,
+
         referredUsers: user.referredUsers,
-        transactions: user.transactions.slice(0, 20)
+
+        transactions:
+          user.transactions.slice(0, 20)
       }
     });
 
   } catch (error) {
     console.error("❌ Login error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "❌ حدث خطأ في الخادم"
     });
   }
 });
 
-// =========================================================
-// جلب جميع المستخدمين - Admin
-// =========================================================
+/* =========================================================
+   ADMIN - ALL USERS
+========================================================= */
 
-app.get("/admin/users", requireMongo, async (req, res) => {
+app.get("/admin/users", async (req, res) => {
   try {
-    const users = await User
-      .find({})
-      .select("-password");
+    const users = await User.find({})
+      .select("-password")
+      .sort({ createdAt: -1 });
 
-    res.json({
+    return res.json({
       success: true,
       users
     });
@@ -502,74 +505,73 @@ app.get("/admin/users", requireMongo, async (req, res) => {
   } catch (error) {
     console.error("❌ Admin users error:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "❌ خطأ في الخادم"
     });
   }
 });
 
-// =========================================================
-// جلب مستخدم محدد - Admin
-// =========================================================
+/* =========================================================
+   ADMIN - GET ONE USER
+========================================================= */
 
-app.get(
-  "/admin/user/:userId",
-  requireMongo,
-  async (req, res) => {
-    try {
-      const user = await User
-        .findOne({
-          userId: req.params.userId
-        })
-        .select("-password");
+app.get("/admin/user/:userId", async (req, res) => {
+  try {
+    const userId = String(
+      req.params.userId || ""
+    ).trim();
 
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "❌ المستخدم غير موجود"
-        });
-      }
+    const user = await User.findOne({
+      userId
+    }).select("-password");
 
-      res.json({
-        success: true,
-        user
-      });
-
-    } catch (error) {
-      console.error("❌ Admin user error:", error);
-
-      res.status(500).json({
+    if (!user) {
+      return res.status(404).json({
         success: false,
-        message: "❌ خطأ في الخادم"
+        message: "❌ المستخدم غير موجود"
       });
     }
-  }
-);
 
-// =========================================================
-// تعديل رصيد المستخدم - Admin
-// =========================================================
+    return res.json({
+      success: true,
+      user
+    });
+
+  } catch (error) {
+    console.error("❌ Admin user error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم"
+    });
+  }
+});
+
+/* =========================================================
+   ADMIN - CHANGE USER BALANCE
+========================================================= */
 
 app.post(
   "/admin/user/:userId/balance",
-  requireMongo,
   async (req, res) => {
     try {
-      const {
-        amount,
-        type
-      } = req.body;
+      const userId = String(
+        req.params.userId || ""
+      ).trim();
 
-      const numericAmount = Number(amount);
+      const amount = Number(
+        req.body.amount
+      );
 
-      if (
-        !Number.isFinite(numericAmount) ||
-        numericAmount <= 0
-      ) {
+      const type = String(
+        req.body.type || ""
+      ).trim().toLowerCase();
+
+      if (!Number.isFinite(amount) || amount <= 0) {
         return res.status(400).json({
           success: false,
-          message: "❌ قيمة المبلغ غير صحيحة"
+          message: "❌ المبلغ غير صالح"
         });
       }
 
@@ -579,12 +581,12 @@ app.post(
       ) {
         return res.status(400).json({
           success: false,
-          message: "❌ نوع العملية غير صحيح"
+          message: "❌ نوع العملية غير صالح"
         });
       }
 
       const user = await User.findOne({
-        userId: req.params.userId
+        userId
       });
 
       if (!user) {
@@ -596,29 +598,31 @@ app.post(
 
       if (type === "deposit") {
 
-        user.balance += numericAmount;
+        user.balance += amount;
 
         user.transactions.unshift({
           type: "💰 إيداع (أدمن)",
-          amount: numericAmount,
+          amount,
           date: new Date(),
           status: "✅ مكتمل"
         });
 
-      } else if (type === "withdraw") {
+      }
 
-        if (user.balance < numericAmount) {
+      if (type === "withdraw") {
+
+        if (user.balance < amount) {
           return res.status(400).json({
             success: false,
             message: "❌ الرصيد غير كافٍ"
           });
         }
 
-        user.balance -= numericAmount;
+        user.balance -= amount;
 
         user.transactions.unshift({
           type: "💸 سحب (أدمن)",
-          amount: -numericAmount,
+          amount: -amount,
           date: new Date(),
           status: "✅ مكتمل"
         });
@@ -626,7 +630,7 @@ app.post(
 
       await user.save();
 
-      res.json({
+      return res.json({
         success: true,
         message: "✅ تم التعديل بنجاح",
         balance: user.balance
@@ -638,7 +642,7 @@ app.post(
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: "❌ خطأ في الخادم"
       });
@@ -646,18 +650,21 @@ app.post(
   }
 );
 
-// =========================================================
-// حذف مستخدم - Admin
-// =========================================================
+/* =========================================================
+   ADMIN - DELETE USER
+========================================================= */
 
 app.delete(
   "/admin/user/:userId",
-  requireMongo,
   async (req, res) => {
     try {
+      const userId = String(
+        req.params.userId || ""
+      ).trim();
+
       const result =
         await User.findOneAndDelete({
-          userId: req.params.userId
+          userId
         });
 
       if (!result) {
@@ -667,7 +674,7 @@ app.delete(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         message: "🗑️ تم حذف الحساب بنجاح"
       });
@@ -678,7 +685,7 @@ app.delete(
         error
       );
 
-      res.status(500).json({
+      return res.status(500).json({
         success: false,
         message: "❌ خطأ في الخادم"
       });
@@ -686,42 +693,25 @@ app.delete(
   }
 );
 
-// =========================================================
-// 404 للـ API
-// =========================================================
+/* =========================================================
+   404 API RESPONSE
+========================================================= */
 
 app.use("/api", (req, res) => {
   res.status(404).json({
     success: false,
-    message: "❌ API endpoint غير موجود"
+    message: "❌ API endpoint not found"
   });
 });
 
-// =========================================================
-// Error Handler
-// =========================================================
-
-app.use((err, req, res, next) => {
-  console.error("❌ Server error:", err);
-
-  res.status(500).json({
-    success: false,
-    message: "❌ حدث خطأ داخلي في الخادم"
-  });
-});
-
-// =========================================================
-// تشغيل السيرفر
-// =========================================================
+/* =========================================================
+   SERVER
+========================================================= */
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, async () => {
-  console.log("========================================");
-  console.log("🚀 Server started");
-  console.log(`🚀 Port: ${PORT}`);
-  console.log(`📂 Static files: ${__dirname}`);
-  console.log("========================================");
-
-  await connectMongoDB();
+app.listen(PORT, () => {
+  console.log(
+    `🚀 Server running on port ${PORT}`
+  );
 });
