@@ -35,10 +35,15 @@ mongoose
   );
 
 // =========================================================
-// Static Files
+// Static Files - IMPORTANT: يجب أن يكون قبل تعريف الـ Routes
 // =========================================================
 
+// ✅ تقديم الملفات الثابتة من المجلد الحالي
 app.use(express.static(__dirname));
+
+// =========================================================
+// Routes - تقديم صفحات HTML
+// =========================================================
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
@@ -251,7 +256,7 @@ async function createUniqueReferralCode(userId) {
 }
 
 // =========================================================
-// HEALTH
+// HEALTH - للتحقق من أن السيرفر يعمل
 // =========================================================
 
 app.get("/api/health", async (req, res) => {
@@ -1066,7 +1071,7 @@ app.post(
 );
 
 // =========================================================
-// ✅ API: ACTIVATE PLAN - NEW
+// ✅ API: ACTIVATE PLAN
 // =========================================================
 
 app.post("/api/activate-plan", async (req, res) => {
@@ -1090,15 +1095,19 @@ app.post("/api/activate-plan", async (req, res) => {
       });
     }
 
-    if (Number(user.balance || 0) < planAmount) {
+    // ✅ التحقق من الرصيد من قاعدة البيانات مباشرة
+    const currentBalance = Number(user.balance || 0);
+    console.log("💰 Current balance from DB:", currentBalance);
+
+    if (currentBalance < planAmount) {
       return res.status(400).json({
         success: false,
-        message: "❌ الرصيد غير كافٍ - رصيدك: $" + Number(user.balance || 0).toFixed(2)
+        message: `❌ الرصيد غير كافٍ - رصيدك: $${currentBalance.toFixed(2)} — المطلوب: $${planAmount}`
       });
     }
 
-    const oldBalance = Number(user.balance || 0);
-    user.balance = oldBalance - planAmount;
+    // ✅ خصم الرصيد وتفعيل الخطة
+    user.balance = currentBalance - planAmount;
     user.plan = planId;
     user.planAmount = planAmount;
     user.planRate = planRate;
