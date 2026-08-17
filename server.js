@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const path = require("path"); 
+const path = require("path");
 
 const app = express();
 app.use(cors());
@@ -10,20 +10,22 @@ app.use(express.json());
 // 🔗 رابط MongoDB
 const MONGODB_URI = "mongodb+srv://kabusbaba:aVNjXlWAUTAkdDT3@cluster0.zh0a3gc.mongodb.net/miningusdt";
 
-// ✅ إصلاح الاتصال بحذف الخيارات غير المدعومة
+// ✅ إصلاح الاتصال
 mongoose.connect(MONGODB_URI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.log("❌ MongoDB Error:", err));
 
 // =========================================================
-//   ✅ تم إصلاح المسار هنا (حذف 'src')
-//   الخادم الآن يبحث عن مجلد 'public' في جذر المشروع
+//   ✅ إعداد خدمة الملفات الثابتة (Frontend)
+//   هذا السطر يبحث عن مجلد 'public' في نفس مكان ملف server.js
 // =========================================================
-app.use(express.static(path.join(__dirname, 'public')));
+const publicPath = path.join(__dirname, 'public');
+console.log("📂 Serving static files from:", publicPath); // سيطبع المسار الصحيح في اللوقز
+app.use(express.static(publicPath));
 
-// عند فتح الصفحة الرئيسية، يتم إرسال ملف index.html الموجود داخل مجلد public
+// عند فتح الصفحة الرئيسية
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  res.sendFile(path.join(publicPath, 'index.html'));
 });
 
 // =========================================================
