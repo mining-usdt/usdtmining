@@ -25,7 +25,7 @@ const fs = require("fs");
 const app = express();
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI =
-  "mongodb+srv://kabusbaba:Kabus123456@cluster0.zh0a3gc.mongodb.net/miningusdt?retryWrites=true&w=majority";
+  "mongodb+srv://kabusbaba:kbskbs123@cluster0.zh0a3gc.mongodb.net/miningusdt?retryWrites=true&w=majority";
 
 // ============================================================
 //  📋 LOGGING SYSTEM
