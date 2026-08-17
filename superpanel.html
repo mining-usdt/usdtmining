@@ -1150,11 +1150,6 @@
         <div class="stat-number" id="adminActivePlans">0</div>
         <div class="stat-label">الخطط النشطة</div>
       </div>
-      <div class="admin-stat-premium" onclick="loadOnlineUsers(); playSound('click')">
-        <div class="stat-icon">🟢</div>
-        <div class="stat-number cyan" id="onlineUsersCount">0</div>
-        <div class="stat-label">المتصلون الآن</div>
-      </div>
     </div>
 
     <div class="admin-grid-premium">
@@ -1477,114 +1472,82 @@
     }
 
     // =========================================================
-    //   ✅ LOAD USERS (FIXED)
+    //   ✅ LOAD ALL USERS FROM MONGODB (CROSS-DEVICE)
     // =========================================================
     async function loadUsers() {
       try {
-        const apiUrl = getApiUrl('/admin/users');
-        const response = await fetch(apiUrl);
-        const data = await response.json();
+        const limit = 100;
+        let page = 1;
+        let allServerUsers = [];
+        let total = null;
 
-        let serverUsers = {};
-        if (data.success && data.users && data.users.length > 0) {
-          // ✅ الإصلاح: قراءة data.users مباشرة (كما يرسلها السيرفر الآن)
-          data.users.forEach(user => {
-            serverUsers[user.email] = user;
+        while (true) {
+          const apiUrl = getApiUrl(`/admin/users?page=${page}&limit=${limit}`);
+          const response = await fetch(apiUrl, {
+            method: 'GET',
+            cache: 'no-store',
+            headers: {
+              'Accept': 'application/json'
+            }
           });
-          console.log('✅ تم جلب ' + data.users.length + ' مستخدم من الخادم');
-        } else {
-          console.warn('⚠️ فشل جلب المستخدمين من الخادم أو لا يوجد مستخدمين');
-          console.log('📥 بيانات الخادم:', data);
-        }
 
-        let localUsers = {};
-        try {
-          localUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-          console.log('📦 تم جلب ' + Object.keys(localUsers).length + ' مستخدم من localStorage');
-        } catch (e) {
-          console.warn('⚠️ فشل قراءة localStorage');
-        }
-
-        // دمج البيانات (الخادم أولاً، ثم المحلي)
-        const merged = { ...localUsers, ...serverUsers };
-        Object.keys(localUsers).forEach(email => {
-          if (!serverUsers[email]) {
-            merged[email] = localUsers[email];
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
           }
+
+          const data = await response.json();
+
+          if (!data.success || !Array.isArray(data.users)) {
+            throw new Error(data.message || 'فشل جلب المستخدمين من السيرفر');
+          }
+
+          allServerUsers.push(...data.users);
+
+          if (data.pagination && Number.isFinite(Number(data.pagination.total))) {
+            total = Number(data.pagination.total);
+          }
+
+          const received = data.users.length;
+
+          if (received === 0) break;
+          if (total !== null && allServerUsers.length >= total) break;
+          if (received < limit) break;
+
+          page++;
+
+          // حماية من التكرار اللانهائي
+          if (page > 10000) break;
+        }
+
+        const serverUsers = {};
+        allServerUsers.forEach(user => {
+          const key = user.email || user.userId || user._id || user.id;
+          if (key) serverUsers[key] = user;
         });
 
-        allUsers = merged;
-        console.log('📊 إجمالي المستخدمين بعد الدمج:', Object.keys(allUsers).length);
+        // السيرفر / MongoDB هو المصدر الأساسي والوحيد للحسابات.
+        // لا ندمج حسابات localStorage حتى لا تظهر حسابات جهاز آخر فقط.
+        allUsers = serverUsers;
+
+        console.log('✅ تم جلب جميع الحسابات من MongoDB:', allServerUsers.length);
+        console.log('🌐 عدد الحسابات الكلي من السيرفر:', total ?? allServerUsers.length);
 
         updateStats();
         renderUserList();
 
       } catch (error) {
-        console.warn('⚠️ خطأ في الاتصال بالخادم، استخدام localStorage فقط:', error);
-        try {
-          allUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-        } catch {
-          allUsers = {};
-        }
+        console.error('❌ فشل جلب الحسابات من السيرفر:', error);
+
+        // لا تستخدم localStorage كبديل لقائمة الحسابات.
+        // هذا يمنع ظهور حسابات جهاز واحد فقط عند فتح لوحة الأدمن من جهاز آخر.
+        allUsers = {};
         updateStats();
         renderUserList();
-        showNotification('⚠️ تم استخدام البيانات المحلية (الخادم غير متصل)', '⚠️');
-      }
-    }
 
-    // =========================================================
-    //   🟢 ONLINE USERS
-    // =========================================================
-    async function loadOnlineUsers() {
-      try {
-        const apiUrl = getApiUrl('/online');
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-          cache: 'no-store'
-        });
-
-        const data = await response.json();
-
-        if (!data.success) {
-          console.warn('⚠️ فشل جلب المتصلين:', data);
-          return;
-        }
-
-        const count = document.getElementById('onlineUsersCount');
-        if (count) {
-          count.textContent = Number(data.count || (Array.isArray(data.users) ? data.users.length : 0));
-        }
-
-        // تحديث حالة المتصل لكل مستخدم في القائمة
-        const onlineIds = new Set(
-          (Array.isArray(data.users) ? data.users : []).map(user => String(user.userId))
+        showNotification(
+          '❌ تعذر الاتصال بالسيرفر — لم يتم تحميل حسابات محلية',
+          '❌'
         );
-
-        document.querySelectorAll('.user-item-premium').forEach(item => {
-          const idElement = item.querySelector('.user-id');
-          if (!idElement) return;
-
-          const text = idElement.textContent || '';
-          const match = text.match(/[🆔\s]*(\d+)/);
-          if (!match) return;
-
-          const userId = match[1];
-          const existing = item.querySelector('.online-status-dot');
-          if (existing) existing.remove();
-
-          if (onlineIds.has(userId)) {
-            const dot = document.createElement('span');
-            dot.className = 'online-status-dot';
-            dot.title = 'متصل الآن';
-            dot.textContent = '🟢';
-            dot.style.cssText = 'margin-inline-start:8px;font-size:11px;';
-            idElement.appendChild(dot);
-          }
-        });
-
-        return data.users || [];
-      } catch (error) {
-        console.warn('⚠️ فشل الاتصال بخدمة المتصلين:', error);
       }
     }
 
@@ -2249,14 +2212,11 @@
       document.getElementById('adminLogin').style.display = 'none';
       document.getElementById('adminPanel').classList.add('active');
       loadUsers();
-      loadOnlineUsers();
 
-      // تحديث المتصلين كل 10 ثواني
+      // تحديث قائمة الحسابات من MongoDB كل 15 ثانية
       setInterval(() => {
-        if (currentAdmin) {
-          loadOnlineUsers();
-        }
-      }, 10000);
+        if (currentAdmin) loadUsers();
+      }, 15000);
     }
 
     console.log('🛡️ SUPER PANEL | KBS ✕ RT7');
