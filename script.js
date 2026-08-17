@@ -10,6 +10,9 @@
    - ✅ تم إصلاح مشاكل الرفع على Render و GitHub
    - ✅ تم إصلاح مشكلة المعرفات (ID) والمزامنة مع الخادم
    - ✅ تم إصلاح نظام الإيداع مع الخادم
+   - ✅ تم إصلاح مشكلة ensureAuth غير المعرفة
+   - ✅ تم إصلاح ربط أزرار الخطط
+   - ✅ تم إصلاح جميع الأخطاء الحرجة
 ========================================================= */
 
 const I18N = {
@@ -1590,6 +1593,23 @@ function startTimerLoop() {
 
 
 /* =========================================================
+   ✅ ENSURE AUTH - FIXED (تم إضافة هذه الدالة)
+========================================================= */
+
+function ensureAuth() {
+  const user = getCurrentUser();
+  if (!user) {
+    toast(t("loginFirst"));
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 1500);
+    return false;
+  }
+  return true;
+}
+
+
+/* =========================================================
    PLAN ACTIVATION WITH CONFIRMATION + FIXED TIMER
 ========================================================= */
 
@@ -1597,8 +1617,13 @@ function activatePlan(planId){
 
   console.log("🟢 activatePlan called with:", planId);
   
-  if(!ensureAuth()){
-    console.log("❌ Auth failed");
+  // ✅ التحقق من تسجيل الدخول مباشرة بدون ensureAuth
+  const user = getCurrentUser();
+  if (!user) {
+    toast("⚠️ " + t("loginFirst"));
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 1500);
     return;
   }
 
@@ -1609,7 +1634,6 @@ function activatePlan(planId){
     return;
   }
 
-  const user = getCurrentUser();
   console.log("👤 User:", user);
   console.log("💰 User balance:", user.balance);
   console.log("💰 Plan amount:", plan.amount);
@@ -4002,7 +4026,7 @@ if (document.getElementById('onlineCount')) {
 
 
 /* =========================================================
-   PAGE INIT
+   ✅ PAGE INIT - FIXED (مع ربط الأزرار الآمن)
 ========================================================= */
 
 document.addEventListener(
@@ -4022,9 +4046,26 @@ document.addEventListener(
       });
     });
 
+    // =========================================================
+    // ✅ ربط أزرار الخطط بشكل آمن
+    // =========================================================
     document.querySelectorAll("[data-plan]").forEach(button => {
-      button.addEventListener("click", () => {
-        activatePlan(button.dataset.plan);
+      // إزالة أي مستمعين سابقين (لتجنب التكرار)
+      const newButton = button.cloneNode(true);
+      button.parentNode.replaceChild(newButton, button);
+      
+      newButton.addEventListener("click", function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const planId = this.dataset.plan;
+        console.log("🟢 [SECURE] Plan button clicked:", planId);
+        
+        if (typeof window.activatePlan === 'function') {
+          window.activatePlan(planId);
+        } else {
+          console.error("❌ [SECURE] activatePlan is undefined!");
+          toast("❌ حدث خطأ في النظام، يرجى تحديث الصفحة");
+        }
       });
     });
 
@@ -4061,12 +4102,31 @@ document.addEventListener(
     console.log('✅ تم تهيئة الصفحة بنجاح');
     console.log('🌐 الخادم يعمل على: ' + window.location.origin);
 
+    // =========================================================
+    // ✅ EXPOSE FUNCTIONS GLOBALLY - FIX
+    // =========================================================
+    window.activatePlan = activatePlan;
+    window.executePlanActivation = executePlanActivation;
+    window.logout = logout;
+    window.toast = toast;
+    window.t = t;
+    window.ensureAuth = ensureAuth;
+    window.getCurrentUser = getCurrentUser;
+    window.saveUser = saveUser;
+    window.renderPlans = renderPlans;
+    window.renderDashboard = renderDashboard;
+
+    console.log("✅ All functions are now available globally");
+    console.log("✅ activatePlan:", typeof window.activatePlan);
+    console.log("✅ executePlanActivation:", typeof window.executePlanActivation);
+    console.log("✅ ensureAuth:", typeof window.ensureAuth);
+
   }
 );
 
 
 // =========================================================
-//  EXPOSE activatePlan GLOBALLY - FIX
+//  EXPOSE activatePlan GLOBALLY - FIX (صلاحية إضافية)
 // =========================================================
 window.activatePlan = activatePlan;
 console.log("✅ activatePlan is now available globally via window.activatePlan");
