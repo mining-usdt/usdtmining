@@ -1724,59 +1724,24 @@
     // =========================================================
 //   ✅ SAVE USER TO DB - FIXED (مع دعم الخادم)
 // =========================================================
+// =========================================================
+//   ✅ SAVE USER TO DB - FIXED
+// =========================================================
 function saveUserToDB(user) {
   // حفظ في localStorage
   const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
   db[user.email] = user;
   localStorage.setItem('miningUsersDB', JSON.stringify(db));
 
-  // تحديث المستخدم الحالي إذا كان هو نفسه
   const currentUser = JSON.parse(localStorage.getItem('currentUser'));
   if (currentUser && currentUser.email === user.email) {
     localStorage.setItem('currentUser', JSON.stringify(user));
   }
 
-  // تحديث allUsers
   allUsers[user.email] = user;
-
-  // ✅ إرسال إلى الخادم عبر نقطة النهاية المخصصة للرصيد
-  const apiUrl = getApiUrl('/admin/balance');
-  fetch(apiUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      userId: user.userId || user._id,
-      email: user.email,
-      amount: 0, // سيتم تحديده في الدوال المنفصلة
-      type: 'deposit',
-      adminName: currentAdmin || 'أدمن'
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
-      console.log('✅ تم مزامنة المستخدم مع الخادم');
-      // تحديث البيانات المحلية من الخادم
-      if (data.user) {
-        allUsers[data.user.email] = data.user;
-        const db2 = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-        db2[data.user.email] = data.user;
-        localStorage.setItem('miningUsersDB', JSON.stringify(db2));
-        if (currentUser && currentUser.email === data.user.email) {
-          localStorage.setItem('currentUser', JSON.stringify(data.user));
-        }
-      }
-    } else {
-      console.warn('⚠️ فشل مزامنة المستخدم مع الخادم:', data.message);
-    }
-  })
-  .catch(err => console.warn('⚠️ فشل مزامنة المستخدم مع الخادم:', err));
 }
 
-    // =========================================================
-    //   ✅ ADMIN: DEPOSIT
-    // =========================================================
-    // =========================================================
+// =========================================================
 //   ✅ ADMIN: DEPOSIT - FIXED
 // =========================================================
 async function adminDeposit() {
@@ -1803,7 +1768,7 @@ async function adminDeposit() {
       cancelText: 'إلغاء'
     });
     
-    // ✅ تحديث الرصيد محلياً
+    // تحديث الرصيد محلياً
     selectedUser.balance = Number(selectedUser.balance || 0) + amount;
     if (!selectedUser.transactions) selectedUser.transactions = [];
     selectedUser.transactions.unshift({
@@ -1813,20 +1778,10 @@ async function adminDeposit() {
       status: '✅ مكتمل'
     });
     
-    // ✅ حفظ محلياً
-    const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-    db[selectedUser.email] = selectedUser;
-    localStorage.setItem('miningUsersDB', JSON.stringify(db));
+    // حفظ محلياً
+    saveUserToDB(selectedUser);
     
-    // ✅ تحديث المستخدم الحالي
-    const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-    if (currentUser && currentUser.email === selectedUser.email) {
-      localStorage.setItem('currentUser', JSON.stringify(selectedUser));
-    }
-    
-    allUsers[selectedUser.email] = selectedUser;
-    
-    // ✅ إرسال إلى الخادم عبر نقطة النهاية المخصصة
+    // إرسال إلى الخادم
     const apiUrl = getApiUrl('/admin/balance');
     fetch(apiUrl, {
       method: 'POST',
@@ -1843,25 +1798,105 @@ async function adminDeposit() {
     .then(data => {
       if (data.success && data.user) {
         console.log('✅ تم مزامنة الإيداع مع الخادم');
-        // تحديث البيانات من الخادم
-        allUsers[data.user.email] = data.user;
-        const db2 = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-        db2[data.user.email] = data.user;
-        localStorage.setItem('miningUsersDB', JSON.stringify(db2));
-        if (currentUser && currentUser.email === data.user.email) {
-          localStorage.setItem('currentUser', JSON.stringify(data.user));
-        }
         selectedUser = data.user;
+        allUsers[data.user.email] = data.user;
+        saveUserToDB(data.user);
         displayUserInfo(selectedUser);
         loadUsers();
+        showNotification(`✅ تم إيداع $${amount.toFixed(2)} بنجاح (تمت المزامنة)`, '💰');
       }
     })
-    .catch(err => console.warn('⚠️ فشل مزامنة الإيداع مع الخادم:', err));
+    .catch(err => {
+      console.warn('⚠️ فشل مزامنة الإيداع مع الخادم:', err);
+      showNotification(`✅ تم إيداع $${amount.toFixed(2)} محلياً (الخادم غير متصل)`, '💰');
+    });
     
     displayUserInfo(selectedUser);
     loadUsers();
     playSound('coin');
-    showNotification(`✅ تم إيداع $${amount.toFixed(2)} بنجاح`, '💰');
+    document.getElementById('adminAmount').value = '';
+    
+  } catch (e) {
+    playSound('click');
+  }
+}
+
+// =========================================================
+//   ✅ ADMIN: WITHDRAW - FIXED
+// =========================================================
+async function adminWithdraw() {
+  if (!selectedUser) {
+    showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
+    return;
+  }
+  const amount = getAmount();
+  if (!amount) return;
+  
+  if (Number(selectedUser.balance || 0) < amount) {
+    showNotification('❌ الرصيد غير كافٍ', '❌');
+    playSound('error');
+    return;
+  }
+  
+  try {
+    await showModal({
+      icon: '💸',
+      title: 'تأكيد السحب',
+      type: 'danger',
+      message: `هل أنت متأكد من سحب <strong>$${amount.toFixed(2)}</strong> من حساب <strong>${selectedUser.name}</strong>؟`,
+      details: {
+        '👤 المستخدم': selectedUser.name,
+        '🆔 المعرف': selectedUser.userId || selectedUser._id || '—',
+        '💸 المبلغ': '$' + amount.toFixed(2),
+        '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
+      },
+      confirmText: '💸 تأكيد السحب',
+      cancelText: 'إلغاء'
+    });
+    
+    selectedUser.balance = Number(selectedUser.balance || 0) - amount;
+    if (!selectedUser.transactions) selectedUser.transactions = [];
+    selectedUser.transactions.unshift({
+      type: '💸 سحب (أدمن)',
+      amount: -amount,
+      date: new Date().toISOString(),
+      status: '✅ مكتمل'
+    });
+    
+    saveUserToDB(selectedUser);
+    
+    const apiUrl = getApiUrl('/admin/balance');
+    fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: selectedUser.userId || selectedUser._id,
+        email: selectedUser.email,
+        amount: amount,
+        type: 'withdraw',
+        adminName: currentAdmin || 'أدمن'
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.user) {
+        console.log('✅ تم مزامنة السحب مع الخادم');
+        selectedUser = data.user;
+        allUsers[data.user.email] = data.user;
+        saveUserToDB(data.user);
+        displayUserInfo(selectedUser);
+        loadUsers();
+        showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح (تمت المزامنة)`, '💸');
+      }
+    })
+    .catch(err => {
+      console.warn('⚠️ فشل مزامنة السحب مع الخادم:', err);
+      showNotification(`✅ تم سحب $${amount.toFixed(2)} محلياً (الخادم غير متصل)`, '💸');
+    });
+    
+    displayUserInfo(selectedUser);
+    loadUsers();
+    playSound('coin');
     document.getElementById('adminAmount').value = '';
     
   } catch (e) {
