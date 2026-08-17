@@ -1787,7 +1787,7 @@ async function adminDeposit() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        userId: selectedUser.userId || selectedUser._id,
+        userId: selectedUser.userId,
         email: selectedUser.email,
         amount: amount,
         type: 'deposit',
