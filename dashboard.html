@@ -1018,11 +1018,12 @@ Email
 
   // ✅ دالة عرض المعرف مع ضمان وجوده
   function renderDashboardFixed() {
-    const user = JSON.parse(localStorage.getItem("currentUser"));
-    if (!user) {
-      window.location.href = "login.html";
-      return;
-    }
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  if (!user) {
+    window.location.href = "login.html";
+    return;
+  }
+  
 
     console.log("👤 المستخدم الحالي:", user);
     console.log("🆔 المعرف:", user.userId);
