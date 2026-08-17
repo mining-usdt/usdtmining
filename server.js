@@ -566,7 +566,7 @@ app.post("/api/login", async (req, res) => {
 });
 
 // --------------------------------------------
-//  👥 ADMIN - GET ALL USERS
+//  👥 ADMIN - GET ALL USERS (FIXED)
 // --------------------------------------------
 app.get("/api/admin/users", async (req, res) => {
   try {
@@ -579,40 +579,49 @@ app.get("/api/admin/users", async (req, res) => {
       User.countDocuments(),
     ]);
 
+    // تنسيق المستخدمين بحيث يكون لديهم userId و _id متاحين للواجهة
     const formattedUsers = users.map((user) => ({
       ...user,
       id: user.userId || user._id.toString(),
       userId: user.userId || user._id.toString(),
+      _id: user._id.toString(),
     }));
 
-    return res.json(
-      formatResponse(true, {
-        users: formattedUsers,
-        pagination: {
-          page,
-          limit,
-          total,
-          pages: Math.ceil(total / limit),
-        },
-      })
-    );
+    // ✅ الإصلاح: إعادة البيانات بالشكل الذي تتوقعه superpanel.html
+    return res.json({
+      success: true,
+      users: formattedUsers, // ✅ مباشرة هنا، وليس داخل data
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      },
+      timestamp: new Date().toISOString(),
+    });
   } catch (error) {
-    return handleError(res, error);
+    logError(error, "GET /api/admin/users");
+    return res.status(500).json({
+      success: false,
+      message: "❌ فشل جلب المستخدمين",
+      error: error.message,
+    });
   }
 });
 
 // --------------------------------------------
-//  👤 ADMIN - GET SINGLE USER
+//  👤 ADMIN - GET SINGLE USER (FIXED)
 // --------------------------------------------
 app.get("/api/admin/user/:identifier", async (req, res) => {
   try {
     const identifier = req.params.identifier.trim();
 
     if (!identifier) {
-      return res.status(400).json(formatResponse(false, null, "❌ المعرف مطلوب"));
+      return res.status(400).json({ success: false, message: "❌ المعرف مطلوب" });
     }
 
-    const user = await User.findOne({
+    // البحث باستخدام userId أو email أو referralCode
+    let user = await User.findOne({
       $or: [
         { userId: identifier },
         { email: identifier.toLowerCase() },
@@ -622,31 +631,46 @@ app.get("/api/admin/user/:identifier", async (req, res) => {
       .select("-password")
       .lean();
 
-    if (!user) {
-      return res.status(404).json(formatResponse(false, null, "❌ المستخدم غير موجود"));
+    // إذا لم يتم العثور، حاول البحث بـ _id
+    if (!user && mongoose.Types.ObjectId.isValid(identifier)) {
+      user = await User.findById(identifier).select("-password").lean();
     }
 
-    return res.json(
-      formatResponse(true, {
-        ...user,
-        id: user.userId || user._id.toString(),
-        userId: user.userId || user._id.toString(),
-      })
-    );
+    if (!user) {
+      return res.status(404).json({ success: false, message: "❌ المستخدم غير موجود" });
+    }
+
+    // تنسيق المستخدم
+    const formattedUser = {
+      ...user,
+      id: user.userId || user._id.toString(),
+      userId: user.userId || user._id.toString(),
+      _id: user._id.toString(),
+    };
+
+    return res.json({
+      success: true,
+      user: formattedUser,
+    });
   } catch (error) {
-    return handleError(res, error);
+    logError(error, "GET /api/admin/user/:identifier");
+    return res.status(500).json({
+      success: false,
+      message: "❌ حدث خطأ في جلب المستخدم",
+      error: error.message,
+    });
   }
 });
 
 // --------------------------------------------
-//  ✏️ ADMIN - UPDATE USER
+//  ✏️ ADMIN - UPDATE USER (FIXED)
 // --------------------------------------------
 app.put("/api/admin/user/:userId", async (req, res) => {
   try {
     const userId = req.params.userId.trim();
 
     if (!userId) {
-      return res.status(400).json(formatResponse(false, null, "❌ المعرف مطلوب"));
+      return res.status(400).json({ success: false, message: "❌ المعرف مطلوب" });
     }
 
     const updateData = { ...req.body };
@@ -656,62 +680,81 @@ app.put("/api/admin/user/:userId", async (req, res) => {
     delete updateData.userId;
     delete updateData.createdAt;
     delete updateData.updatedAt;
+    delete updateData.id;
 
     // التحقق من صحة البيانات
     if (updateData.balance !== undefined && updateData.balance < 0) {
-      return res.status(400).json(formatResponse(false, null, "❌ الرصيد لا يمكن أن يكون سالباً"));
+      return res.status(400).json({ success: false, message: "❌ الرصيد لا يمكن أن يكون سالباً" });
     }
 
     if (updateData.profit !== undefined && updateData.profit < 0) {
-      return res.status(400).json(formatResponse(false, null, "❌ الأرباح لا يمكن أن تكون سالبة"));
+      return res.status(400).json({ success: false, message: "❌ الأرباح لا يمكن أن تكون سالبة" });
     }
 
-    const user = await User.findOneAndUpdate({ userId }, { $set: updateData }, { new: true, runValidators: true })
-      .select("-password")
-      .lean();
+    // البحث عن المستخدم
+    let user = await User.findOne({ userId });
+    if (!user && mongoose.Types.ObjectId.isValid(userId)) {
+      user = await User.findById(userId);
+    }
 
     if (!user) {
-      return res.status(404).json(formatResponse(false, null, "❌ المستخدم غير موجود"));
+      return res.status(404).json({ success: false, message: "❌ المستخدم غير موجود" });
     }
 
-    log(`User updated: ${user.name} (${user.email})`, "SUCCESS");
+    // تحديث المستخدم
+    const updatedUser = await User.findByIdAndUpdate(
+      user._id,
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select("-password").lean();
 
-    return res.json(
-      formatResponse(true, {
-        ...user,
-        id: user.userId || user._id.toString(),
-        userId: user.userId || user._id.toString(),
-      })
-    );
+    const formattedUser = {
+      ...updatedUser,
+      id: updatedUser.userId || updatedUser._id.toString(),
+      userId: updatedUser.userId || updatedUser._id.toString(),
+      _id: updatedUser._id.toString(),
+    };
+
+    log(`User updated: ${updatedUser.name} (${updatedUser.email})`, "SUCCESS");
+
+    return res.json({
+      success: true,
+      user: formattedUser,
+    });
   } catch (error) {
-    return handleError(res, error);
+    logError(error, "PUT /api/admin/user/:userId");
+    return res.status(500).json({
+      success: false,
+      message: "❌ حدث خطأ في تحديث المستخدم",
+      error: error.message,
+    });
   }
 });
 
 // --------------------------------------------
-//  💰 ADMIN - BALANCE (DEPOSIT / WITHDRAW)
+//  💰 ADMIN - BALANCE (DEPOSIT / WITHDRAW) (FIXED)
 // --------------------------------------------
 app.post("/api/admin/balance", async (req, res) => {
   try {
     const { userId, email, amount, type, adminName = "أدمن" } = req.body;
 
     if (!userId && !email) {
-      return res.status(400).json(formatResponse(false, null, "❌ المعرف أو البريد مطلوب"));
+      return res.status(400).json({ success: false, message: "❌ المعرف أو البريد مطلوب" });
     }
 
     if (!amount || amount <= 0 || !Number.isFinite(amount)) {
-      return res.status(400).json(formatResponse(false, null, "❌ المبلغ غير صالح"));
+      return res.status(400).json({ success: false, message: "❌ المبلغ غير صالح" });
     }
 
     if (!["deposit", "withdraw"].includes(type)) {
-      return res.status(400).json(formatResponse(false, null, "❌ نوع العملية غير صالح"));
+      return res.status(400).json({ success: false, message: "❌ نوع العملية غير صالح" });
     }
 
     // البحث عن المستخدم
     let user = null;
     if (userId) {
       user = await User.findOne({ userId });
-      if (!user && mongoose.isValidObjectId(userId)) {
+      if (!user && mongoose.Types.ObjectId.isValid(userId)) {
         user = await User.findById(userId);
       }
     }
@@ -720,7 +763,7 @@ app.post("/api/admin/balance", async (req, res) => {
     }
 
     if (!user) {
-      return res.status(404).json(formatResponse(false, null, "❌ المستخدم غير موجود"));
+      return res.status(404).json({ success: false, message: "❌ المستخدم غير موجود" });
     }
 
     const oldBalance = Number(user.balance || 0);
@@ -734,7 +777,7 @@ app.post("/api/admin/balance", async (req, res) => {
       transactionType = "💰 إيداع (أدمن)";
     } else {
       if (oldBalance < amount) {
-        return res.status(400).json(formatResponse(false, null, "❌ الرصيد غير كافٍ"));
+        return res.status(400).json({ success: false, message: "❌ الرصيد غير كافٍ" });
       }
       newBalance = oldBalance - amount;
       transactionAmount = -amount;
@@ -749,7 +792,7 @@ app.post("/api/admin/balance", async (req, res) => {
       note: `بواسطة الأدمن ${adminName}`,
     };
 
-    // تحديث المستخدم باستخدام updateOne (أكثر كفاءة)
+    // تحديث المستخدم
     const result = await User.updateOne(
       { _id: user._id },
       {
@@ -759,38 +802,47 @@ app.post("/api/admin/balance", async (req, res) => {
     );
 
     if (!result.acknowledged || result.matchedCount !== 1) {
-      return res.status(500).json(formatResponse(false, null, "❌ لم يتم تحديث الحساب"));
+      return res.status(500).json({ success: false, message: "❌ لم يتم تحديث الحساب" });
     }
 
     // جلب البيانات المحدثة
     const updatedUser = await User.findById(user._id).select("-password").lean();
+    const formattedUser = {
+      ...updatedUser,
+      id: updatedUser.userId || updatedUser._id.toString(),
+      userId: updatedUser.userId || updatedUser._id.toString(),
+      _id: updatedUser._id.toString(),
+    };
 
     log(`Balance ${type} for ${user.name}: $${amount} (New balance: $${newBalance})`, "SUCCESS");
 
-    return res.json(
-      formatResponse(true, {
-        ...updatedUser,
-        id: updatedUser.userId || updatedUser._id.toString(),
-        userId: updatedUser.userId || updatedUser._id.toString(),
-      })
-    );
+    return res.json({
+      success: true,
+      user: formattedUser,
+      message: `✅ تم ${type === 'deposit' ? 'إيداع' : 'سحب'} $${amount.toFixed(2)} بنجاح`,
+    });
   } catch (error) {
-    return handleError(res, error);
+    logError(error, "POST /api/admin/balance");
+    return res.status(500).json({
+      success: false,
+      message: "❌ حدث خطأ في معالجة العملية",
+      error: error.message,
+    });
   }
 });
 
 // --------------------------------------------
-//  📋 ADMIN - TRANSACTIONS
+//  📋 ADMIN - TRANSACTIONS (FIXED)
 // --------------------------------------------
 app.get("/api/admin/user/:identifier/transactions", async (req, res) => {
   try {
     const identifier = req.params.identifier.trim();
 
     if (!identifier) {
-      return res.status(400).json(formatResponse(false, null, "❌ المعرف مطلوب"));
+      return res.status(400).json({ success: false, message: "❌ المعرف مطلوب" });
     }
 
-    const user = await User.findOne({
+    let user = await User.findOne({
       $or: [
         { userId: identifier },
         { email: identifier.toLowerCase() },
@@ -798,48 +850,60 @@ app.get("/api/admin/user/:identifier/transactions", async (req, res) => {
       ],
     }).lean();
 
-    if (!user) {
-      return res.status(404).json(formatResponse(false, null, "❌ المستخدم غير موجود"));
+    if (!user && mongoose.Types.ObjectId.isValid(identifier)) {
+      user = await User.findById(identifier).lean();
     }
 
-    return res.json(
-      formatResponse(true, {
-        userId: user.userId,
-        name: user.name,
-        email: user.email,
-        transactions: user.transactions || [],
-        totalTransactions: (user.transactions || []).length,
-      })
-    );
+    if (!user) {
+      return res.status(404).json({ success: false, message: "❌ المستخدم غير موجود" });
+    }
+
+    return res.json({
+      success: true,
+      userId: user.userId,
+      name: user.name,
+      email: user.email,
+      transactions: user.transactions || [],
+      totalTransactions: (user.transactions || []).length,
+    });
   } catch (error) {
-    return handleError(res, error);
+    logError(error, "GET /api/admin/user/:identifier/transactions");
+    return res.status(500).json({
+      success: false,
+      message: "❌ حدث خطأ في جلب العمليات",
+      error: error.message,
+    });
   }
 });
 
 // --------------------------------------------
-//  🚀 ACTIVATE PLAN
+//  🚀 ACTIVATE PLAN (FIXED)
 // --------------------------------------------
 app.post("/api/activate-plan", async (req, res) => {
   try {
     const { userId, planId, planAmount, planRate, planDays } = req.body;
 
     if (!userId || !planId) {
-      return res.status(400).json(formatResponse(false, null, "❌ المعرف والخطة مطلوبان"));
+      return res.status(400).json({ success: false, message: "❌ المعرف والخطة مطلوبان" });
     }
 
     if (!planAmount || planAmount <= 0 || !planRate || planRate <= 0) {
-      return res.status(400).json(formatResponse(false, null, "❌ بيانات الخطة غير صالحة"));
+      return res.status(400).json({ success: false, message: "❌ بيانات الخطة غير صالحة" });
     }
 
-    const user = await User.findOne({ userId });
+    let user = await User.findOne({ userId });
+    if (!user && mongoose.Types.ObjectId.isValid(userId)) {
+      user = await User.findById(userId);
+    }
+
     if (!user) {
-      return res.status(404).json(formatResponse(false, null, "❌ المستخدم غير موجود"));
+      return res.status(404).json({ success: false, message: "❌ المستخدم غير موجود" });
     }
 
     const currentBalance = Number(user.balance || 0);
     if (currentBalance < planAmount) {
       return res.status(400).json(
-        formatResponse(false, null, `❌ الرصيد غير كافٍ - رصيدك: $${currentBalance.toFixed(2)} — المطلوب: $${planAmount}`)
+        { success: false, message: `❌ الرصيد غير كافٍ - رصيدك: $${currentBalance.toFixed(2)} — المطلوب: $${planAmount}` }
       );
     }
 
@@ -864,39 +928,41 @@ app.post("/api/activate-plan", async (req, res) => {
 
     log(`Plan activated for ${user.name}: ${planId} ($${planAmount})`, "SUCCESS");
 
-    return res.json(
-      formatResponse(true, {
-        userId: user.userId,
-        name: user.name,
-        email: user.email,
-        balance: user.balance,
-        profit: user.profit,
-        plan: user.plan,
-        planAmount: user.planAmount,
-        planRate: user.planRate,
-        planStart: user.planStart,
-        timerStart: user.timerStart,
-        referralCode: user.referralCode,
-        transactions: user.transactions.slice(0, 20),
-      })
-    );
+    const formattedUser = {
+      ...user.toObject(),
+      id: user.userId,
+      _id: user._id.toString(),
+    };
+    delete formattedUser.password;
+    delete formattedUser.__v;
+
+    return res.json({
+      success: true,
+      user: formattedUser,
+      message: `✅ تم تفعيل خطة ${planId} بنجاح`,
+    });
   } catch (error) {
-    return handleError(res, error);
+    logError(error, "POST /api/activate-plan");
+    return res.status(500).json({
+      success: false,
+      message: "❌ حدث خطأ في تفعيل الخطة",
+      error: error.message,
+    });
   }
 });
 
 // --------------------------------------------
-//  ❌ DELETE USER (ADMIN)
+//  ❌ DELETE USER (ADMIN) (FIXED)
 // --------------------------------------------
 app.delete("/api/admin/user/:identifier", async (req, res) => {
   try {
     const identifier = req.params.identifier.trim();
 
     if (!identifier) {
-      return res.status(400).json(formatResponse(false, null, "❌ المعرف مطلوب"));
+      return res.status(400).json({ success: false, message: "❌ المعرف مطلوب" });
     }
 
-    const user = await User.findOne({
+    let user = await User.findOne({
       $or: [
         { userId: identifier },
         { email: identifier.toLowerCase() },
@@ -904,22 +970,38 @@ app.delete("/api/admin/user/:identifier", async (req, res) => {
       ],
     });
 
-    if (!user) {
-      return res.status(404).json(formatResponse(false, null, "❌ المستخدم غير موجود"));
+    if (!user && mongoose.Types.ObjectId.isValid(identifier)) {
+      user = await User.findById(identifier);
     }
 
+    if (!user) {
+      return res.status(404).json({ success: false, message: "❌ المستخدم غير موجود" });
+    }
+
+    const userInfo = { userId: user.userId, email: user.email, name: user.name };
     await User.deleteOne({ _id: user._id });
 
     log(`User deleted: ${user.name} (${user.email})`, "WARNING");
 
-    return res.json(formatResponse(true, { deleted: true, userId: user.userId, email: user.email }));
+    return res.json({
+      success: true,
+      deleted: true,
+      userId: userInfo.userId,
+      email: userInfo.email,
+      message: `✅ تم حذف المستخدم ${userInfo.name} بنجاح`,
+    });
   } catch (error) {
-    return handleError(res, error);
+    logError(error, "DELETE /api/admin/user/:identifier");
+    return res.status(500).json({
+      success: false,
+      message: "❌ حدث خطأ في حذف المستخدم",
+      error: error.message,
+    });
   }
 });
 
 // --------------------------------------------
-//  📊 ADMIN STATS
+//  📊 ADMIN STATS (FIXED)
 // --------------------------------------------
 app.get("/api/admin/stats", async (req, res) => {
   try {
@@ -927,20 +1009,24 @@ app.get("/api/admin/stats", async (req, res) => {
       User.countDocuments(),
       User.aggregate([{ $group: { _id: null, total: { $sum: "$balance" } } }]),
       User.aggregate([{ $group: { _id: null, total: { $sum: "$profit" } } }]),
-      User.countDocuments({ plan: { $ne: null } }),
+      User.countDocuments({ plan: { $ne: null, $nin: [null, "—", ""] } }),
     ]);
 
-    return res.json(
-      formatResponse(true, {
-        totalUsers,
-        totalBalance: totalBalance[0]?.total || 0,
-        totalProfit: totalProfit[0]?.total || 0,
-        activePlans,
-        timestamp: new Date().toISOString(),
-      })
-    );
+    return res.json({
+      success: true,
+      totalUsers,
+      totalBalance: totalBalance[0]?.total || 0,
+      totalProfit: totalProfit[0]?.total || 0,
+      activePlans,
+      timestamp: new Date().toISOString(),
+    });
   } catch (error) {
-    return handleError(res, error);
+    logError(error, "GET /api/admin/stats");
+    return res.status(500).json({
+      success: false,
+      message: "❌ حدث خطأ في جلب الإحصائيات",
+      error: error.message,
+    });
   }
 });
 
@@ -971,13 +1057,13 @@ app.get("/:page.html", (req, res) => {
 
 // 404 - Not Found
 app.use((req, res) => {
-  res.status(404).json(formatResponse(false, null, "❌ المسار غير موجود"));
+  res.status(404).json({ success: false, message: "❌ المسار غير موجود" });
 });
 
 // Global error handler
 app.use((err, req, res, next) => {
   logError(err, "Unhandled Error");
-  res.status(500).json(formatResponse(false, null, "❌ حدث خطأ غير متوقع في الخادم"));
+  res.status(500).json({ success: false, message: "❌ حدث خطأ غير متوقع في الخادم" });
 });
 
 // ============================================================
