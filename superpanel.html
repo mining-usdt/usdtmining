@@ -1032,6 +1032,26 @@
       letter-spacing: 1px;
     }
 
+    .sync-btn {
+      background: linear-gradient(135deg, #32b8ff, #0088cc) !important;
+      color: white !important;
+      border-color: rgba(50, 184, 255, 0.3) !important;
+    }
+
+    .sync-btn:hover {
+      box-shadow: 0 0 40px rgba(50, 184, 255, 0.3) !important;
+    }
+
+    .copy-id-btn {
+      background: linear-gradient(135deg, #b388ff, #7c4dff) !important;
+      color: white !important;
+      border-color: rgba(179, 136, 255, 0.3) !important;
+    }
+
+    .copy-id-btn:hover {
+      box-shadow: 0 0 40px rgba(179, 136, 255, 0.3) !important;
+    }
+
     @media (max-width: 1050px) {
       .admin-stats-premium {
         grid-template-columns: repeat(2, 1fr);
@@ -1191,6 +1211,9 @@
         <button onclick="refreshData()">
           <span>🔄</span> تحديث
         </button>
+        <button onclick="syncWithServer()" class="sync-btn">
+          <span>🌐</span> مزامنة مع الخادم
+        </button>
         <button onclick="exportData()">
           <span>📥</span> تصدير
         </button>
@@ -1232,12 +1255,17 @@
           <span class="badge">VIP</span>
         </div>
 
-        <label>🆔 معرف المستخدم (ID)</label>
-        <input type="text" id="adminUserId" placeholder="مثال: 497198458" dir="ltr">
+        <label>🆔 معرف المستخدم (ID) أو البريد الإلكتروني أو كود الدعوة</label>
+        <input type="text" id="adminUserId" placeholder="أدخل ID أو البريد أو كود الدعوة" dir="ltr">
 
-        <button class="search-btn" onclick="searchUser()">
-          <span>🔎</span> بحث عن المستخدم
-        </button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+          <button class="search-btn" onclick="searchUser()" style="flex:1;">
+            <span>🔎</span> بحث
+          </button>
+          <button class="search-btn copy-id-btn" onclick="copyUserId()" style="flex:0.5;min-width:80px;">
+            <span>📋</span> نسخ ID
+          </button>
+        </div>
 
         <div class="user-info-premium" id="userInfoDisplay">
           <div class="info-grid">
@@ -1488,7 +1516,7 @@
     ];
 
     // =========================================================
-    //   ✅ API URL (يعمل محلياً وعبر Render)
+    //   ✅ API URL
     // =========================================================
     function getApiUrl(endpoint) {
       const hostname = window.location.hostname;
@@ -1538,61 +1566,76 @@
     }
 
     // =========================================================
-    //   ✅ LOAD USERS FROM SERVER (MongoDB) + LocalStorage
+    //   ✅ LOAD USERS
     // =========================================================
     async function loadUsers() {
       try {
-        // ✅ جلب المستخدمين من الخادم (MongoDB)
         const apiUrl = getApiUrl('/admin/users');
         const response = await fetch(apiUrl);
         const data = await response.json();
 
-        if (data.success && data.users) {
-          // تحويل المصفوفة إلى كائن باستخدام البريد الإلكتروني كمفتاح
-          allUsers = {};
+        let serverUsers = {};
+        if (data.success && data.users && data.users.length > 0) {
           data.users.forEach(user => {
-            allUsers[user.email] = user;
+            serverUsers[user.email] = user;
           });
           console.log('✅ تم جلب ' + data.users.length + ' مستخدم من الخادم');
         } else {
-          // إذا فشل الخادم، استخدم localStorage
-          console.warn('⚠️ فشل جلب المستخدمين من الخادم، استخدام localStorage');
-          try {
-            allUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-          } catch {
-            allUsers = {};
-          }
+          console.warn('⚠️ فشل جلب المستخدمين من الخادم أو لا يوجد مستخدمين');
         }
+
+        let localUsers = {};
+        try {
+          localUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+          console.log('📦 تم جلب ' + Object.keys(localUsers).length + ' مستخدم من localStorage');
+        } catch (e) {
+          console.warn('⚠️ فشل قراءة localStorage');
+        }
+
+        const merged = { ...localUsers, ...serverUsers };
+        Object.keys(localUsers).forEach(email => {
+          if (!serverUsers[email]) {
+            merged[email] = localUsers[email];
+          }
+        });
+
+        allUsers = merged;
+        console.log('📊 إجمالي المستخدمين بعد الدمج:', Object.keys(allUsers).length);
+
+        updateStats();
+        renderUserList();
+
       } catch (error) {
-        console.warn('⚠️ خطأ في الاتصال بالخادم، استخدام localStorage:', error);
+        console.warn('⚠️ خطأ في الاتصال بالخادم، استخدام localStorage فقط:', error);
         try {
           allUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
         } catch {
           allUsers = {};
         }
+        updateStats();
+        renderUserList();
       }
-
-      // ✅ دمج المستخدمين من localStorage مع المستخدمين من الخادم
-      try {
-        const localUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-        // دمج بحيث لا يتم فقدان أي مستخدم
-        Object.keys(localUsers).forEach(key => {
-          if (!allUsers[key]) {
-            allUsers[key] = localUsers[key];
-          }
-        });
-      } catch (e) {}
-
-      updateStats();
-      renderUserList();
     }
 
+    async function syncWithServer() {
+      showNotification('🔄 جاري المزامنة مع الخادم...', '🔄');
+      await loadUsers();
+      showNotification('✅ تمت المزامنة بنجاح — ' + Object.keys(allUsers).length + ' مستخدم', '✅');
+      playSound('success');
+    }
+
+    // =========================================================
+    //   ✅ REFRESH
+    // =========================================================
     function refreshData() {
       loadUsers();
       playSound('click');
       showNotification('🔄 تم تحديث البيانات', '🔄');
     }
 
+    // =========================================================
+    //   ✅ EXPORT
+    // =========================================================
     function exportData() {
       const data = JSON.stringify(allUsers, null, 2);
       const blob = new Blob([data], { type: 'application/json' });
@@ -1647,7 +1690,7 @@
         return bDate.localeCompare(aDate);
       });
       container.innerHTML = sorted.map(user => `
-        <div class="user-item-premium" onclick="selectUserById('${user.userId || user.email}')">
+        <div class="user-item-premium" onclick="selectUser('${user.userId || user.email}')">
           <span class="user-id">🆔 ${user.userId || '—'}</span>
           <span class="user-name">${user.name || 'غير معروف'}</span>
           <span class="user-balance">$${Number(user.balance || 0).toFixed(2)}</span>
@@ -1656,43 +1699,61 @@
     }
 
     // =========================================================
-    //   ✅ SEARCH USER
+    //   ✅ SEARCH USER - FIXED (يبحث بـ ID، البريد، وكود الدعوة)
     // =========================================================
     function searchUser() {
-      const userId = document.getElementById('adminUserId').value.trim();
-      if (!userId) {
-        showNotification('⚠️ أدخل معرف المستخدم أولاً', '⚠️');
+      const identifier = document.getElementById('adminUserId').value.trim();
+      if (!identifier) {
+        showNotification('⚠️ أدخل المعرف أو البريد أو كود الدعوة', '⚠️');
         return;
       }
-      selectUserById(userId);
+      selectUser(identifier);
       playSound('click');
     }
 
-    function setAmount(val) {
-      document.getElementById('adminAmount').value = val;
-      playSound('click');
-    }
-
-    // =========================================================
-    //   ✅ SELECT USER BY ID
-    // =========================================================
-    function selectUserById(id) {
+    function selectUser(identifier) {
       const users = Object.values(allUsers);
-      const user = users.find(u => u.userId === id || u.email === id);
+      // ✅ البحث بأكثر من طريقة
+      const user = users.find(u =>
+        u.userId === identifier ||
+        u.userId === String(identifier) ||
+        u.email === identifier ||
+        u.email === identifier.toLowerCase() ||
+        u.referralCode === identifier ||
+        u.referralCode === identifier.toUpperCase()
+      );
+
       if (!user) {
-        showNotification('❌ لم يتم العثور على مستخدم بهذا المعرف', '❌');
+        showNotification('❌ لم يتم العثور على مستخدم', '❌');
         document.getElementById('userInfoDisplay').classList.remove('active');
         document.getElementById('adminActions').classList.remove('active');
         selectedUser = null;
         playSound('error');
         return;
       }
+
       selectedUser = user;
       displayUserInfo(user);
       document.getElementById('adminActions').classList.add('active');
       document.getElementById('adminUserId').value = user.userId || '';
       playSound('success');
       showNotification(`✅ تم العثور على ${user.name}`, '✅');
+    }
+
+    // =========================================================
+    //   ✅ COPY USER ID
+    // =========================================================
+    function copyUserId() {
+      if (!selectedUser) {
+        showNotification('⚠️ لا يوجد مستخدم', '⚠️');
+        return;
+      }
+      navigator.clipboard.writeText(selectedUser.userId || '').then(() => {
+        showNotification(`✅ تم نسخ المعرف: ${selectedUser.userId}`, '📋');
+        playSound('click');
+      }).catch(() => {
+        showNotification(`✅ ${selectedUser.userId}`, '📋');
+      });
     }
 
     // =========================================================
@@ -1711,7 +1772,6 @@
       document.getElementById('infoTransactions').textContent = (user.transactions || []).length;
       document.getElementById('infoReferral').textContent = user.referralCode || '—';
 
-      // عرض التايمر المتبقي
       let timerDisplay = '—';
       if (user.plan && user.plan !== '—' && user.timerStart) {
         const now = Date.now();
@@ -1734,8 +1794,13 @@
     }
 
     // =========================================================
-    //   ✅ GET AMOUNT
+    //   ✅ SET AMOUNT
     // =========================================================
+    function setAmount(val) {
+      document.getElementById('adminAmount').value = val;
+      playSound('click');
+    }
+
     function getAmount() {
       const val = parseFloat(document.getElementById('adminAmount').value);
       if (isNaN(val) || val <= 0) {
@@ -1747,22 +1812,34 @@
     }
 
     // =========================================================
-    //   ✅ SAVE USER TO DB (LocalStorage + Server)
+    //   ✅ SAVE USER TO DB
     // =========================================================
     function saveUserToDB(user) {
-      // حفظ في localStorage
       const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
       db[user.email] = user;
       localStorage.setItem('miningUsersDB', JSON.stringify(db));
 
-      // حفظ في currentUser إذا كان هو نفسه
       const currentUser = JSON.parse(localStorage.getItem('currentUser'));
       if (currentUser && currentUser.email === user.email) {
         localStorage.setItem('currentUser', JSON.stringify(user));
       }
 
-      // تحديث allUsers
       allUsers[user.email] = user;
+
+      // ✅ مزامنة مع الخادم
+      const apiUrl = getApiUrl('/admin/user/' + user.userId);
+      fetch(apiUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          console.log('✅ تم مزامنة المستخدم مع الخادم');
+        }
+      })
+      .catch(err => console.warn('⚠️ فشل مزامنة المستخدم مع الخادم:', err));
     }
 
     // =========================================================
@@ -1881,14 +1958,22 @@
           confirmText: '🗑️ حذف نهائي',
           cancelText: 'إلغاء'
         });
+        // حذف من LocalStorage
         const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
         delete db[selectedUser.email];
         localStorage.setItem('miningUsersDB', JSON.stringify(db));
+
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         if (currentUser && currentUser.email === selectedUser.email) {
           localStorage.removeItem('currentUser');
         }
+
         delete allUsers[selectedUser.email];
+
+        // حذف من الخادم
+        const apiUrl = getApiUrl('/admin/user/' + selectedUser.userId);
+        await fetch(apiUrl, { method: 'DELETE' });
+
         selectedUser = null;
         document.getElementById('userInfoDisplay').classList.remove('active');
         document.getElementById('adminActions').classList.remove('active');
