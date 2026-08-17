@@ -677,3 +677,108 @@ app.listen(PORT, () => {
   console.log(`📡 API available at: http://localhost:${PORT}/api`);
   console.log(`👥 Users endpoint: http://localhost:${PORT}/api/admin/users`);
 });
+// =========================================================
+// ✅ API: ADMIN - UPDATE BALANCE (DEPOSIT/WITHDRAW) - FIXED
+// =========================================================
+
+app.post("/api/admin/balance", async (req, res) => {
+  try {
+    const { userId, email, amount, type } = req.body;
+    
+    if (!userId && !email) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ المعرف أو البريد مطلوب"
+      });
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ المبلغ غير صالح"
+      });
+    }
+
+    if (type !== "deposit" && type !== "withdraw") {
+      return res.status(400).json({
+        success: false,
+        message: "❌ نوع العملية غير صالح"
+      });
+    }
+
+    let user;
+    if (userId) {
+      user = await User.findOne({ userId });
+    } else {
+      user = await User.findOne({ email });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ المستخدم غير موجود"
+      });
+    }
+
+    let balanceChanged = 0;
+    let txType = "";
+    let txStatus = "✅ مكتمل";
+
+    if (type === "deposit") {
+      user.balance = Number(user.balance || 0) + amount;
+      balanceChanged = amount;
+      txType = "💰 إيداع (أدمن)";
+    } else if (type === "withdraw") {
+      if (Number(user.balance || 0) < amount) {
+        return res.status(400).json({
+          success: false,
+          message: "❌ الرصيد غير كافٍ"
+        });
+      }
+      user.balance = Number(user.balance || 0) - amount;
+      balanceChanged = -amount;
+      txType = "💸 سحب (أدمن)";
+    }
+
+    if (!user.transactions) user.transactions = [];
+    user.transactions.unshift({
+      type: txType,
+      amount: balanceChanged,
+      date: new Date().toISOString(),
+      status: txStatus,
+      note: `بواسطة الأدمن ${req.body.adminName || 'غير معروف'}`
+    });
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: `✅ تم ${type === 'deposit' ? 'الإيداع' : 'السحب'} بنجاح`,
+      user: {
+        userId: user.userId,
+        name: user.name,
+        email: user.email,
+        balance: user.balance,
+        profit: user.profit,
+        plan: user.plan,
+        planAmount: user.planAmount,
+        planRate: user.planRate,
+        planDays: user.planDays,
+        planStart: user.planStart,
+        timerStart: user.timerStart,
+        referralCode: user.referralCode,
+        referredBy: user.referredBy,
+        referralBonus: user.referralBonus,
+        referredUsers: user.referredUsers,
+        transactions: user.transactions
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Admin balance error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم"
+    });
+  }
+});
