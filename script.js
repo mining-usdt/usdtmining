@@ -7,6 +7,7 @@
    - Live Crypto Prices from CoinGecko
    - 24-hour Timer with auto-profit addition
    - Celebration on plan activation
+   - ✅ تم إصلاح مشاكل الرفع على Render و GitHub
 ========================================================= */
 
 const I18N = {
@@ -1100,18 +1101,18 @@ const PLANS = [
 
 
 /* =========================================================
-   UNIQUE USER ID GENERATOR
+   UNIQUE USER ID GENERATOR - FIXED
 ========================================================= */
 
-fetch("http://localhost:3000/register", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(user)
-})
-.then(res => res.json())
-.then(data => {
-  console.log("User saved in DB:", data);
-});
+function generateUniqueUserId() {
+  const users = getUsers();
+  const existingIds = new Set();
+
+  Object.values(users).forEach(user => {
+    if (user.userId) {
+      existingIds.add(user.userId);
+    }
+  });
 
   let newId;
   let attempts = 0;
@@ -1127,7 +1128,22 @@ fetch("http://localhost:3000/register", {
   }
 
   return newId;
+}
 
+
+/* =========================================================
+   GET USERS - FIXED
+========================================================= */
+
+function getUsers() {
+  try {
+    return JSON.parse(
+      localStorage.getItem("miningUsersDB")
+    ) || {};
+  } catch {
+    return {};
+  }
+}
 
 
 /* =========================================================
@@ -1245,30 +1261,54 @@ function getCurrentUser(){
 }
 
 
-
-
+/* =========================================================
+   ✅ SAVE USER - FIXED (مع دعم الخادم)
+========================================================= */
 
 function saveUser(user){
+  if (!user) {
+    console.error('❌ لا يوجد مستخدم للحفظ');
+    return;
+  }
 
   if (!user.userId) {
     user.userId = generateUniqueUserId();
+    console.log('✅ تم إنشاء معرف جديد:', user.userId);
   }
   
   if (!user.referralCode) {
     user.referralCode = generateReferralCode(user.userId);
+    console.log('✅ تم إنشاء كود دعوة:', user.referralCode);
   }
 
-  fetch("http://localhost:3000/register", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(user)
-})
-.then(res => res.json())
-.then(data => {
-  console.log("تم إنشاء المستخدم:", data);
-});
+  // حفظ محلياً
+  localStorage.setItem("currentUser", JSON.stringify(user));
 
+  const database = getUsers();
+  database[user.email] = user;
+  localStorage.setItem("miningUsersDB", JSON.stringify(database));
 
+  // ✅ إرسال إلى الخادم (باستخدام المسار الصحيح)
+  const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000/api/register'
+    : '/api/register';
+    
+  fetch(apiUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(user)
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      console.log("✅ تم حفظ المستخدم في الخادم:", data);
+    } else {
+      console.warn("⚠️ فشل حفظ المستخدم في الخادم:", data.message);
+    }
+  })
+  .catch(err => {
+    console.warn("⚠️ الخادم غير متصل، تم الحفظ محلياً فقط:", err);
+  });
 
 }
 
@@ -1559,7 +1599,7 @@ function activatePlan(planId){
 ========================================================= */
 
 function executePlanActivation(plan, user) {
-  console.log("✅ Executing plan activation for:", plan.id); // ✅ plan.id مش user.plan.id
+  console.log("✅ Executing plan activation for:", plan.id);
 
   // ✅ خصم المبلغ من الرصيد
   user.balance = Number(user.balance || 0) - plan.amount;
@@ -2504,7 +2544,7 @@ function setupDepositForm(){
       // ✅ نظام العمولة 20% للمدعو (إذا كان هذا المستخدم مدعو)
       // =========================================================
       if (user.referredBy) {
-        
+        const allUsers = getUsers();
         const referrer = allUsers[user.referredBy];
         
         if (referrer) {
@@ -2691,295 +2731,189 @@ function setupWithdrawForm(){
 
 
 /* =========================================================
-   REGISTER (WITH REFERRAL)
+   ✅ REGISTER - FIXED (مع دعم الخادم)
 ========================================================= */
 
-function setupRegister(){
+function setupRegister() {
+  const form = document.getElementById("registerForm");
 
-  const form =
-    document.getElementById(
-      "registerForm"
-    );
-
-  if(!form){
-
+  if (!form) {
+    console.warn('⚠️ نموذج التسجيل غير موجود');
     return;
-
   }
 
+  console.log('✅ تم العثور على نموذج التسجيل');
 
-  form.addEventListener(
-    "submit",
-    event => {
+  form.addEventListener("submit", function(event) {
+    event.preventDefault();
 
-      event.preventDefault();
+    const name = document.getElementById("regName")?.value.trim();
+    const email = document.getElementById("regEmail")?.value.trim().toLowerCase();
+    const password = document.getElementById("regPassword")?.value;
+    const confirm = document.getElementById("regConfirm")?.value;
+    const referralCode = document.getElementById("regReferral")?.value.trim().toUpperCase();
 
-
-      const name =
-        document.getElementById(
-          "regName"
-        )?.value
-          .trim();
-
-
-      const email =
-        document.getElementById(
-          "regEmail"
-        )?.value
-          .trim()
-          .toLowerCase();
-
-
-      const password =
-        document.getElementById(
-          "regPassword"
-        )?.value;
-
-
-      const confirm =
-        document.getElementById(
-          "regConfirm"
-        )?.value;
-        
-      const referralCode =
-        document.getElementById(
-          "regReferral"
-        )?.value
-          .trim()
-          .toUpperCase();
-
-
-      if(
-        password !== confirm
-      ){
-
-        toast(
-          t("wrongConfirm")
-        );
-
-        return;
-
-      }
-
-
-      const database =
-        getUsers();
-
-
-      if(database[email]){
-
-        toast(
-          t("already")
-        );
-
-        return;
-
-      }
-
-
-      const newUser = {
-
-        userId: null,
-
-        name:name,
-
-        email:email,
-
-        password:password,
-
-        balance:0,
-
-        profit:0,
-
-        plan:null,
-
-        planAmount:0,
-
-        planRate:0,
-
-        planDays:0,
-
-        planStart:null,
-
-        lastProfitDate:null,
-
-        transactions:[],
-        
-        referralCode: null,
-        
-        referredBy: null,
-        
-        referralBonus: 0,
-        
-        referredUsers: [],
-        
-        timerStart: null
-
-      };
-
-
-      // 🔗 Handle referral
-      if (referralCode) {
-        const allUsers = getUsers();
-        let referrer = null;
-        
-        for (const key in allUsers) {
-          if (allUsers[key].referralCode === referralCode) {
-            referrer = allUsers[key];
-            break;
-          }
-        }
-        
-        if (referrer) {
-          newUser.referredBy = referrer.email;
-          
-          if (!referrer.referredUsers) {
-            referrer.referredUsers = [];
-          }
-          referrer.referredUsers.push({
-            email: email,
-            name: name,
-            joinedAt: new Date().toISOString(),
-            totalDeposits: 0,
-            commissionEarned: 0
-          });
-          
-          saveUser(referrer);
-          
-          toast("✅ تم التسجيل باستخدام كود الدعوة!");
-          
-        } else {
-          toast(t("referralInvalid"));
-        }
-      }
-
-
-      saveUser(
-        newUser
-      );
-
-
-      toast(
-        t("registered")
-      );
-
-
-      setTimeout(
-        () => {
-
-          window.location.href =
-            "index.html";
-
-        },
-        500
-      );
-
+    if (!name || name.length < 2) {
+      toast('⚠️ أدخل اسم صحيح');
+      return;
     }
-  );
 
+    if (!email || !email.includes('@')) {
+      toast('⚠️ أدخل بريد إلكتروني صحيح');
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      toast('⚠️ كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+      return;
+    }
+
+    if (password !== confirm) {
+      toast(t("wrongConfirm"));
+      return;
+    }
+
+    const database = getUsers();
+
+    if (database[email]) {
+      toast(t("already"));
+      return;
+    }
+
+    // ✅ إنشاء مستخدم جديد مع userId
+    const newUser = {
+      userId: generateUniqueUserId(),
+      name: name,
+      email: email,
+      password: password,
+      balance: 0,
+      profit: 0,
+      plan: null,
+      planAmount: 0,
+      planRate: 0,
+      planDays: 0,
+      planStart: null,
+      lastProfitDate: null,
+      transactions: [],
+      referralCode: null,
+      referredBy: null,
+      referralBonus: 0,
+      referredUsers: [],
+      timerStart: null,
+      createdAt: new Date().toISOString()
+    };
+
+    // معالجة كود الدعوة
+    if (referralCode) {
+      let referrer = null;
+      for (const key in database) {
+        if (database[key].referralCode === referralCode) {
+          referrer = database[key];
+          break;
+        }
+      }
+
+      if (referrer) {
+        newUser.referredBy = referrer.email;
+        if (!referrer.referredUsers) referrer.referredUsers = [];
+        referrer.referredUsers.push({
+          email: email,
+          name: name,
+          joinedAt: new Date().toISOString(),
+          totalDeposits: 0,
+          commissionEarned: 0
+        });
+        saveUser(referrer);
+        toast('🎉 تم التسجيل باستخدام كود الدعوة!');
+      } else {
+        toast(t("referralInvalid"));
+      }
+    }
+
+    // ✅ حفظ المستخدم
+    saveUser(newUser);
+    toast(t("registered"));
+
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 1500);
+  });
 }
 
 
 /* =========================================================
-   LOGIN
+   ✅ LOGIN - FIXED (مع دعم الخادم)
 ========================================================= */
 
-function setupLogin(){
+function setupLogin() {
+  const form = document.getElementById("loginForm");
 
-  const form =
-    document.getElementById(
-      "loginForm"
-    );
-
-  if(!form){
-
+  if (!form) {
+    console.warn('⚠️ نموذج الدخول غير موجود');
     return;
-
   }
 
+  console.log('✅ تم العثور على نموذج الدخول');
 
-  form.addEventListener(
-    "submit",
-    event => {
+  form.addEventListener("submit", function(event) {
+    event.preventDefault();
 
-      event.preventDefault();
+    const email = document.getElementById("loginEmail")?.value.trim().toLowerCase();
+    const password = document.getElementById("loginPassword")?.value;
 
-
-      const email =
-        document.getElementById(
-          "loginEmail"
-        )?.value
-          .trim()
-          .toLowerCase();
-
-
-      const password =
-        document.getElementById(
-          "loginPassword"
-        )?.value;
-
-
-      const database =
-        getUsers();
-
-
-      const user =
-        database[email];
-
-
-      if(
-        !user ||
-        user.password !== password
-      ){
-
-        toast(
-          t("badLogin")
-        );
-
-        return;
-
-      }
-
-
-      if (!user.userId) {
-        user.userId = generateUniqueUserId();
-        database[email] = user;
-        localStorage.setItem(
-          "miningUsersDB",
-          JSON.stringify(database)
-        );
-      }
-
-
-      fetch("http://localhost:3000/register", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(user)
-})
-.then(res => res.json())
-.then(data => {
-  console.log("تم إنشاء المستخدم:", data);
-});
-
-
-      toast(
-        t("logged")
-      );
-
-
-      setTimeout(
-        () => {
-
-          window.location.href =
-            "dashboard.html";
-
-        },
-        400
-      );
-
+    if (!email || !password) {
+      toast('⚠️ أدخل البريد وكلمة المرور');
+      return;
     }
-  );
 
+    // ✅ محاولة تسجيل الدخول عبر الخادم أولاً
+    const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:3000/api/login'
+      : '/api/login';
+
+    fetch(apiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        localStorage.setItem("currentUser", JSON.stringify(data.user));
+        toast(t("logged"));
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 500);
+      } else {
+        // إذا فشل الخادم، جرب التخزين المحلي
+        const database = getUsers();
+        const user = database[email];
+        if (user && user.password === password) {
+          localStorage.setItem("currentUser", JSON.stringify(user));
+          toast(t("logged"));
+          setTimeout(() => {
+            window.location.href = "dashboard.html";
+          }, 500);
+        } else {
+          toast(t("badLogin"));
+        }
+      }
+    })
+    .catch(() => {
+      // إذا الخادم غير متصل، استخدم التخزين المحلي
+      const database = getUsers();
+      const user = database[email];
+      if (user && user.password === password) {
+        localStorage.setItem("currentUser", JSON.stringify(user));
+        toast(t("logged"));
+        setTimeout(() => {
+          window.location.href = "dashboard.html";
+        }, 500);
+      } else {
+        toast(t("badLogin"));
+      }
+    });
+  });
 }
 
 
@@ -4042,6 +3976,9 @@ document.addEventListener(
 
     // ✅ تشغيل تحديث الأسعار الحية
     startCryptoUpdates();
+
+    console.log('✅ تم تهيئة الصفحة بنجاح');
+    console.log('🌐 الخادم يعمل على: ' + window.location.origin);
 
   }
 );
