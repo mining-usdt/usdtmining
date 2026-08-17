@@ -1658,41 +1658,58 @@ function activatePlan(planId){
    تنفيذ التفعيل بعد التأكيد
 ========================================================= */
 
-function executePlanActivation(plan, user) {
+async function executePlanActivation(plan, user) {
   console.log("✅ Executing plan activation for:", plan.id);
 
-  // ✅ خصم المبلغ من الرصيد
-  user.balance = Number(user.balance || 0) - plan.amount;
-  console.log("💰 New balance after deduction:", user.balance);
+  // ✅ إرسال طلب تفعيل الخطة إلى الخادم
+  const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000/api/activate-plan'
+    : '/api/activate-plan';
 
-  // ✅ تعيين الخطة
-  user.plan = plan.id;
-  user.planAmount = plan.amount;
-  user.planRate = plan.rate;
-  user.planDays = plan.days;
-  user.planStart = new Date().toISOString();
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: user.userId,
+        planId: plan.id,
+        planAmount: plan.amount,
+        planRate: plan.rate,
+        planDays: plan.days
+      })
+    });
 
-  // ✅ ✅ ✅ إصلاح المؤقت - reset بشكل صحيح
-  user.timerStart = Date.now();
+    const data = await response.json();
 
-  // ✅ تسجيل العملية
-  addTransaction(user, `🚀 تفعيل خطة ${plan.id}`, -plan.amount, '✅ مكتمل');
+    if (!data.success) {
+      toast("❌ " + data.message);
+      return;
+    }
 
-  // ✅ حفظ المستخدم
-  saveUser(user);
-  console.log("✅ User saved with plan:", user.plan);
-  console.log("⏱️ Timer started at:", new Date(user.timerStart).toLocaleString());
+    // ✅ تحديث المستخدم من الخادم
+    const updatedUser = data.user;
+    localStorage.setItem('currentUser', JSON.stringify(updatedUser));
 
-  // ✅ عرض الاحتفال
-  showCelebration(plan);
+    // ✅ حفظ في قاعدة البيانات المحلية
+    const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+    db[updatedUser.email] = updatedUser;
+    localStorage.setItem('miningUsersDB', JSON.stringify(db));
 
-  // ✅ عرض رسالة نجاح
-  toast("🎉 " + t("planActivated"));
+    // ✅ عرض الاحتفال
+    showCelebration(plan);
 
-  // ✅ التوجيه إلى لوحة التحكم بعد 2.5 ثانية
-  setTimeout(() => {
-    window.location.href = "dashboard.html";
-  }, 2500);
+    // ✅ عرض رسالة نجاح
+    toast("🎉 " + t("planActivated") + " رصيدك: $" + Number(updatedUser.balance).toFixed(2));
+
+    // ✅ التوجيه إلى لوحة التحكم بعد 2.5 ثانية
+    setTimeout(() => {
+      window.location.href = "dashboard.html";
+    }, 2500);
+
+  } catch (error) {
+    console.error("❌ فشل تفعيل الخطة:", error);
+    toast("❌ فشل الاتصال بالخادم، تأكد من تشغيل server.js");
+  }
 }
 
 /* =========================================================
