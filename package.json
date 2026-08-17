@@ -1,12 +1,12 @@
 {
   "name": "miningusdt1",
   "version": "1.0.0",
-  "description": "",
-  "main": "script.js",
+  "description": "Mining USDT Platform",
+  "main": "server.js",
   "scripts": {
-  "start": "node server.js",
-  "test": "echo \"Error: no test specified\" && exit 1"
-} ,
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/mining-usdt/usdt.git"
@@ -20,8 +20,10 @@
   },
   "homepage": "https://github.com/mining-usdt/usdt#readme",
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "helmet": "^7.1.0",
     "mongoose": "^9.9.2"
   }
 }
