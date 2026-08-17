@@ -831,7 +831,7 @@
 
 
 <!-- =========================================
-     DEPOSIT PAGE SCRIPT
+     DEPOSIT PAGE SCRIPT - FIXED
 ========================================= -->
 
 <script>
@@ -1420,7 +1420,7 @@ document.addEventListener("DOMContentLoaded", function(){
 
 
   /* =========================
-     CONFIRM
+     ✅ CONFIRM PROOF - FIXED (SEND TO SERVER)
   ========================== */
 
   document
@@ -1429,7 +1429,7 @@ document.addEventListener("DOMContentLoaded", function(){
     )
     ?.addEventListener(
       "click",
-      function(){
+      async function(){
 
         if(!selectedProof){
 
@@ -1441,82 +1441,65 @@ document.addEventListener("DOMContentLoaded", function(){
 
         }
 
+        // ✅ جلب المستخدم الحالي
+        const user = JSON.parse(localStorage.getItem("currentUser"));
+        if (!user) {
+          showToast("❌ يرجى تسجيل الدخول أولاً");
+          return;
+        }
 
-        /*
-          يتم حفظ بيانات الطلب محليًا
-          كطلب مراجعة للواجهة الحالية.
-        */
+        if (!selectedNetwork) {
+          showToast("⚠️ اختر الشبكة أولاً");
+          return;
+        }
 
-        const request = {
+        // ✅ إرسال طلب الإيداع إلى الخادم
+        const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+          ? 'http://localhost:3000/api/admin/balance'
+          : '/api/admin/balance';
 
-          id:
-            "DEP-" +
-            Date.now(),
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userId: user.userId,
+              email: user.email,
+              amount: selectedAmount,
+              type: 'deposit',
+              adminName: user.name || 'مستخدم'
+            })
+          });
 
-          network:
-            selectedNetwork,
+          const data = await response.json();
 
-          amount:
-            selectedAmount,
+          if (data.success) {
+            // ✅ تحديث بيانات المستخدم محلياً
+            localStorage.setItem('currentUser', JSON.stringify(data.user));
+            
+            // ✅ حفظ في قاعدة البيانات المحلية
+            const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+            db[user.email] = data.user;
+            localStorage.setItem('miningUsersDB', JSON.stringify(db));
 
-          proofName:
-            selectedProof.name,
-
-          status:
-            "pending",
-
-          createdAt:
-            new Date().toISOString()
-
-        };
-
-
-        const oldRequests =
-          JSON.parse(
-            localStorage.getItem(
-              "depositRequests"
-            ) || "[]"
-          );
-
-
-        oldRequests.unshift(
-          request
-        );
-
-
-        localStorage.setItem(
-          "depositRequests",
-          JSON.stringify(
-            oldRequests
-          )
-        );
-
-
-        document
-          .getElementById(
-            "successNetwork"
-          )
-          .textContent =
-            selectedNetwork;
-
-
-        document
-          .getElementById(
-            "successAmount"
-          )
-          .textContent =
-            selectedAmount.toFixed(2);
-
-
-        showScreen(
-          "success",
-          5
-        );
-
-
-        showToast(
-          t("depositSubmitted")
-        );
+            // ✅ عرض رسالة نجاح
+            document.getElementById("successNetwork").textContent = selectedNetwork;
+            document.getElementById("successAmount").textContent = selectedAmount.toFixed(2);
+            showScreen("success", 5);
+            showToast("✅ تم الإيداع بنجاح! رصيدك الجديد: $" + Number(data.user.balance).toFixed(2));
+            
+            // ✅ تفعيل زر العودة
+            document.querySelector('.success-btn')?.addEventListener('click', function(e) {
+              e.preventDefault();
+              window.location.href = "dashboard.html";
+            });
+          } else {
+            showToast("❌ فشل الإيداع: " + data.message);
+          }
+        } catch (error) {
+          console.error("❌ خطأ في الاتصال:", error);
+          showToast("❌ فشل الاتصال بالخادم، تأكد من تشغيل server.js");
+        }
 
       }
     );
