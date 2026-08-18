@@ -427,11 +427,10 @@
 
 <script>
 // =========================================================
-//   SUPER PANEL V99 - FULLY UPGRADED
+//   SUPER PANEL V99 - FULLY UPGRADED (FIXED DEPOSIT)
 // =========================================================
 
-// استخدم العنوان الثابت للخادم
-const API_URL = 'https://usdtmining.onrender.com/api';
+const API_URL = window.location.origin + '/api';
 console.log('🛡️ SUPER PANEL V99 | API_URL:', API_URL);
 
 let soundEnabled = true;
@@ -575,27 +574,16 @@ async function loadUsers() {
   try {
     console.log('🔄 Loading users from server...');
     const res = await fetch(`${API_URL}/admin/users`);
-    console.log('📥 Response status:', res.status);
-    
-    if (!res.ok) {
-      throw new Error(`HTTP error! status: ${res.status}`);
-    }
-    
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
     const data = await res.json();
-    console.log('📥 Data received:', data);
-    
     if (data.success) {
       allUsers = {};
       data.users.forEach(user => {
         allUsers[user.userId] = user;
-        // أيضًا قم بتخزينه بالبريد للوصول السريع
-        if (user.email) {
-          allUsers[user.email] = user;
-        }
+        if (user.email) allUsers[user.email] = user;
       });
       updateStats();
       renderUserList();
-      // إذا كان هناك مستخدم محدد، قم بتحديث معلوماته
       if (selectedUser && selectedUser.userId) {
         const updatedUser = data.users.find(u => u.userId === selectedUser.userId);
         if (updatedUser) {
@@ -610,8 +598,6 @@ async function loadUsers() {
   } catch (e) {
     console.error('❌ Error loading users:', e);
     showNotification('⚠️ فشل الاتصال بالخادم، جاري التحميل من التخزين المحلي', '⚠️');
-    
-    // Fallback to localStorage
     try {
       const localDb = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
       allUsers = {};
@@ -696,7 +682,6 @@ async function selectUserById(id) {
       const user = data.user;
       console.log('✅ User found on server:', user);
       selectedUser = user;
-      // تحديث allUsers
       allUsers[user.userId] = user;
       if (user.email) allUsers[user.email] = user;
       displayUserInfo(user);
@@ -762,7 +747,7 @@ function getAmount() {
 }
 
 // =========================================================
-//   ADMIN DEPOSIT - FIXED
+//   ADMIN DEPOSIT (FIXED)
 // =========================================================
 async function adminDeposit() {
   console.log('💰 adminDeposit called');
@@ -770,9 +755,12 @@ async function adminDeposit() {
   if (!selectedUser.userId) { showNotification('⚠️ هذا المستخدم ليس لديه معرف صحيح', '⚠️'); playSound('error'); return; }
   const amount = getAmount();
   if (!amount) return;
+
   try {
     await showModal({
-      icon: '💰', title: 'تأكيد الإيداع', type: 'success',
+      icon: '💰',
+      title: 'تأكيد الإيداع',
+      type: 'success',
       message: `هل أنت متأكد من إيداع <strong>$${amount.toFixed(2)}</strong> في حساب <strong>${selectedUser.name}</strong>؟`,
       details: {
         '👤 المستخدم': selectedUser.name,
@@ -780,35 +768,55 @@ async function adminDeposit() {
         '💰 المبلغ': '$' + amount.toFixed(2),
         '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
       },
-      confirmText: '💰 تأكيد الإيداع', cancelText: 'إلغاء'
+      confirmText: '💰 تأكيد الإيداع',
+      cancelText: 'إلغاء'
     });
+
     console.log('📤 Sending deposit request... userId:', selectedUser.userId, 'amount:', amount);
     const res = await fetch(`${API_URL}/admin/balance`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: selectedUser.userId, amount: amount, type: 'deposit', adminName: currentAdmin || 'أدمن' })
+      body: JSON.stringify({
+        userId: selectedUser.userId,
+        amount: amount,
+        type: 'deposit',
+        adminName: currentAdmin || 'أدمن'
+      })
     });
+
     const data = await res.json();
     console.log('📥 Server response:', data);
+
     if (data.success) {
-      // تحديث selectedUser بالبيانات الجديدة من السيرفر
+      // تحديث المستخدم بالبيانات الجديدة من الخادم
       const updatedUser = data.user;
-      selectedUser = updatedUser;
-      // تحديث allUsers
-      if (updatedUser.userId) allUsers[updatedUser.userId] = updatedUser;
-      if (updatedUser.email) allUsers[updatedUser.email] = updatedUser;
-      displayUserInfo(updatedUser);
-      // إعادة تحميل قائمة المستخدمين لتحديث الرصيد في القائمة
-      await loadUsers();
-      playSound('coin');
-      showNotification(`✅ تم إيداع $${amount.toFixed(2)} بنجاح`, '💰');
-      document.getElementById('adminAmount').value = '';
-    } else { showNotification('❌ ' + data.message, '❌'); playSound('error'); }
-  } catch (e) { console.error('❌ Deposit error:', e); showNotification('❌ فشل الإيداع: ' + e.message, '❌'); playSound('error'); }
+      if (updatedUser) {
+        selectedUser = updatedUser;
+        if (updatedUser.userId) allUsers[updatedUser.userId] = updatedUser;
+        if (updatedUser.email) allUsers[updatedUser.email] = updatedUser;
+        displayUserInfo(updatedUser);
+        // إعادة تحميل قائمة المستخدمين لتحديث الرصيد في القائمة
+        await loadUsers();
+        playSound('coin');
+        showNotification(`✅ تم إيداع $${amount.toFixed(2)} بنجاح`, '💰');
+        document.getElementById('adminAmount').value = '';
+      } else {
+        showNotification('❌ لم يتم استلام بيانات المستخدم المحدثة', '❌');
+        playSound('error');
+      }
+    } else {
+      showNotification('❌ ' + data.message, '❌');
+      playSound('error');
+    }
+  } catch (e) {
+    console.error('❌ Deposit error:', e);
+    showNotification('❌ فشل الإيداع: ' + e.message, '❌');
+    playSound('error');
+  }
 }
 
 // =========================================================
-//   ADMIN WITHDRAW - FIXED
+//   ADMIN WITHDRAW (FIXED)
 // =========================================================
 async function adminWithdraw() {
   console.log('💸 adminWithdraw called');
@@ -816,10 +824,18 @@ async function adminWithdraw() {
   if (!selectedUser.userId) { showNotification('⚠️ هذا المستخدم ليس لديه معرف صحيح', '⚠️'); playSound('error'); return; }
   const amount = getAmount();
   if (!amount) return;
-  if (Number(selectedUser.balance || 0) < amount) { showNotification('❌ الرصيد غير كافٍ', '❌'); playSound('error'); return; }
+
+  if (Number(selectedUser.balance || 0) < amount) {
+    showNotification('❌ الرصيد غير كافٍ', '❌');
+    playSound('error');
+    return;
+  }
+
   try {
     await showModal({
-      icon: '💸', title: 'تأكيد السحب', type: 'danger',
+      icon: '💸',
+      title: 'تأكيد السحب',
+      type: 'danger',
       message: `هل أنت متأكد من سحب <strong>$${amount.toFixed(2)}</strong> من حساب <strong>${selectedUser.name}</strong>؟`,
       details: {
         '👤 المستخدم': selectedUser.name,
@@ -827,40 +843,61 @@ async function adminWithdraw() {
         '💸 المبلغ': '$' + amount.toFixed(2),
         '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
       },
-      confirmText: '💸 تأكيد السحب', cancelText: 'إلغاء'
+      confirmText: '💸 تأكيد السحب',
+      cancelText: 'إلغاء'
     });
+
     console.log('📤 Sending withdraw request... userId:', selectedUser.userId, 'amount:', amount);
     const res = await fetch(`${API_URL}/admin/balance`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: selectedUser.userId, amount: amount, type: 'withdraw', adminName: currentAdmin || 'أدمن' })
+      body: JSON.stringify({
+        userId: selectedUser.userId,
+        amount: amount,
+        type: 'withdraw',
+        adminName: currentAdmin || 'أدمن'
+      })
     });
+
     const data = await res.json();
     console.log('📥 Server response:', data);
+
     if (data.success) {
-      // تحديث selectedUser بالبيانات الجديدة من السيرفر
       const updatedUser = data.user;
-      selectedUser = updatedUser;
-      // تحديث allUsers
-      if (updatedUser.userId) allUsers[updatedUser.userId] = updatedUser;
-      if (updatedUser.email) allUsers[updatedUser.email] = updatedUser;
-      displayUserInfo(updatedUser);
-      await loadUsers();
-      playSound('coin');
-      showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح`, '💸');
-      document.getElementById('adminAmount').value = '';
-    } else { showNotification('❌ ' + data.message, '❌'); playSound('error'); }
-  } catch (e) { console.error('❌ Withdraw error:', e); showNotification('❌ فشل السحب: ' + e.message, '❌'); playSound('error'); }
+      if (updatedUser) {
+        selectedUser = updatedUser;
+        if (updatedUser.userId) allUsers[updatedUser.userId] = updatedUser;
+        if (updatedUser.email) allUsers[updatedUser.email] = updatedUser;
+        displayUserInfo(updatedUser);
+        await loadUsers();
+        playSound('coin');
+        showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح`, '💸');
+        document.getElementById('adminAmount').value = '';
+      } else {
+        showNotification('❌ لم يتم استلام بيانات المستخدم المحدثة', '❌');
+        playSound('error');
+      }
+    } else {
+      showNotification('❌ ' + data.message, '❌');
+      playSound('error');
+    }
+  } catch (e) {
+    console.error('❌ Withdraw error:', e);
+    showNotification('❌ فشل السحب: ' + e.message, '❌');
+    playSound('error');
+  }
 }
 
 // =========================================================
-//   ADMIN DELETE USER - FULLY UPGRADED
+//   ADMIN DELETE USER
 // =========================================================
 async function adminDeleteUser() {
   if (!selectedUser) { showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️'); return; }
   try {
     await showModal({
-      icon: '🗑️', title: 'حذف الحساب', type: 'danger',
+      icon: '🗑️',
+      title: 'حذف الحساب',
+      type: 'danger',
       message: `هل أنت متأكد من حذف حساب <strong>${selectedUser.name}</strong> نهائياً؟<br><span style="color:#ff5d6c;font-size:13px;">⚠️ هذا الإجراء لا يمكن التراجع عنه!</span>`,
       details: {
         '👤 المستخدم': selectedUser.name,
@@ -868,12 +905,12 @@ async function adminDeleteUser() {
         '💰 الرصيد': '$' + Number(selectedUser.balance || 0).toFixed(2),
         '📋 الخطة': selectedUser.plan || '—'
       },
-      confirmText: '🗑️ حذف نهائي', cancelText: 'إلغاء'
+      confirmText: '🗑️ حذف نهائي',
+      cancelText: 'إلغاء'
     });
     const res = await fetch(`${API_URL}/admin/user/${selectedUser.userId}`, { method: 'DELETE' });
     const data = await res.json();
     if (data.success) {
-      // حذف المستخدم من allUsers
       if (selectedUser.userId) delete allUsers[selectedUser.userId];
       if (selectedUser.email) delete allUsers[selectedUser.email];
       selectedUser = null;
@@ -887,14 +924,16 @@ async function adminDeleteUser() {
 }
 
 // =========================================================
-//   RESET USER PLAN - FULLY UPGRADED
+//   RESET USER PLAN
 // =========================================================
 async function resetUserPlan() {
   if (!selectedUser) { showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️'); return; }
   if (!selectedUser.plan || selectedUser.plan === '—') { showNotification('ℹ️ هذا المستخدم ليس لديه خطة نشطة', 'ℹ️'); return; }
   try {
     await showModal({
-      icon: '🔄', title: 'إلغاء الخطة', type: 'warning',
+      icon: '🔄',
+      title: 'إلغاء الخطة',
+      type: 'warning',
       message: `هل أنت متأكد من إلغاء خطة <strong>${selectedUser.plan}</strong> لحساب <strong>${selectedUser.name}</strong>؟`,
       details: {
         '👤 المستخدم': selectedUser.name,
@@ -902,7 +941,8 @@ async function resetUserPlan() {
         '💰 مبلغ الخطة': '$' + Number(selectedUser.planAmount || 0).toFixed(2),
         '📊 العائد': selectedUser.planRate + '%'
       },
-      confirmText: '🔄 تأكيد الإلغاء', cancelText: 'إلغاء'
+      confirmText: '🔄 تأكيد الإلغاء',
+      cancelText: 'إلغاء'
     });
     const res = await fetch(`${API_URL}/admin/user/${selectedUser.userId}`, {
       method: 'PUT',
@@ -924,7 +964,7 @@ async function resetUserPlan() {
 }
 
 // =========================================================
-//   RESET TIMER TO 25 SECONDS - FULLY UPGRADED
+//   RESET TIMER TO 25 SECONDS
 // =========================================================
 async function resetTimerTo25Seconds() {
   if (!selectedUser) { showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️'); return; }
@@ -933,7 +973,9 @@ async function resetTimerTo25Seconds() {
   const dailyProfit = (selectedUser.planAmount * selectedUser.planRate) / 100;
   try {
     await showModal({
-      icon: '⏱️', title: 'تصفير التايمر إلى 25 ثانية', type: 'warning',
+      icon: '⏱️',
+      title: 'تصفير التايمر إلى 25 ثانية',
+      type: 'warning',
       message: `هل أنت متأكد من تصفير تايمر خطة <strong>${selectedUser.plan}</strong> لحساب <strong>${selectedUser.name}</strong> إلى <strong>25 ثانية</strong>؟<br><br><span style="color:#ffd700;">⚡ بعد 25 ثانية سيحصل على مكافأة الربح اليومي!</span>`,
       details: {
         '👤 المستخدم': selectedUser.name,
@@ -941,9 +983,9 @@ async function resetTimerTo25Seconds() {
         '⏱️ التايمر الجديد': '25 ثانية',
         '💰 الربح اليومي': '$' + dailyProfit.toFixed(2)
       },
-      confirmText: '⏱️ تصفير إلى 25 ثانية', cancelText: 'إلغاء'
+      confirmText: '⏱️ تصفير إلى 25 ثانية',
+      cancelText: 'إلغاء'
     });
-    // حساب timerStart جديد بحيث يتبقى 25 ثانية فقط
     const newTimerStart = Date.now() - (24 * 60 * 60 * 1000) + (25 * 1000);
     const res = await fetch(`${API_URL}/admin/user/${selectedUser.userId}`, {
       method: 'PUT',
@@ -965,7 +1007,7 @@ async function resetTimerTo25Seconds() {
 }
 
 // =========================================================
-//   VIEW TRANSACTIONS - FULLY UPGRADED
+//   VIEW TRANSACTIONS
 // =========================================================
 async function viewTransactions() {
   if (!selectedUser) { showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️'); return; }
