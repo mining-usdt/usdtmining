@@ -356,28 +356,10 @@ const UserSchema = new mongoose.Schema(
       }
     ],
 
-    transactions: [
-      {
-        type: String,
-        amount: Number,
-        date: Date,
-        status: String,
-        note: String,
-        game: String,
-        address: String,
-        network: String,
-        bet: Number,
-        playerTotal: Number,
-        dealerTotal: Number,
-        guess: Number,
-        target: Number,
-        dice: [Number],
-        sum: Number,
-        symbols: [String],
-        choice: String,
-        result: String
-      }
-    ],
+    transactions: {
+  type: [mongoose.Schema.Types.Mixed],
+  default: []
+},
 
         createdAt: {
       type: Date,
