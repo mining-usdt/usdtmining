@@ -30,7 +30,70 @@ console.log('🟢 API_URL:', API_URL);
 // =========================================================
 //  TOAST FUNCTION
 // =========================================================
+// =========================================================
+//  SHOW ALERT (RED MODAL)
+// =========================================================
 
+function showAlert(message, icon = '⚠️') {
+  const existing = document.getElementById('customAlert');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'customAlert';
+  overlay.style.cssText = `
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+    padding: 20px;
+  `;
+
+  overlay.innerHTML = `
+    <div style="
+      max-width: 480px;
+      width: 100%;
+      background: linear-gradient(145deg, rgba(8, 24, 31, 0.98), rgba(3, 10, 15, 0.98));
+      border: 2px solid #ff5d6c;
+      border-radius: 28px;
+      padding: 35px 30px 30px;
+      box-shadow: 0 30px 100px rgba(0, 0, 0, 0.6), 0 0 60px rgba(255, 93, 108, 0.15);
+      animation: celebrationPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      text-align: center;
+    ">
+      <div style="font-size: 52px; margin-bottom: 10px;">${icon}</div>
+      <h2 style="font-size: 26px; font-weight: 800; color: #ff5d6c; margin-bottom: 10px;">🚫 عملية السحب غير متاحة</h2>
+      <div style="color: #f3fffb; font-size: 15px; line-height: 1.9; margin-bottom: 25px; padding: 15px; background: rgba(255, 93, 108, 0.08); border-radius: 16px; border: 1px solid rgba(255, 93, 108, 0.15);">
+        ${message}
+      </div>
+      <button onclick="document.getElementById('customAlert').remove()" style="
+        padding: 14px 32px;
+        border-radius: 14px;
+        border: none;
+        background: linear-gradient(135deg, #ff5d6c, #ff3366);
+        color: white;
+        font-weight: 800;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 0 30px rgba(255, 93, 108, 0.2);
+      " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+        حسنًا
+      </button>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // إغلاق عند الضغط خارج النافذة
+  overlay.addEventListener('click', function(e) {
+    if (e.target === overlay) overlay.remove();
+  });
+}
 function toast(message) {
   let element = document.getElementById("toast");
   if (!element) {
@@ -1754,9 +1817,7 @@ function setupDepositForm() {
 
 function setupWithdrawForm() {
   const form = document.getElementById("withdrawForm");
-  if (!form) {
-    return;
-  }
+  if (!form) return;
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -1768,6 +1829,31 @@ function setupWithdrawForm() {
         window.location.href = "register.html";
       }, 700);
       return;
+    }
+
+    // =========================================================
+    //  شرط الـ 7 أيام
+    // =========================================================
+    if (user.createdAt) {
+      const createdAt = new Date(user.createdAt);
+      const now = new Date();
+      const diffTime = Math.abs(now - createdAt);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const requiredDays = 7;
+
+      if (diffDays < requiredDays) {
+        const remaining = requiredDays - diffDays;
+        const msg = `
+          ⛔ لا يمكنك السحب إلا بعد إكمال 7 أيام من التسجيل في المنصة.<br>
+          <strong style="color: #ffd700;">الأيام المتبقية: ${remaining} يومًا</strong>
+        `;
+        showAlert(msg, '⛔');
+        return;
+      }
+    } else {
+      // إذا لم يكن هناك تاريخ تسجيل (مستخدم قديم)، نسمح بالسحب
+      // أو يمكنك إضافة رسالة تنبيه بدلاً من السماح
+      console.warn('⚠️ المستخدم ليس لديه تاريخ تسجيل، تم السماح بالسحب.');
     }
 
     const amount = Number(document.getElementById("withdrawAmount")?.value || 0);
