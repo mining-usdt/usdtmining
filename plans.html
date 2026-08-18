@@ -136,6 +136,22 @@
           </div>
         `).join('');
 
+        // ✅ ربط الأزرار باستخدام Event Delegation
+        document.addEventListener('click', function(e) {
+          const btn = e.target.closest('[data-plan]');
+          if (!btn) return;
+          e.preventDefault();
+          e.stopPropagation();
+          const planId = btn.dataset.plan;
+          console.log("🟢 Button clicked for plan:", planId);
+          if (typeof window.activatePlan === 'function') {
+            window.activatePlan(planId);
+          } else {
+            console.error('❌ activatePlan not found!');
+            toast('❌ حدث خطأ في النظام، يرجى تحديث الصفحة');
+          }
+        });
+
         document.querySelectorAll('[data-logout]').forEach(btn => {
           btn.addEventListener('click', function() {
             if (typeof logout === 'function') logout();
