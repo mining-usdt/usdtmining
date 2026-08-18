@@ -1095,6 +1095,31 @@
     .back-btn-floating:hover .arrow {
       transform: translateX(-6px);
     }
+
+    /* Status indicator */
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    .status-dot.online {
+      background: var(--green);
+      box-shadow: 0 0 15px rgba(0, 255, 157, 0.4);
+      animation: pulse-dot 1.5s ease-in-out infinite;
+    }
+
+    .status-dot.offline {
+      background: var(--danger);
+      box-shadow: 0 0 15px rgba(255, 93, 108, 0.3);
+    }
+
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
   </style>
 
 </head>
@@ -1122,6 +1147,11 @@
       <p class="subtitle">
         KBS <span>✕</span> RT7
       </p>
+
+      <div style="margin-bottom:15px;padding:10px;border-radius:12px;background:rgba(0,255,157,0.05);border:1px solid rgba(0,255,157,0.08);">
+        <span class="status-dot" id="serverStatusDot"></span>
+        <span id="serverStatusText" style="color:var(--muted);font-size:13px;">جاري التحقق من الاتصال...</span>
+      </div>
 
       <form id="adminLoginForm" class="form-grid">
         <div class="input-group">
@@ -1308,7 +1338,7 @@
 
   <script>
     // =========================================================
-    //   SUPER PANEL SCRIPT - FIXED
+    //   SUPER PANEL SCRIPT - FULLY FIXED
     // =========================================================
 
     let soundEnabled = true;
@@ -1317,6 +1347,7 @@
     let currentAdmin = null;
     let modalResolve = null;
     let modalReject = null;
+    let serverOnline = false;
 
     // =========================================================
     //   TOGGLE SOUND
@@ -1425,7 +1456,12 @@
           confirmBtn.style.color = '#00130d';
         }
         const cancelBtn = actions.querySelector('.btn-cancel');
-        cancelBtn.textContent = options.cancelText || 'إلغاء';
+        if (options.cancelText === '') {
+          cancelBtn.style.display = 'none';
+        } else {
+          cancelBtn.style.display = 'inline-block';
+          cancelBtn.textContent = options.cancelText || 'إلغاء';
+        }
         overlay.classList.add('active');
         playSound('click');
         modalResolve = resolve;
@@ -1452,6 +1488,36 @@
     }
 
     function confirmModal() {}
+
+    // =========================================================
+    //   CHECK SERVER STATUS
+    // =========================================================
+    async function checkServerStatus() {
+      const dot = document.getElementById('serverStatusDot');
+      const text = document.getElementById('serverStatusText');
+      try {
+        const apiUrl = getApiUrl('/health');
+        const response = await fetch(apiUrl, { cache: 'no-store' });
+        const data = await response.json();
+        if (data.success && data.mongodb === 'connected') {
+          serverOnline = true;
+          dot.className = 'status-dot online';
+          text.textContent = '🟢 الخادم متصل وقاعدة البيانات متصلة';
+          text.style.color = 'var(--green)';
+        } else {
+          serverOnline = false;
+          dot.className = 'status-dot offline';
+          text.textContent = '🔴 الخادم غير متصل أو قاعدة البيانات منفصلة';
+          text.style.color = 'var(--danger)';
+        }
+      } catch (e) {
+        serverOnline = false;
+        dot.className = 'status-dot offline';
+        text.textContent = '🔴 لا يمكن الاتصال بالخادم';
+        text.style.color = 'var(--danger)';
+        console.warn('⚠️ Server connection failed:', e);
+      }
+    }
 
     // =========================================================
     //   ADMIN CREDENTIALS
@@ -1512,11 +1578,20 @@
     }
 
     // =========================================================
-    //   ✅ LOAD USERS - FIXED
+    //   ✅ LOAD USERS - FIXED (دمج الخادم + localStorage)
     // =========================================================
     async function loadUsers() {
       try {
-        // ✅ جلب المستخدمين من الخادم (MongoDB)
+        // 1️⃣ جلب من localStorage أولاً
+        let localUsers = {};
+        try {
+          localUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+          console.log('📦 تم جلب ' + Object.keys(localUsers).length + ' مستخدم من localStorage');
+        } catch (e) {
+          console.warn('⚠️ فشل قراءة localStorage');
+        }
+
+        // 2️⃣ جلب من الخادم
         const apiUrl = getApiUrl('/admin/users');
         console.log('🔄 جلب المستخدمين من:', apiUrl);
         
@@ -1526,37 +1601,36 @@
         let serverUsers = {};
         if (data.success && data.users && data.users.length > 0) {
           data.users.forEach(user => {
-            serverUsers[user.email] = user;
+            if (user.email) {
+              serverUsers[user.email] = user;
+            } else if (user.userId) {
+              // إذا لم يكن هناك بريد، نستخدم userId كمفتاح
+              serverUsers[user.userId] = user;
+            }
           });
           console.log('✅ تم جلب ' + data.users.length + ' مستخدم من الخادم');
         } else {
           console.warn('⚠️ فشل جلب المستخدمين من الخادم أو لا يوجد مستخدمين');
         }
 
-        // ✅ جلب المستخدمين من localStorage
-        let localUsers = {};
+        // 3️⃣ دمج البيانات (الخادم له الأولوية)
+        allUsers = { ...localUsers, ...serverUsers };
+
+        // 4️⃣ حفظ البيانات المدمجة في localStorage للتخزين المؤقت
         try {
-          localUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-          console.log('📦 تم جلب ' + Object.keys(localUsers).length + ' مستخدم من localStorage');
-        } catch (e) {
-          console.warn('⚠️ فشل قراءة localStorage');
-        }
+          localStorage.setItem('miningUsersDB', JSON.stringify(allUsers));
+        } catch (e) {}
 
-        // ✅ دمج البيانات (الخادم له الأولوية)
-        const merged = { ...localUsers, ...serverUsers };
-        
-        // ✅ إضافة المستخدمين المحليين الذين ليسوا في الخادم
-        Object.keys(localUsers).forEach(email => {
-          if (!serverUsers[email]) {
-            merged[email] = localUsers[email];
-          }
-        });
-
-        allUsers = merged;
         console.log('📊 إجمالي المستخدمين بعد الدمج:', Object.keys(allUsers).length);
 
         updateStats();
         renderUserList();
+
+        // إذا كان هناك مستخدم محدد مسبقاً، تحديث عرضه
+        if (selectedUser && allUsers[selectedUser.email]) {
+          selectedUser = allUsers[selectedUser.email];
+          displayUserInfo(selectedUser);
+        }
 
       } catch (error) {
         console.warn('⚠️ خطأ في الاتصال بالخادم، استخدام localStorage فقط:', error);
@@ -1617,7 +1691,7 @@
       users.forEach(user => {
         totalBalance += Number(user.balance || 0);
         totalProfit += Number(user.profit || 0);
-        if (user.plan && user.plan !== '—' && user.plan !== null) activePlans++;
+        if (user.plan && user.plan !== '—' && user.plan !== null && user.plan !== 'null') activePlans++;
       });
       document.getElementById('adminTotalUsers').textContent = totalUsers;
       document.getElementById('adminTotalBalance').textContent = '$' + totalBalance.toFixed(2);
@@ -1705,12 +1779,27 @@
         return;
       }
       const id = selectedUser.userId || selectedUser._id || '';
-      navigator.clipboard.writeText(id).then(() => {
-        showNotification(`✅ تم نسخ المعرف: ${id}`, '📋');
-        playSound('click');
-      }).catch(() => {
-        showNotification(`✅ ${id}`, '📋');
-      });
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(id).then(() => {
+          showNotification(`✅ تم نسخ المعرف: ${id}`, '📋');
+          playSound('click');
+        }).catch(() => {
+          fallbackCopy(id);
+        });
+      } else {
+        fallbackCopy(id);
+      }
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      showNotification(`✅ تم نسخ المعرف: ${text}`, '📋');
+      playSound('click');
     }
 
     // =========================================================
@@ -1730,7 +1819,7 @@
       document.getElementById('infoReferral').textContent = user.referralCode || '—';
 
       let timerDisplay = '—';
-      if (user.plan && user.plan !== '—' && user.timerStart) {
+      if (user.plan && user.plan !== '—' && user.plan !== null && user.plan !== 'null' && user.timerStart) {
         const now = Date.now();
         const elapsed = now - user.timerStart;
         let remaining = (24 * 60 * 60 * 1000) - elapsed;
@@ -1742,7 +1831,7 @@
           const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
           timerDisplay = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         }
-      } else if (user.plan && user.plan !== '—') {
+      } else if (user.plan && user.plan !== '—' && user.plan !== null && user.plan !== 'null') {
         timerDisplay = '⏳ لم يبدأ';
       }
       document.getElementById('infoTimer').textContent = timerDisplay;
@@ -1769,35 +1858,49 @@
     }
 
     // =========================================================
-    //   SAVE USER TO DB
+    //   SAVE USER TO DB (localStorage + Server)
     // =========================================================
-    function saveUserToDB(user) {
-      // حفظ في localStorage
-      const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-      db[user.email] = user;
-      localStorage.setItem('miningUsersDB', JSON.stringify(db));
-
-      const currentUser = JSON.parse(localStorage.getItem('currentUser'));
-      if (currentUser && currentUser.email === user.email) {
-        localStorage.setItem('currentUser', JSON.stringify(user));
+    async function saveUserToDB(user) {
+      if (!user || !user.email) {
+        console.error('❌ لا يمكن حفظ مستخدم بدون بريد');
+        return;
       }
 
-      allUsers[user.email] = user;
+      // 1️⃣ حفظ في localStorage
+      try {
+        const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+        db[user.email] = user;
+        localStorage.setItem('miningUsersDB', JSON.stringify(db));
 
-      // مزامنة مع الخادم
-      const apiUrl = getApiUrl('/admin/user/' + (user.userId || user._id));
-      fetch(apiUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(user)
-      })
-      .then(res => res.json())
-      .then(data => {
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (currentUser && currentUser.email === user.email) {
+          localStorage.setItem('currentUser', JSON.stringify(user));
+        }
+
+        allUsers[user.email] = user;
+        console.log('✅ تم حفظ المستخدم في localStorage');
+      } catch (e) {
+        console.warn('⚠️ فشل حفظ في localStorage:', e);
+      }
+
+      // 2️⃣ مزامنة مع الخادم
+      try {
+        const identifier = user.userId || user._id || user.email;
+        const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(identifier));
+        const response = await fetch(apiUrl, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(user)
+        });
+        const data = await response.json();
         if (data.success) {
           console.log('✅ تم مزامنة المستخدم مع الخادم');
+        } else {
+          console.warn('⚠️ فشل مزامنة المستخدم مع الخادم:', data.message);
         }
-      })
-      .catch(err => console.warn('⚠️ فشل مزامنة المستخدم مع الخادم:', err));
+      } catch (e) {
+        console.warn('⚠️ فشل الاتصال بالخادم للمزامنة:', e);
+      }
     }
 
     // =========================================================
@@ -1833,7 +1936,7 @@
           date: new Date().toISOString(),
           status: '✅ مكتمل'
         });
-        saveUserToDB(selectedUser);
+        await saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
         playSound('coin');
@@ -1882,7 +1985,7 @@
           date: new Date().toISOString(),
           status: '✅ مكتمل'
         });
-        saveUserToDB(selectedUser);
+        await saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
         playSound('coin');
@@ -1916,23 +2019,35 @@
           confirmText: '🗑️ حذف نهائي',
           cancelText: 'إلغاء'
         });
+
+        // 1️⃣ حذف من localStorage
         const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
         delete db[selectedUser.email];
         localStorage.setItem('miningUsersDB', JSON.stringify(db));
 
+        // 2️⃣ حذف من currentUser إذا كان هو المستخدم الحالي
         const currentUser = JSON.parse(localStorage.getItem('currentUser'));
         if (currentUser && currentUser.email === selectedUser.email) {
           localStorage.removeItem('currentUser');
         }
 
+        // 3️⃣ حذف من allUsers
         delete allUsers[selectedUser.email];
 
-        const apiUrl = getApiUrl('/admin/user/' + (selectedUser.userId || selectedUser._id));
-        await fetch(apiUrl, { method: 'DELETE' });
+        // 4️⃣ حذف من الخادم
+        try {
+          const identifier = selectedUser.userId || selectedUser._id || selectedUser.email;
+          const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(identifier));
+          await fetch(apiUrl, { method: 'DELETE' });
+          console.log('🗑️ تم حذف المستخدم من الخادم');
+        } catch (e) {
+          console.warn('⚠️ فشل حذف المستخدم من الخادم:', e);
+        }
 
         selectedUser = null;
         document.getElementById('userInfoDisplay').classList.remove('active');
         document.getElementById('adminActions').classList.remove('active');
+        document.getElementById('adminUserId').value = '';
         loadUsers();
         playSound('error');
         showNotification('🗑️ تم حذف الحساب بنجاح', '🗑️');
@@ -1949,7 +2064,8 @@
         showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
         return;
       }
-      if (!selectedUser.plan || selectedUser.plan === '—') {
+      const hasPlan = selectedUser.plan && selectedUser.plan !== '—' && selectedUser.plan !== null && selectedUser.plan !== 'null';
+      if (!hasPlan) {
         showNotification('ℹ️ هذا المستخدم ليس لديه خطة نشطة', 'ℹ️');
         return;
       }
@@ -1971,6 +2087,7 @@
         selectedUser.plan = null;
         selectedUser.planAmount = 0;
         selectedUser.planRate = 0;
+        selectedUser.planDays = 0;
         selectedUser.planStart = null;
         selectedUser.timerStart = null;
         if (!selectedUser.transactions) selectedUser.transactions = [];
@@ -1980,7 +2097,7 @@
           date: new Date().toISOString(),
           status: '✅ مكتمل'
         });
-        saveUserToDB(selectedUser);
+        await saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
         playSound('success');
@@ -1998,16 +2115,12 @@
         showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
         return;
       }
-
       const hasPlan = selectedUser.plan && selectedUser.plan !== '—' && selectedUser.plan !== null && selectedUser.plan !== 'null';
-
       if (!hasPlan) {
         showNotification('ℹ️ هذا المستخدم ليس لديه خطة نشطة', 'ℹ️');
         return;
       }
-
       const dailyProfit = (selectedUser.planAmount * selectedUser.planRate) / 100;
-
       try {
         await showModal({
           icon: '⏱️',
@@ -2024,9 +2137,7 @@
           confirmText: '⏱️ تصفير إلى 25 ثانية',
           cancelText: 'إلغاء'
         });
-
         selectedUser.timerStart = Date.now() - (24 * 60 * 60 * 1000) + (25 * 1000);
-
         if (!selectedUser.transactions) selectedUser.transactions = [];
         selectedUser.transactions.unshift({
           type: '⏱️ تصفير التايمر (أدمن)',
@@ -2035,14 +2146,11 @@
           status: '✅ مكتمل',
           note: 'تم تصفير التايمر إلى 25 ثانية'
         });
-
-        saveUserToDB(selectedUser);
+        await saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
-
         playSound('success');
         showNotification(`✅ تم تصفير تايمر ${selectedUser.name} إلى 25 ثانية`, '⏱️');
-
       } catch (e) {
         playSound('click');
       }
@@ -2061,7 +2169,6 @@
         showNotification('📭 لا توجد عمليات لهذا المستخدم', '📭');
         return;
       }
-
       let html = '<div class="transactions-list">';
       transactions.slice(0, 30).forEach(tx => {
         const amountClass = tx.amount >= 0 ? 'positive' : 'negative';
@@ -2095,7 +2202,22 @@
     // =========================================================
     document.addEventListener('DOMContentLoaded', function() {
       console.log('🛡️ SUPER PANEL Loading...');
+      
+      // فحص حالة الخادم
+      checkServerStatus();
+      
+      // تحميل المستخدمين
       loadUsers();
+      
+      // تحديث حالة الخادم كل 30 ثانية
+      setInterval(checkServerStatus, 30000);
+      
+      // تحديث البيانات كل 60 ثانية
+      setInterval(() => {
+        if (document.getElementById('adminPanel').classList.contains('active')) {
+          loadUsers();
+        }
+      }, 60000);
     });
   </script>
 
