@@ -461,7 +461,7 @@ function publicUser(user) {
 }
 
 // =========================================================
-//  CORE PROFIT CALCULATION LOGIC
+//  CORE PROFIT CALCULATION LOGIC - FIXED
 // =========================================================
 
 async function calculateAndAddProfit(user) {
@@ -470,7 +470,7 @@ async function calculateAndAddProfit(user) {
   }
 
   const now = Date.now();
-  const lastProfitDate = user.lastProfitDate ? new Date(user.lastProfitDate).getTime() : null;
+  const lastProfitDate = user.lastProfitDate ? new Date(user.lastProfitDate).getTime() : user.timerStart;
 
   // If the plan has already expired
   const planEnd = new Date(user.planStart);
@@ -488,9 +488,8 @@ async function calculateAndAddProfit(user) {
     return user;
   }
 
-  // If no profit has been added yet, start from planStart
-  const startTime = lastProfitDate || new Date(user.planStart).getTime();
-  const elapsed = now - startTime;
+  // حساب الوقت المنقضي من timerStart
+  const elapsed = now - user.timerStart;
   
   if (elapsed < 24 * 60 * 60 * 1000) {
     // Not enough time has passed
@@ -510,7 +509,7 @@ async function calculateAndAddProfit(user) {
   user.profit = Number(user.profit || 0) + totalProfitToAdd;
 
   // Update lastProfitDate to the last completed cycle
-  const lastCycleDate = new Date(startTime + cycles * 24 * 60 * 60 * 1000);
+  const lastCycleDate = new Date(user.timerStart + cycles * 24 * 60 * 60 * 1000);
   user.lastProfitDate = lastCycleDate.toISOString();
 
   // Add transactions for each cycle
@@ -518,7 +517,7 @@ async function calculateAndAddProfit(user) {
     user.transactions.unshift({
       type: `📈 ربح يومي (${user.plan})`,
       amount: dailyProfit,
-      date: new Date(startTime + (i + 1) * 24 * 60 * 60 * 1000).toISOString(),
+      date: new Date(user.timerStart + (i + 1) * 24 * 60 * 60 * 1000).toISOString(),
       status: "✅ مكتمل"
     });
   }
@@ -835,9 +834,88 @@ app.get("/api/user/:identifier", async (req, res) => {
 });
 
 // =========================================================
-// // =========================================================
-// ACTIVATE PLAN
+// ACTIVATE PLAN - NEW ENDPOINT
 // =========================================================
+
+app.post("/api/activate-plan", async (req, res) => {
+  try {
+    const userId = String(req.body.userId || "").trim();
+    const planId = String(req.body.planId || "").trim();
+    const planAmount = Number(req.body.planAmount || 0);
+    const planRate = Number(req.body.planRate || 0);
+    const planDays = Number(req.body.planDays || 0);
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ معرف المستخدم مطلوب"
+      });
+    }
+
+    if (!planId || planAmount <= 0 || planRate <= 0 || planDays <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ بيانات الخطة غير صحيحة"
+      });
+    }
+
+    const user = await User.findOne({ userId });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ المستخدم غير موجود"
+      });
+    }
+
+    if (Number(user.balance || 0) < planAmount) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ الرصيد غير كافٍ"
+      });
+    }
+
+    // خصم مبلغ الخطة من الرصيد
+    user.balance = Number(user.balance || 0) - planAmount;
+
+    // تعيين الخطة
+    user.plan = planId;
+    user.planAmount = planAmount;
+    user.planRate = planRate;
+    user.planDays = planDays;
+    user.planStart = new Date();
+    user.timerStart = Date.now();
+    user.lastProfitDate = null;
+
+    // تسجيل المعاملة
+    if (!Array.isArray(user.transactions)) {
+      user.transactions = [];
+    }
+    user.transactions.unshift({
+      type: `🚀 تفعيل خطة ${planId}`,
+      amount: -planAmount,
+      date: new Date().toISOString(),
+      status: "✅ مكتمل",
+      note: `تم تفعيل خطة ${planId} بمبلغ $${planAmount}`
+    });
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: "✅ تم تفعيل الخطة بنجاح",
+      user: publicUser(user)
+    });
+  } catch (error) {
+    console.error("❌ Activate plan error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "❌ حدث خطأ في الخادم"
+    });
+  }
+});
+
 // =========================================================
 // ADMIN - BALANCE (تم تعديله لضمان التوافق)
 // =========================================================
@@ -1065,6 +1143,7 @@ app.put(
     }
   }
 );
+
 // =========================================================
 // ADMIN - GET ALL USERS
 // =========================================================
@@ -1168,228 +1247,6 @@ app.get(
     } catch (error) {
       console.error(
         "❌ Admin user error:",
-        error
-      );
-
-      return res.status(500).json({
-        success: false,
-        message: "❌ خطأ في الخادم"
-      });
-    }
-  }
-);
-
-// =========================================================
-// ADMIN - UPDATE USER
-// =========================================================
-
-app.put(
-  "/api/admin/user/:userId",
-  async (req, res) => {
-    try {
-      const userId = String(
-        req.params.userId || ""
-      ).trim();
-
-      const updateData = {
-        ...(req.body || {})
-      };
-
-      delete updateData._id;
-      delete updateData.__v;
-      delete updateData.password;
-      delete updateData.id;
-      delete updateData.userId;
-      delete updateData.email;
-
-      if (!userId) {
-        return res.status(400).json({
-          success: false,
-          message: "❌ معرف المستخدم مطلوب"
-        });
-      }
-
-      const user =
-        await User.findOneAndUpdate(
-          { userId },
-          { $set: updateData },
-          {
-            new: true,
-            runValidators: true
-          }
-        ).select("-password");
-
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "❌ المستخدم غير موجود"
-        });
-      }
-
-      return res.json({
-        success: true,
-        message:
-          "✅ تم تحديث المستخدم بنجاح",
-        user: {
-          ...user.toObject(),
-          id:
-            user.userId ||
-            user._id.toString(),
-          userId:
-            user.userId ||
-            user._id.toString()
-        }
-      });
-    } catch (error) {
-      console.error(
-        "❌ Admin update error:",
-        error
-      );
-
-      return res.status(500).json({
-        success: false,
-        message: "❌ خطأ في الخادم"
-      });
-    }
-  }
-);
-
-// =========================================================
-// ADMIN - BALANCE
-// =========================================================
-
-app.post(
-  "/api/admin/balance",
-  async (req, res) => {
-    try {
-      const userId = String(
-        req.body.userId || ""
-      ).trim();
-
-      const email = String(
-        req.body.email || ""
-      )
-        .trim()
-        .toLowerCase();
-
-      const amount = Number(
-        req.body.amount
-      );
-
-      const type = String(
-        req.body.type || ""
-      ).trim();
-
-      const adminName = String(
-        req.body.adminName || "غير معروف"
-      ).trim();
-
-      if (!userId && !email) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "❌ المعرف أو البريد مطلوب"
-        });
-      }
-
-      if (
-        !Number.isFinite(amount) ||
-        amount <= 0
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "❌ المبلغ غير صالح"
-        });
-      }
-
-      if (
-        type !== "deposit" &&
-        type !== "withdraw"
-      ) {
-        return res.status(400).json({
-          success: false,
-          message:
-            "❌ نوع العملية غير صالح"
-        });
-      }
-
-      let user = null;
-
-      if (userId) {
-        user = await User.findOne({
-          userId
-        });
-      }
-
-      if (!user && email) {
-        user = await User.findOne({
-          email
-        });
-      }
-
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "❌ المستخدم غير موجود"
-        });
-      }
-
-      const currentBalance = Number(
-        user.balance || 0
-      );
-
-      let balanceChanged = 0;
-      let txType = "";
-
-      if (type === "deposit") {
-        user.balance =
-          currentBalance + amount;
-
-        balanceChanged = amount;
-        txType = "💰 إيداع (أدمن)";
-      }
-
-      if (type === "withdraw") {
-        if (currentBalance < amount) {
-          return res.status(400).json({
-            success: false,
-            message:
-              "❌ الرصيد غير كافٍ"
-          });
-        }
-
-        user.balance =
-          currentBalance - amount;
-
-        balanceChanged = -amount;
-        txType = "💸 سحب (أدمن)";
-      }
-
-      if (!Array.isArray(user.transactions)) {
-        user.transactions = [];
-      }
-
-      user.transactions.unshift({
-        type: txType,
-        amount: balanceChanged,
-        date: new Date(),
-        status: "✅ مكتمل",
-        note: `بواسطة الأدمن ${adminName}`
-      });
-
-      await user.save();
-
-      return res.json({
-        success: true,
-        message:
-          type === "deposit"
-            ? "✅ تم الإيداع بنجاح"
-            : "✅ تم السحب بنجاح",
-        user: publicUser(user)
-      });
-    } catch (error) {
-      console.error(
-        "❌ Admin balance error:",
         error
       );
 
