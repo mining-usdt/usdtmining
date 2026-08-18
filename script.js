@@ -924,8 +924,8 @@ async function syncCurrentUserFromServer() {
     }
 
     const res = await fetch(
-      `${API_URL}/admin/user/${encodeURIComponent(currentUser.userId)}`
-    );
+  `${API_URL}/user/${encodeURIComponent(currentUser.userId)}`
+);
 
     const data = await res.json();
 
@@ -1133,45 +1133,110 @@ function renderPlans() {
 //  TIMER SYSTEM
 // =========================================================
 
-function updateTimerDisplay() {
+async function updateTimerDisplay() {
   const user = getCurrentUser();
-  const timerEl = document.getElementById('profitTimer');
-  
-  if (!timerEl) return;
-  
-  if (!user || !user.plan || !user.timerStart) {
-    timerEl.textContent = '--:--:--';
+  const timerEl = document.getElementById("profitTimer");
+  const statusEl = document.getElementById("timerStatus");
+
+  if (!timerEl) {
+    return;
+  }
+
+  // لا توجد خطة
+  if (!user || !user.plan || !user.timerStart || !user.planStart) {
+    timerEl.textContent = "--:--:--";
+
+    if (statusEl) {
+      statusEl.textContent = "⏸ غير نشط";
+      statusEl.className = "timer-status inactive";
+    }
+
     return;
   }
 
   const now = Date.now();
-  const elapsed = now - user.timerStart;
-  let remaining = (24 * 60 * 60 * 1000) - elapsed;
-  
+  const elapsed = now - Number(user.timerStart);
+  const fullDay = 24 * 60 * 60 * 1000;
+  const remaining = fullDay - elapsed;
+
+  // انتهت دورة الـ24 ساعة
   if (remaining <= 0) {
-    const dailyProfit = (user.planAmount * user.planRate) / 100;
-    user.balance = Number(user.balance || 0) + dailyProfit;
-    user.profit = Number(user.profit || 0) + dailyProfit;
-    addTransaction(user, `📈 ربح يومي (${user.plan})`, dailyProfit, '✅ مكتمل');
-    user.timerStart = Date.now();
-    saveUserToServer(user).then(() => {
-      if (document.body.dataset.page === "dashboard") renderDashboard();
-    });
-    toast(t('profitAdded').replace('${amount}', dailyProfit.toFixed(2)));
-    timerEl.textContent = '00:00:00';
+    timerEl.textContent = "00:00:00";
+
+    if (statusEl) {
+      statusEl.textContent = "🔄 جاري إضافة الربح...";
+      statusEl.className = "timer-status active";
+      statusEl.style.color = "#ffd700";
+    }
+
+    console.log("⏰ 24 hours completed - syncing profit from server...");
+
+    try {
+      const freshUser = await syncCurrentUserFromServer();
+
+      if (freshUser) {
+        localStorage.setItem(
+          "currentUser",
+          JSON.stringify(freshUser)
+        );
+
+        console.log(
+          "✅ Profit cycle processed by server",
+          {
+            balance: freshUser.balance,
+            profit: freshUser.profit,
+            timerStart: freshUser.timerStart
+          }
+        );
+
+        if (document.body.dataset.page === "dashboard") {
+          renderDashboard();
+        }
+      }
+    } catch (error) {
+      console.error(
+        "❌ Failed to process profit cycle:",
+        error
+      );
+    }
+
     return;
   }
 
-  const hours = Math.floor(remaining / (60 * 60 * 1000));
-  const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
-  const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
+  const hours = Math.floor(
+    remaining / (60 * 60 * 1000)
+  );
 
-  timerEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  const minutes = Math.floor(
+    (remaining % (60 * 60 * 1000)) /
+      (60 * 1000)
+  );
+
+  const seconds = Math.floor(
+    (remaining % (60 * 1000)) /
+      1000
+  );
+
+  timerEl.textContent =
+    `${String(hours).padStart(2, "0")}:` +
+    `${String(minutes).padStart(2, "0")}:` +
+    `${String(seconds).padStart(2, "0")}`;
+
+  if (statusEl) {
+    statusEl.textContent = "🟢 نشط";
+    statusEl.className = "timer-status active";
+    statusEl.style.color = "";
+  }
 }
+
+  
 
 function startTimerLoop() {
   updateTimerDisplay();
-  setTimeout(startTimerLoop, 1000);
+
+  setTimeout(() => {
+    startTimerLoop();
+  }, 1000);
 }
 
 // =========================================================
