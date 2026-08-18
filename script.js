@@ -175,11 +175,11 @@ const I18N = {
     account: "الحساب",
     referralMyCode: "🎯 كود الدعوة الخاص بك",
     referralCodeLabel: "🔗 الكود:",
-    referralShareHint: "💡 شارك هذا الكود مع أصدقائك — تحصل على 20% من كل إيداع يقومون به!",
+    referralShareHint: "💡 شارك هذا الكود مع أصدقائك — تحصل على 10% من كل إيداع يقومون به!",
     referralTotalBonusLabel: "💰 إجمالي العمولات",
     referralTotalReferralsLabel: "👥 عدد المدعوين",
     referralBonusPerReferralLabel: "🎁 نسبة العمولة",
-    referralBonusAmount: "+ 20% عمولة من كل إيداع",
+    referralBonusAmount: "+ 10% عمولة من كل إيداع",
     referralShareTelegram: "📱 مشاركة عبر تيليجرام",
     referralShareWhatsapp: "💬 مشاركة عبر واتساب",
     referralShareTwitter: "🐦 مشاركة عبر تويتر",
@@ -207,7 +207,7 @@ const I18N = {
     depositOp: "إيداع",
     profitOp: "ربح",
     withdrawOp: "سحب",
-    referralBonus: "🎁 عمولة دعوة 20%",
+    referralBonus: "🎁 عمولة دعوة 10%",
     dashboardWelcome: "مرحبًا",
     userId: "🆔 المعرف",
     miningDashboard: "لوحة تحكم التعدين",
@@ -1773,7 +1773,7 @@ function renderDashboard() {
 
   const bonusPerEl = document.getElementById("referralBonusPerReferral");
   if (bonusPerEl) {
-    bonusPerEl.textContent = "20%";
+    bonusPerEl.textContent = "10%";
   }
 
   // Transactions
@@ -1847,7 +1847,7 @@ function setupDepositForm() {
       const referrer = allUsers[user.referredBy];
       
       if (referrer) {
-        const commission = amount * 0.20;
+        const commission = amount * 0.10;
         referrer.balance = Number(referrer.balance || 0) + commission;
         referrer.referralBonus = Number(referrer.referralBonus || 0) + commission;
         
