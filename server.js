@@ -361,71 +361,191 @@ function publicUser(user) {
 //  CORE PROFIT CALCULATION LOGIC
 // =========================================================
 
-async function calculateAndAddProfit(user) {
+
+ async function calculateAndAddProfit(user) {
   if (!user || !user.plan || !user.planStart || !user.timerStart) {
     return user;
   }
 
-  const now = Date.now();
-  const lastProfitDate = user.lastProfitDate ? new Date(user.lastProfitDate).getTime() : null;
+  try {
+    const now = Date.now();
 
-  const planEnd = new Date(user.planStart);
-  planEnd.setDate(planEnd.getDate() + user.planDays);
+    // تحويل timerStart إلى رقم بشكل آمن
+    const timerStartMs = new Date(user.timerStart).getTime();
 
-  if (now > planEnd.getTime()) {
-    user.plan = null;
-    user.planAmount = 0;
-    user.planRate = 0;
-    user.planDays = 0;
-    user.planStart = null;
-    user.timerStart = null;
-    user.lastProfitDate = null;
+    // تحويل planStart إلى رقم بشكل آمن
+    const planStartMs = new Date(user.planStart).getTime();
+
+    if (!Number.isFinite(timerStartMs) || !Number.isFinite(planStartMs)) {
+      console.error("❌ Invalid timerStart or planStart:", {
+        timerStart: user.timerStart,
+        planStart: user.planStart
+      });
+
+      return user;
+    }
+
+    // مدة الخطة
+    const planDays = Number(user.planDays || 0);
+
+    const planEndMs =
+      planStartMs +
+      planDays * 24 * 60 * 60 * 1000;
+
+    // إذا انتهت الخطة بالكامل
+    if (planDays > 0 && now >= planEndMs) {
+      const elapsedBeforeExpiry =
+        now - timerStartMs;
+
+      const fullDay =
+        24 * 60 * 60 * 1000;
+
+      const cycles =
+        Math.floor(elapsedBeforeExpiry / fullDay);
+
+      // إضافة الأرباح المكتملة قبل انتهاء الخطة
+      if (cycles > 0) {
+        const dailyProfit =
+          (Number(user.planAmount || 0) *
+            Number(user.planRate || 0)) / 100;
+
+        const totalProfit =
+          dailyProfit * cycles;
+
+        user.balance =
+          Number(user.balance || 0) +
+          totalProfit;
+
+        user.profit =
+          Number(user.profit || 0) +
+          totalProfit;
+
+        if (!Array.isArray(user.transactions)) {
+          user.transactions = [];
+        }
+
+        for (let i = 0; i < cycles; i++) {
+          const cycleDate =
+            timerStartMs +
+            ((i + 1) * fullDay);
+
+          user.transactions.unshift({
+            type: `📈 ربح يومي (${user.plan})`,
+            amount: dailyProfit,
+            date: new Date(cycleDate),
+            status: "✅ مكتمل"
+          });
+        }
+      }
+
+      // الخطة انتهت
+      user.plan = null;
+      user.planAmount = 0;
+      user.planRate = 0;
+      user.planDays = 0;
+      user.planStart = null;
+      user.timerStart = null;
+      user.lastProfitDate = null;
+
+      await user.save();
+
+      console.log(
+        "✅ Plan expired after processing pending profit:",
+        user.userId
+      );
+
+      return user;
+    }
+
+    // حساب الوقت المنقضي من بداية دورة الربح
+    const elapsed =
+      now - timerStartMs;
+
+    const fullDay =
+      24 * 60 * 60 * 1000;
+
+    // لم تكتمل 24 ساعة
+    if (elapsed < fullDay) {
+      return user;
+    }
+
+    // عدد الدورات المكتملة
+    const cycles =
+      Math.floor(elapsed / fullDay);
+
+    if (cycles <= 0) {
+      return user;
+    }
+
+    // الربح اليومي
+    const dailyProfit =
+      (Number(user.planAmount || 0) *
+        Number(user.planRate || 0)) / 100;
+
+    const totalProfit =
+      dailyProfit * cycles;
+
+    // إضافة الربح إلى الرصيد
+    user.balance =
+      Number(user.balance || 0) +
+      totalProfit;
+
+    user.profit =
+      Number(user.profit || 0) +
+      totalProfit;
+
+    if (!Array.isArray(user.transactions)) {
+      user.transactions = [];
+    }
+
+    // إضافة transaction لكل دورة مكتملة
+    for (let i = 0; i < cycles; i++) {
+      const cycleTime =
+        timerStartMs +
+        ((i + 1) * fullDay);
+
+      user.transactions.unshift({
+        type: `📈 ربح يومي (${user.plan})`,
+        amount: dailyProfit,
+        date: new Date(cycleTime),
+        status: "✅ مكتمل"
+      });
+    }
+
+    // آخر دورة مكتملة
+    const lastCycleTime =
+      timerStartMs +
+      (cycles * fullDay);
+
+    user.lastProfitDate =
+      new Date(lastCycleTime);
+
+    // تشغيل التايمر للدورة التالية
+    user.timerStart =
+      new Date(lastCycleTime);
+
     await user.save();
-    return user;
-  }
 
-  const startTime = lastProfitDate || new Date(user.planStart).getTime();
-  const elapsed = now - startTime;
-
-  if (elapsed < 24 * 60 * 60 * 1000) {
-    return user;
-  }
-
-  const cycles = Math.floor(elapsed / (24 * 60 * 60 * 1000));
-  if (cycles === 0) return user;
-
-  const dailyProfit = (user.planAmount * user.planRate) / 100;
-  const totalProfitToAdd = dailyProfit * cycles;
-
-  user.balance = Number(user.balance || 0) + totalProfitToAdd;
-  user.profit = Number(user.profit || 0) + totalProfitToAdd;
-
-  const lastCycleDate = new Date(startTime + cycles * 24 * 60 * 60 * 1000);
-  user.lastProfitDate = lastCycleDate.toISOString();
-
-  for (let i = 0; i < cycles; i++) {
-    user.transactions.unshift({
-      type: `📈 ربح يومي (${user.plan})`,
-      amount: dailyProfit,
-      date: new Date(startTime + (i + 1) * 24 * 60 * 60 * 1000).toISOString(),
-      status: "✅ مكتمل"
+    console.log("✅ Profit cycle completed:", {
+      userId: user.userId,
+      plan: user.plan,
+      cycles: cycles,
+      dailyProfit: dailyProfit,
+      totalProfit: totalProfit,
+      newBalance: user.balance,
+      newTimerStart: user.timerStart
     });
-  }
 
-  if (now > planEnd.getTime()) {
-    user.plan = null;
-    user.planAmount = 0;
-    user.planRate = 0;
-    user.planDays = 0;
-    user.planStart = null;
-    user.timerStart = null;
-    user.lastProfitDate = null;
-  } else {
-    user.timerStart = lastCycleDate.getTime();
-  }
+    return user;
 
-  await user.save();
-  return user;
+  } catch (error) {
+    console.error(
+      "❌ calculateAndAddProfit error:",
+      error
+    );
+
+    return user;
+  }
 }
 
 // =========================================================
