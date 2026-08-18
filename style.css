@@ -430,7 +430,7 @@ img{
 
 .ticker-change.positive {
   color: var(--green);
-  background: rgba(0, 256, 157, 0.08);
+  background: rgba(0, 255, 157, 0.08);
 }
 
 .ticker-change.negative {
@@ -2014,4 +2014,109 @@ td{
 @keyframes celebrationPop {
   0% { transform: scale(0.8) translateY(20px); opacity: 0; }
   100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+/* =========================================================
+   FIX: Missing styles for buttons and elements
+========================================================= */
+
+/* Gold color variable */
+:root {
+  --gold: #ffd700;
+}
+
+/* Plan badge fix */
+.plan-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  color: var(--green);
+  font-size: 11px;
+  background: rgba(0, 255, 157, 0.1);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+/* Featured plan border */
+.plan.featured {
+  border-color: rgba(0, 255, 157, 0.42);
+  position: relative;
+}
+
+/* Plan button fix */
+.plan .primary-btn,
+.plan .secondary-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Toast fix */
+.toast {
+  position: fixed;
+  left: 20px;
+  bottom: 20px;
+  z-index: 5000;
+  width: min(360px, calc(100% - 40px));
+  padding: 14px 16px;
+  background: #07151b;
+  border: 1px solid var(--green);
+  border-radius: 13px;
+  color: white;
+  box-shadow: 0 0 25px rgba(0, 255, 157, 0.18);
+  transform: translateY(130px);
+  opacity: 0;
+  transition: 0.3s;
+}
+
+.toast.show {
+  transform: none;
+  opacity: 1;
+}
+
+/* Mobile menu fix */
+.nav-links.open {
+  display: flex !important;
+}
+
+/* Button hover fix */
+.primary-btn:hover,
+.secondary-btn:hover,
+.ghost-btn:hover {
+  transform: translateY(-2px);
+}
+
+/* Dashboard KPI fix */
+.kpi strong {
+  display: block;
+  font-size: 29px;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+}
+
+/* Status badge */
+.status {
+  display: inline-block;
+  padding: 4px 9px;
+  border-radius: 20px;
+  background: rgba(0, 255, 157, 0.08);
+  color: var(--green);
+}
+
+/* Empty state */
+.empty {
+  text-align: center;
+  color: #60787d;
+  padding: 45px;
+}
+
+/* Plan grid responsive */
+@media (max-width: 1050px) {
+  .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 620px) {
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
 }
