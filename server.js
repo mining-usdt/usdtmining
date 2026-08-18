@@ -1104,7 +1104,58 @@ app.post("/api/admin/balance", async (req, res) => {
     }
 
     console.log(`✅ Admin ${type} | user=${updatedUser.userId} | amount=${amount} | new balance=${updatedUser.balance}`);
+    // =========================================================
+// REFERRAL COMMISSION - 10%
+// =========================================================
+if (type === "deposit" && updatedUser.referredBy) {
+  try {
+    const commission = amount * 0.10;
 
+    const referrer = await User.findOne({
+      email: String(updatedUser.referredBy).trim().toLowerCase()
+    });
+
+    if (referrer) {
+      const referralUpdate = {
+        $inc: {
+          balance: commission,
+          referralBonus: commission
+        },
+        $push: {
+          transactions: {
+            type: "🎁 عمولة دعوة 10%",
+            amount: commission,
+            date: new Date(),
+            status: "✅ مكتمل",
+            note: `عمولة 10% من إيداع المدعو ${updatedUser.email}`
+          }
+        }
+      };
+
+      const referredIndex = (referrer.referredUsers || []).findIndex(
+        u => String(u.email).trim().toLowerCase() ===
+             String(updatedUser.email).trim().toLowerCase()
+      );
+
+      if (referredIndex !== -1) {
+        referralUpdate.$inc[`referredUsers.${referredIndex}.totalDeposits`] = amount;
+        referralUpdate.$inc[`referredUsers.${referredIndex}.commissionEarned`] = commission;
+      }
+
+      await User.findOneAndUpdate(
+        { _id: referrer._id },
+        referralUpdate,
+        { new: true, runValidators: true }
+      );
+
+      console.log(
+        `🎁 Referral 10% = ${commission} | referrer=${referrer.email} | referred=${updatedUser.email}`
+      );
+    }
+  } catch (referralError) {
+    console.error("❌ Referral commission error:", referralError);
+  }
+}
     return res.json({
       success: true,
       message: type === "deposit" ? "✅ تم الإيداع بنجاح" : "✅ تم السحب بنجاح",
