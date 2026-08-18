@@ -34,7 +34,7 @@ app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 // HANDLE OPTIONS REQUESTS
 // =========================================================
 
-app.options("*", (req, res) => {
+app.options(/.*/, (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -47,8 +47,6 @@ app.options("*", (req, res) => {
 
 const MONGODB_URI =
   "mongodb+srv://kbsbaba:ahmet123123@cluster0.zh0a3gc.mongodb.net/miningusdt?appName=Cluster0";
-
-console.log("🔗 Connecting to MongoDB...");
 
 if (!MONGODB_URI) {
   console.error("❌ MONGODB_URI environment variable is missing");
@@ -68,10 +66,184 @@ if (!MONGODB_URI) {
 }
 
 // =========================================================
-// STATIC FILES - Serve all static files first
+// STATIC FILES
 // =========================================================
 
 app.use(express.static(__dirname));
+
+// =========================================================
+// SERVE HTML PAGES DIRECTLY
+// =========================================================
+
+app.get("/", (req, res) => {
+  const filePath = path.join(__dirname, "index.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("index.html غير موجود");
+});
+
+app.get("/index.html", (req, res) => {
+  const filePath = path.join(__dirname, "index.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("index.html غير موجود");
+});
+
+app.get("/login.html", (req, res) => {
+  const filePath = path.join(__dirname, "login.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("login.html غير موجود");
+});
+
+app.get("/register.html", (req, res) => {
+  const filePath = path.join(__dirname, "register.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("register.html غير موجود");
+});
+
+app.get("/dashboard.html", (req, res) => {
+  const filePath = path.join(__dirname, "dashboard.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("dashboard.html غير موجود");
+});
+
+app.get("/plans.html", (req, res) => {
+  const filePath = path.join(__dirname, "plans.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("plans.html غير موجود");
+});
+
+app.get("/deposit.html", (req, res) => {
+  const filePath = path.join(__dirname, "deposit.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("deposit.html غير موجود");
+});
+
+app.get("/withdraw.html", (req, res) => {
+  const filePath = path.join(__dirname, "withdraw.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("withdraw.html غير موجود");
+});
+
+app.get("/contact.html", (req, res) => {
+  const filePath = path.join(__dirname, "contact.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("contact.html غير موجود");
+});
+
+app.get("/games.html", (req, res) => {
+  const filePath = path.join(__dirname, "games.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("games.html غير موجود");
+});
+
+app.get("/superpanel.html", (req, res) => {
+  const filePath = path.join(__dirname, "superpanel.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("superpanel.html غير موجود");
+});
+
+app.get("/game-coin.html", (req, res) => {
+  const filePath = path.join(__dirname, "game-coin.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("game-coin.html غير موجود");
+});
+
+app.get("/game-dice.html", (req, res) => {
+  const filePath = path.join(__dirname, "game-dice.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("game-dice.html غير موجود");
+});
+
+app.get("/game-slots.html", (req, res) => {
+  const filePath = path.join(__dirname, "game-slots.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("game-slots.html غير موجود");
+});
+
+app.get("/game-roulette.html", (req, res) => {
+  const filePath = path.join(__dirname, "game-roulette.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("game-roulette.html غير موجود");
+});
+
+app.get("/game-guess.html", (req, res) => {
+  const filePath = path.join(__dirname, "game-guess.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("game-guess.html غير موجود");
+});
+
+app.get("/game-blackjack.html", (req, res) => {
+  const filePath = path.join(__dirname, "game-blackjack.html");
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  return res.status(404).send("game-blackjack.html غير موجود");
+});
 
 // =========================================================
 // USER MODEL
@@ -207,13 +379,10 @@ const UserSchema = new mongoose.Schema(
       }
     ],
 
-    createdAt: {
+        createdAt: {
       type: Date,
       default: Date.now
     }
-  },
-  {
-    versionKey: true
   }
 );
 
@@ -310,10 +479,9 @@ function publicUser(user) {
 }
 
 // =========================================================
-// API ROUTES
+// HEALTH
 // =========================================================
 
-// HEALTH
 app.get("/api/health", async (req, res) => {
   try {
     const mongoConnected =
@@ -338,14 +506,20 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
+// =========================================================
 // REGISTER
+// =========================================================
+
 app.post("/api/register", async (req, res) => {
   try {
     const name = String(req.body.name || "").trim();
+
     const email = String(req.body.email || "")
       .trim()
       .toLowerCase();
+
     const password = String(req.body.password || "");
+
     const referralCode = String(
       req.body.referralCode || ""
     )
@@ -476,7 +650,10 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
+// =========================================================
 // LOGIN
+// =========================================================
+
 app.post("/api/login", async (req, res) => {
   try {
     const email = String(req.body.email || "")
@@ -536,7 +713,10 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
+// =========================================================
 // GET USER
+// =========================================================
+
 app.get("/api/user/:identifier", async (req, res) => {
   try {
     const identifier = String(
@@ -585,7 +765,10 @@ app.get("/api/user/:identifier", async (req, res) => {
   }
 });
 
+// =========================================================
 // ACTIVATE PLAN
+// =========================================================
+
 app.post("/api/activate-plan", async (req, res) => {
   try {
     const userId = String(
@@ -673,9 +856,11 @@ app.post("/api/activate-plan", async (req, res) => {
       });
     }
 
+    // خصم الخطة
     user.balance =
       currentBalance - planAmount;
 
+    // تفعيل الخطة
     user.plan = planId;
     user.planAmount = planAmount;
     user.planRate = planRate;
@@ -715,7 +900,10 @@ app.post("/api/activate-plan", async (req, res) => {
   }
 });
 
+// =========================================================
 // ADMIN - GET ALL USERS
+// =========================================================
+
 app.get("/api/admin/users", async (req, res) => {
   try {
     const users = await User.find({})
@@ -758,7 +946,10 @@ app.get("/api/admin/users", async (req, res) => {
   }
 });
 
+// =========================================================
 // ADMIN - GET SINGLE USER
+// =========================================================
+
 app.get(
   "/api/admin/user/:identifier",
   async (req, res) => {
@@ -823,7 +1014,10 @@ app.get(
   }
 );
 
+// =========================================================
 // ADMIN - UPDATE USER
+// =========================================================
+
 app.put(
   "/api/admin/user/:userId",
   async (req, res) => {
@@ -895,7 +1089,10 @@ app.put(
   }
 );
 
+// =========================================================
 // ADMIN - BALANCE
+// =========================================================
+
 app.post(
   "/api/admin/balance",
   async (req, res) => {
@@ -1039,7 +1236,10 @@ app.post(
   }
 );
 
+// =========================================================
 // ADMIN - DELETE USER
+// =========================================================
+
 app.delete(
   "/api/admin/user/:userId",
   async (req, res) => {
@@ -1086,7 +1286,10 @@ app.delete(
   }
 );
 
+// =========================================================
 // ADMIN - STATS
+// =========================================================
+
 app.get(
   "/api/admin/stats",
   async (req, res) => {
@@ -1151,12 +1354,14 @@ app.get(
 );
 
 // =========================================================
-// CATCH-ALL ROUTE - SIMPLE APPROACH
+// CATCH-ALL ROUTE FOR FRONTEND - FIXED
 // =========================================================
 
-// Handle all non-API requests by serving the appropriate HTML file
-app.get("*", (req, res) => {
-  // Skip API routes
+// IMPORTANT:
+// Express/path-to-regexp versions that reject "/*"
+// are handled by using a RegExp catch-all route.
+app.get(/.*/, (req, res) => {
+  // Don't interfere with API routes
   if (req.path.startsWith("/api")) {
     return res.status(404).json({
       success: false,
@@ -1165,37 +1370,30 @@ app.get("*", (req, res) => {
     });
   }
 
-  // Get the requested path without leading slash
-  let page = req.path.replace(/^\//, "");
-  
-  // If empty or root, serve index.html
-  if (!page) {
-    page = "index";
-  }
-  
-  // Remove .html extension if present
-  page = page.replace(/\.html$/, "");
-  
-  // Build the file path
-  const filePath = path.join(__dirname, `${page}.html`);
-  
-  // Check if file exists
+  // Try to serve the requested HTML file
+  const page = req.path
+    .replace(/^\//, "")
+    .replace(/\.html$/, "");
+
+  const filePath = path.join(
+    __dirname,
+    `${page}.html`
+  );
+
   if (fs.existsSync(filePath)) {
     return res.sendFile(filePath);
   }
-  
-  // Try to serve as static file
-  const staticPath = path.join(__dirname, req.path);
-  if (fs.existsSync(staticPath)) {
-    return res.sendFile(staticPath);
-  }
-  
+
   // Fallback to index.html
-  const indexFile = path.join(__dirname, "index.html");
+  const indexFile = path.join(
+    __dirname,
+    "index.html"
+  );
+
   if (fs.existsSync(indexFile)) {
     return res.sendFile(indexFile);
   }
-  
+
   return res.status(404).send("الصفحة غير موجودة");
 });
 
