@@ -6,10 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>🃏 البلاك جاك — miningusdt</title>
   <link rel="stylesheet" href="style.css">
-
   <style>
+    /* نفس الستايلات مع الألوان الذهبية الكلاسيكية */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       background: #03080d;
+      min-height: 100vh;
+      font-family: 'Cairo', sans-serif;
+      color: #f3fffb;
       overflow-x: hidden;
     }
 
@@ -23,10 +32,10 @@
       content: '';
       position: fixed;
       inset: 0;
-      z-index: -1;
+      z-index: -2;
       background:
-        radial-gradient(ellipse at 30% 40%, rgba(255, 215, 0, 0.06), transparent 50%),
-        radial-gradient(ellipse at 70% 60%, rgba(0, 255, 157, 0.04), transparent 40%),
+        radial-gradient(ellipse at 30% 40%, rgba(255, 215, 0, 0.08), transparent 50%),
+        radial-gradient(ellipse at 70% 60%, rgba(0, 255, 157, 0.06), transparent 40%),
         #03080d;
       animation: bgPulse 6s ease-in-out infinite;
     }
@@ -37,7 +46,7 @@
         opacity: 1;
       }
       50% {
-        opacity: 0.6;
+        opacity: 0.7;
       }
     }
 
@@ -53,9 +62,62 @@
       position: absolute;
       width: 4px;
       height: 4px;
-      background: rgba(255, 215, 0, 0.2);
       border-radius: 50%;
       animation: floatParticle linear infinite;
+    }
+
+    .particle:nth-child(1) {
+      left: 10%;
+      animation-duration: 12s;
+      background: rgba(255, 215, 0, 0.2);
+    }
+    .particle:nth-child(2) {
+      left: 25%;
+      animation-duration: 15s;
+      animation-delay: 2s;
+      width: 6px;
+      height: 6px;
+      background: rgba(0, 255, 157, 0.15);
+    }
+    .particle:nth-child(3) {
+      left: 40%;
+      animation-duration: 10s;
+      animation-delay: 4s;
+      background: rgba(255, 215, 0, 0.15);
+    }
+    .particle:nth-child(4) {
+      left: 55%;
+      animation-duration: 18s;
+      animation-delay: 1s;
+      background: rgba(0, 255, 157, 0.12);
+    }
+    .particle:nth-child(5) {
+      left: 70%;
+      animation-duration: 14s;
+      animation-delay: 3s;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 215, 0, 0.12);
+    }
+    .particle:nth-child(6) {
+      left: 85%;
+      animation-duration: 11s;
+      animation-delay: 5s;
+      background: rgba(0, 255, 157, 0.1);
+    }
+    .particle:nth-child(7) {
+      left: 45%;
+      animation-duration: 16s;
+      animation-delay: 2s;
+      width: 7px;
+      height: 7px;
+      background: rgba(255, 215, 0, 0.1);
+    }
+    .particle:nth-child(8) {
+      left: 65%;
+      animation-duration: 13s;
+      animation-delay: 4s;
+      background: rgba(0, 255, 157, 0.08);
     }
 
     @keyframes floatParticle {
@@ -83,10 +145,10 @@
     .game-card-main {
       padding: 35px 30px 40px;
       border-radius: 30px;
-      background: rgba(8, 24, 31, 0.88);
+      background: rgba(8, 24, 31, 0.92);
       backdrop-filter: blur(20px);
       border: 2px solid rgba(255, 215, 0, 0.08);
-      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 60px rgba(255, 215, 0, 0.04);
       position: relative;
       overflow: hidden;
     }
@@ -97,7 +159,7 @@
       inset: -2px;
       border-radius: 30px;
       padding: 2px;
-      background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(0, 255, 157, 0.05));
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.12), rgba(0, 255, 157, 0.08));
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
       mask-composite: exclude;
@@ -113,42 +175,50 @@
       gap: 10px;
     }
 
-    .game-header .back-btn {
+    .back-btn-floating {
       display: inline-flex;
       align-items: center;
       gap: 8px;
       padding: 10px 18px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      background: rgba(255, 255, 255, 0.02);
+      border-radius: 50px;
+      border: 1px solid rgba(255, 215, 0, 0.12);
+      background: rgba(3, 8, 13, 0.8);
+      backdrop-filter: blur(18px);
       color: var(--text);
       text-decoration: none;
-      transition: 0.3s;
       font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
     }
 
-    .game-header .back-btn:hover {
-      border-color: var(--green);
-      color: var(--green);
+    .back-btn-floating:hover {
+      transform: translateX(-4px) scale(1.04);
+      border-color: #ffd700;
+      color: #ffd700;
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.1);
     }
 
-    .game-header .balance-small {
-      padding: 8px 18px;
-      border-radius: 12px;
-      background: rgba(0, 255, 157, 0.04);
-      border: 1px solid rgba(0, 255, 157, 0.06);
+    .balance-small {
+      padding: 8px 20px;
+      border-radius: 14px;
+      background: rgba(0, 255, 157, 0.06);
+      border: 1px solid rgba(0, 255, 157, 0.08);
       text-align: center;
+      min-width: 100px;
     }
 
-    .game-header .balance-small .label {
+    .balance-small .label {
       font-size: 10px;
       color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
     }
 
-    .game-header .balance-small .amount {
-      font-size: 18px;
+    .balance-small .amount {
+      font-size: 20px;
       font-weight: 800;
       color: #ffd700;
+      text-shadow: 0 0 30px rgba(255, 215, 0, 0.1);
     }
 
     .game-icon-big {
@@ -171,10 +241,11 @@
 
     .game-title-main {
       text-align: center;
-      font-size: 32px;
+      font-size: 34px;
       font-weight: 900;
       color: #ffd700;
       margin-bottom: 5px;
+      text-shadow: 0 0 40px rgba(255, 215, 0, 0.1);
     }
 
     .game-desc-main {
@@ -183,6 +254,18 @@
       font-size: 14px;
       margin-bottom: 20px;
       line-height: 1.8;
+    }
+
+    .game-badge-top {
+      display: inline-block;
+      padding: 4px 18px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(255, 215, 0, 0.1);
+      color: #ffd700;
+      border: 1px solid rgba(255, 215, 0, 0.1);
+      margin-bottom: 12px;
     }
 
     .game-result {
@@ -204,24 +287,24 @@
     }
 
     .game-result.win {
-      border-color: var(--green);
-      color: var(--green);
-      background: rgba(0, 255, 157, 0.06);
-      box-shadow: 0 0 40px rgba(0, 255, 157, 0.06);
+      border-color: #00ff9d;
+      color: #00ff9d;
+      background: rgba(0, 255, 157, 0.08);
+      box-shadow: 0 0 40px rgba(0, 255, 157, 0.08);
     }
 
     .game-result.lose {
       border-color: #ff4444;
       color: #ff4444;
-      background: rgba(255, 50, 50, 0.06);
-      box-shadow: 0 0 40px rgba(255, 50, 50, 0.06);
+      background: rgba(255, 50, 50, 0.08);
+      box-shadow: 0 0 40px rgba(255, 50, 50, 0.08);
     }
 
     .game-result.draw {
       border-color: #ffd700;
       color: #ffd700;
-      background: rgba(255, 215, 0, 0.06);
-      box-shadow: 0 0 40px rgba(255, 215, 0, 0.06);
+      background: rgba(255, 215, 0, 0.08);
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.08);
     }
 
     .game-bet-input {
@@ -243,10 +326,11 @@
       padding: 12px 16px;
       border-radius: 12px;
       border: 2px solid rgba(255, 215, 0, 0.08);
-      background: rgba(6, 16, 23, 0.8);
+      background: rgba(6, 16, 23, 0.9);
       color: white;
       outline: none;
       font-size: 16px;
+      font-weight: 600;
       transition: 0.3s;
     }
 
@@ -290,16 +374,16 @@
       transition: all 0.3s;
       background: linear-gradient(135deg, #ffd700, #ffab00);
       color: #1a0a00;
-      box-shadow: 0 0 40px rgba(255, 215, 0, 0.1);
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.15);
       margin-top: 10px;
     }
 
-    .game-btn-play:hover {
+    .game-btn-play:hover:not(:disabled) {
       transform: translateY(-3px);
-      box-shadow: 0 0 60px rgba(255, 215, 0, 0.2);
+      box-shadow: 0 0 60px rgba(255, 215, 0, 0.3);
     }
 
-    .game-btn-play:active {
+    .game-btn-play:active:not(:disabled) {
       transform: scale(0.96);
     }
 
@@ -307,16 +391,6 @@
       opacity: 0.4;
       cursor: not-allowed;
       transform: none !important;
-    }
-
-    .game-btn-play.secondary {
-      background: linear-gradient(135deg, #ff6b35, #ff4500);
-      color: white;
-      box-shadow: 0 0 40px rgba(255, 69, 0, 0.1);
-    }
-
-    .game-btn-play.secondary:hover {
-      box-shadow: 0 0 60px rgba(255, 69, 0, 0.2);
     }
 
     .game-history {
@@ -347,7 +421,7 @@
     }
 
     .game-history .history-item.win {
-      color: var(--green);
+      color: #00ff9d;
     }
 
     .game-history .history-item.lose {
@@ -358,19 +432,6 @@
       color: #ffd700;
     }
 
-    .game-badge-top {
-      display: inline-block;
-      padding: 4px 16px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 700;
-      background: rgba(255, 215, 0, 0.08);
-      color: #ffd700;
-      border: 1px solid rgba(255, 215, 0, 0.08);
-      margin-bottom: 10px;
-    }
-
-    /* Cards */
     .cards-container {
       display: flex;
       justify-content: center;
@@ -381,13 +442,13 @@
     }
 
     .card-item {
-      width: 60px;
-      height: 85px;
+      width: 65px;
+      height: 90px;
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
+      font-size: 30px;
       font-weight: 800;
       background: white;
       color: #1a0a00;
@@ -435,7 +496,7 @@
     }
 
     .card-section .section-total.blackjack {
-      color: var(--green);
+      color: #00ff9d;
       text-shadow: 0 0 30px rgba(0, 255, 157, 0.2);
     }
 
@@ -458,7 +519,7 @@
       transition: all 0.3s;
     }
 
-    .game-actions button:hover {
+    .game-actions button:hover:not(:disabled) {
       transform: translateY(-3px);
     }
 
@@ -483,7 +544,6 @@
       color: #1a0a00;
     }
 
-    /* Responsive */
     @media (max-width: 620px) {
       .game-card-main {
         padding: 25px 18px 30px;
@@ -518,7 +578,7 @@
         align-items: stretch;
         text-align: center;
       }
-      .game-header .back-btn {
+      .back-btn-floating {
         justify-content: center;
       }
       .card-item {
@@ -550,7 +610,6 @@
 
 <body>
 
-  <!-- Particles -->
   <div class="particles">
     <div class="particle"></div>
     <div class="particle"></div>
@@ -562,7 +621,6 @@
     <div class="particle"></div>
   </div>
 
-  <!-- Navbar -->
   <header class="navbar">
     <div class="container nav-inner">
       <a class="brand" href="index.html">
@@ -592,7 +650,6 @@
     </div>
   </header>
 
-  <!-- Game -->
   <main class="game-page">
     <div class="container game-container">
       <div class="game-card-main">
@@ -612,10 +669,8 @@
         </div>
         <div class="game-desc-main">قريب من 21 بدون تجاوز — اربح ضعف رهانك!</div>
 
-        <!-- Result -->
         <div class="game-result" id="bjResult">🃏 ابدأ اللعبة!</div>
 
-        <!-- Cards -->
         <div class="card-section">
           <div class="section-label">🃏 يد اللاعب</div>
           <div class="cards-container" id="playerCards"></div>
@@ -628,7 +683,6 @@
           <div class="section-total" id="dealerTotal">المجموع: ?</div>
         </div>
 
-        <!-- Bet -->
         <div class="game-bet-input">
           <label>💰 <span data-i18n="betAmount">الرهان:</span></label>
           <input type="number" id="bjBet" value="10" min="1" step="1">
@@ -640,7 +694,6 @@
           </div>
         </div>
 
-        <!-- Actions -->
         <div class="game-actions" id="bjActions">
           <button class="btn-hit" id="bjHit" disabled>📥 سحب</button>
           <button class="btn-stand" id="bjStand" disabled>⏹ توقف</button>
@@ -649,7 +702,6 @@
 
         <button class="game-btn-play" id="bjDeal">🃏 ابدأ الجولة</button>
 
-        <!-- History -->
         <div class="game-history" id="bjHistory">
           <div style="text-align:center;color:var(--muted);padding:8px;" data-i18n="noHistory">لا توجد سجلات بعد</div>
         </div>
@@ -670,10 +722,11 @@
 
   <script>
     // =========================================================
-    //   BLACKJACK GAME
+    //   BLACKJACK - FULLY SERVER SYNCED (2x multiplier)
     // =========================================================
 
-    let user = JSON.parse(localStorage.getItem('currentUser'));
+    let currentUser = null;
+    const API_URL = window.location.origin + '/api';
 
     // Game state
     let deck = [];
@@ -685,17 +738,122 @@
     const SUITS = ['♠', '♥', '♦', '♣'];
     const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
-    function updateBalance() {
-      user = JSON.parse(localStorage.getItem('currentUser'));
-      if (user) {
-        document.getElementById('gameBalance').textContent = '$' + Number(user.balance || 0).toFixed(2);
-      } else {
-        document.getElementById('gameBalance').textContent = '$0.00';
+    // DOM elements
+    const balanceEl = document.getElementById('gameBalance');
+    const resultEl = document.getElementById('bjResult');
+    const historyEl = document.getElementById('bjHistory');
+    const playerCardsEl = document.getElementById('playerCards');
+    const dealerCardsEl = document.getElementById('dealerCards');
+    const playerTotalEl = document.getElementById('playerTotal');
+    const dealerTotalEl = document.getElementById('dealerTotal');
+    const bjBet = document.getElementById('bjBet');
+    const bjDeal = document.getElementById('bjDeal');
+    const bjHit = document.getElementById('bjHit');
+    const bjStand = document.getElementById('bjStand');
+    const bjDouble = document.getElementById('bjDouble');
+
+    // =========================================================
+    //  FETCH USER FROM SERVER
+    // =========================================================
+    async function fetchCurrentUser() {
+      const localUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (!localUser || !localUser.userId) {
+        currentUser = null;
+        updateBalanceDisplay();
+        return null;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/user/${encodeURIComponent(localUser.userId)}`);
+        const data = await res.json();
+        if (data.success && data.user) {
+          currentUser = data.user;
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          updateBalanceDisplay();
+          updateHistory();
+          return currentUser;
+        } else {
+          currentUser = localUser;
+          updateBalanceDisplay();
+          updateHistory();
+          return currentUser;
+        }
+      } catch (e) {
+        console.warn('⚠️ Server unavailable, using local data:', e);
+        currentUser = localUser;
+        updateBalanceDisplay();
+        updateHistory();
+        return currentUser;
       }
     }
 
-    function setBet(game, amount) {
-      document.getElementById('bjBet').value = amount;
+    // =========================================================
+    //  UPDATE BALANCE ON SERVER
+    // =========================================================
+    async function updateUserBalance(amount, transactionType, transactionDetails = {}) {
+      if (!currentUser || !currentUser.userId) {
+        toast('❌ يرجى تسجيل الدخول أولاً');
+        return false;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/admin/balance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser.userId,
+            amount: Math.abs(amount),
+            type: amount >= 0 ? 'deposit' : 'withdraw',
+            adminName: 'نظام اللعبة'
+          })
+        });
+
+        const data = await res.json();
+        if (data.success && data.user) {
+          currentUser = data.user;
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          updateBalanceDisplay();
+          updateHistory();
+          return true;
+        } else {
+          console.error('❌ Failed to update balance:', data.message);
+          toast('❌ فشل تحديث الرصيد: ' + (data.message || 'خطأ غير معروف'));
+          return false;
+        }
+      } catch (e) {
+        console.error('❌ Update balance error:', e);
+        toast('❌ فشل الاتصال بالخادم');
+        return false;
+      }
+    }
+
+    // =========================================================
+    //  UI UPDATE FUNCTIONS
+    // =========================================================
+    function updateBalanceDisplay() {
+      if (currentUser) {
+        balanceEl.textContent = '$' + Number(currentUser.balance || 0).toFixed(2);
+      } else {
+        balanceEl.textContent = '$0.00';
+      }
+    }
+
+    function updateHistory() {
+      if (!currentUser) {
+        historyEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:8px;">لا توجد سجلات بعد</div>';
+        return;
+      }
+      const transactions = (currentUser.transactions || []).filter(t => t.game === 'blackjack').slice(0, 8);
+      if (transactions.length) {
+        historyEl.innerHTML = transactions.map(t => `
+            <div class="history-item ${t.amount > 0 ? 'win' : t.amount === 0 ? 'draw' : 'lose'}">
+              <span>${t.type}</span>
+              <span>${t.amount > 0 ? '+' : ''}$${Number(t.amount).toFixed(2)}</span>
+            </div>
+          `).join('');
+      } else {
+        historyEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:8px;">لا توجد سجلات بعد</div>';
+      }
     }
 
     function toast(message) {
@@ -707,18 +865,13 @@
       window.toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
     }
 
-    function saveUserAndUpdate(userData) {
-      const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-      db[userData.email] = userData;
-      localStorage.setItem('miningUsersDB', JSON.stringify(db));
-      localStorage.setItem('currentUser', JSON.stringify(userData));
-      updateBalance();
+    function setBet(game, amount) {
+      document.getElementById('bjBet').value = amount;
     }
 
     // =========================================================
     //   DECK FUNCTIONS
     // =========================================================
-
     function createDeck() {
       const newDeck = [];
       for (const suit of SUITS) {
@@ -775,21 +928,21 @@
     // =========================================================
     //   GAME LOGIC
     // =========================================================
-
-    function startGame() {
-      const userData = JSON.parse(localStorage.getItem('currentUser'));
-      if (!userData) {
+    async function startGame() {
+      if (!currentUser) {
         toast('يرجى تسجيل الدخول أولاً');
         return;
       }
 
-      const betAmount = parseInt(document.getElementById('bjBet').value) || 0;
+      const betAmount = parseInt(bjBet.value) || 0;
       if (betAmount <= 0) {
         toast('أدخل رهان صحيح');
         return;
       }
-      if (Number(userData.balance || 0) < betAmount) {
-        toast('❌ رصيد غير كافٍ');
+
+      await fetchCurrentUser();
+      if (Number(currentUser.balance || 0) < betAmount) {
+        toast('❌ رصيد غير كافٍ - رصيدك: $' + Number(currentUser.balance || 0).toFixed(2));
         return;
       }
 
@@ -798,54 +951,51 @@
       playerHand = [];
       dealerHand = [];
 
-      // Deal initial cards
       playerHand.push(drawCard());
       dealerHand.push(drawCard());
       playerHand.push(drawCard());
       dealerHand.push(drawCard());
 
       gameActive = true;
-      document.getElementById('bjDeal').disabled = true;
-      document.getElementById('bjHit').disabled = false;
-      document.getElementById('bjStand').disabled = false;
-      document.getElementById('bjDouble').disabled = false;
+      bjDeal.disabled = true;
+      bjHit.disabled = false;
+      bjStand.disabled = false;
+      bjDouble.disabled = false;
 
       renderGame();
 
-      // Check for blackjack
       const pTotal = handTotal(playerHand);
       const dTotal = handTotal(dealerHand);
 
       if (pTotal === 21 && dTotal === 21) {
-        endGame('push', '🔄 تعادل! كلاهما 21');
+        await endGame('push', '🔄 تعادل! كلاهما 21');
       } else if (pTotal === 21) {
-        endGame('win', '🎉 بلاك جاك!');
+        await endGame('win', '🎉 بلاك جاك!');
       } else if (dTotal === 21) {
-        endGame('lose', '😞 الموزع عنده بلاك جاك');
+        await endGame('lose', '😞 الموزع عنده بلاك جاك');
       }
     }
 
-    function hit() {
+    async function hit() {
       if (!gameActive) return;
       playerHand.push(drawCard());
       renderGame();
 
       const total = handTotal(playerHand);
       if (total > 21) {
-        endGame('lose', '💀 تجاوزت الـ 21!');
+        await endGame('lose', '💀 تجاوزت الـ 21!');
       } else if (total === 21) {
-        stand();
+        await stand();
       }
     }
 
-    function stand() {
+    async function stand() {
       if (!gameActive) return;
       gameActive = false;
-      document.getElementById('bjHit').disabled = true;
-      document.getElementById('bjStand').disabled = true;
-      document.getElementById('bjDouble').disabled = true;
+      bjHit.disabled = true;
+      bjStand.disabled = true;
+      bjDouble.disabled = true;
 
-      // Dealer plays
       while (handTotal(dealerHand) < 17) {
         dealerHand.push(drawCard());
       }
@@ -856,23 +1006,23 @@
       const dTotal = handTotal(dealerHand);
 
       if (dTotal > 21) {
-        endGame('win', '🎉 الموزع تجاوز الـ 21!');
+        await endGame('win', '🎉 الموزع تجاوز الـ 21!');
       } else if (pTotal > dTotal) {
-        endGame('win', '🎉 فزت!');
+        await endGame('win', '🎉 فزت!');
       } else if (pTotal === dTotal) {
-        endGame('push', '🔄 تعادل!');
+        await endGame('push', '🔄 تعادل!');
       } else {
-        endGame('lose', '😞 الموزع فاز!');
+        await endGame('lose', '😞 الموزع فاز!');
       }
     }
 
-    function doubleDown() {
+    async function doubleDown() {
       if (!gameActive) return;
-      const userData = JSON.parse(localStorage.getItem('currentUser'));
-      if (!userData) return;
+      if (!currentUser) return;
 
       const newBet = bet * 2;
-      if (Number(userData.balance || 0) < newBet) {
+      await fetchCurrentUser();
+      if (Number(currentUser.balance || 0) < newBet) {
         toast('❌ رصيد غير كافٍ للمضاعفة');
         return;
       }
@@ -883,126 +1033,96 @@
 
       const total = handTotal(playerHand);
       if (total > 21) {
-        endGame('lose', '💀 تجاوزت الـ 21!');
+        await endGame('lose', '💀 تجاوزت الـ 21!');
       } else {
-        stand();
+        await stand();
       }
     }
 
-    function endGame(result, message) {
+    async function endGame(result, message) {
       gameActive = false;
-      document.getElementById('bjHit').disabled = true;
-      document.getElementById('bjStand').disabled = true;
-      document.getElementById('bjDouble').disabled = true;
-      document.getElementById('bjDeal').disabled = false;
+      bjHit.disabled = true;
+      bjStand.disabled = true;
+      bjDouble.disabled = true;
+      bjDeal.disabled = false;
 
-      const userData = JSON.parse(localStorage.getItem('currentUser'));
-      if (!userData) return;
-
-      let winAmount = 0;
-      let resultType = '';
+      let profit = 0;
+      let type = '';
 
       if (result === 'win') {
-        winAmount = bet * 2;
-        resultType = 'فوز بلاك جاك';
-        userData.balance = Number(userData.balance || 0) + winAmount;
-        document.getElementById('bjResult').className = 'game-result win';
+        profit = bet * 2;
+        type = 'فوز بلاك جاك';
       } else if (result === 'lose') {
-        winAmount = -bet;
-        resultType = 'خسارة بلاك جاك';
-        userData.balance = Number(userData.balance || 0) - bet;
-        document.getElementById('bjResult').className = 'game-result lose';
+        profit = -bet;
+        type = 'خسارة بلاك جاك';
       } else {
-        winAmount = 0;
-        resultType = 'تعادل بلاك جاك';
-        document.getElementById('bjResult').className = 'game-result draw';
+        profit = 0;
+        type = 'تعادل بلاك جاك';
       }
 
-      document.getElementById('bjResult').innerHTML = message;
-
-      // Add transaction
-      if (!userData.transactions) userData.transactions = [];
-      userData.transactions.unshift({
-        type: `🃏 ${resultType}`,
-        amount: winAmount,
-        date: new Date().toISOString(),
-        status: 'مكتمل',
+      const success = await updateUserBalance(profit, `🃏 ${type}`, {
         game: 'blackjack',
         bet: bet,
         playerTotal: handTotal(playerHand),
         dealerTotal: handTotal(dealerHand)
       });
 
-      saveUserAndUpdate(userData);
-      renderGame(true);
+      if (!success) {
+        bjDeal.disabled = false;
+        return;
+      }
 
-      // Update history
-      updateHistory(userData);
+      if (result === 'win') {
+        resultEl.className = 'game-result win';
+      } else if (result === 'lose') {
+        resultEl.className = 'game-result lose';
+      } else {
+        resultEl.className = 'game-result draw';
+      }
+      resultEl.innerHTML = message;
+
+      renderGame(true);
+      updateHistory();
     }
 
     function renderGame(showDealer = false) {
-      // Player cards
-      const playerContainer = document.getElementById('playerCards');
-      playerContainer.innerHTML = playerHand.map(c => cardDisplay(c)).join('');
-
+      playerCardsEl.innerHTML = playerHand.map(c => cardDisplay(c)).join('');
       const pTotal = handTotal(playerHand);
-      const pEl = document.getElementById('playerTotal');
-      pEl.textContent = 'المجموع: ' + pTotal;
-      pEl.className = 'section-total';
-      if (pTotal > 21) pEl.classList.add('bust');
-      else if (pTotal === 21) pEl.classList.add('blackjack');
+      playerTotalEl.textContent = 'المجموع: ' + pTotal;
+      playerTotalEl.className = 'section-total';
+      if (pTotal > 21) playerTotalEl.classList.add('bust');
+      else if (pTotal === 21) playerTotalEl.classList.add('blackjack');
 
-      // Dealer cards
-      const dealerContainer = document.getElementById('dealerCards');
       if (showDealer || !gameActive) {
-        dealerContainer.innerHTML = dealerHand.map(c => cardDisplay(c)).join('');
+        dealerCardsEl.innerHTML = dealerHand.map(c => cardDisplay(c)).join('');
         const dTotal = handTotal(dealerHand);
-        const dEl = document.getElementById('dealerTotal');
-        dEl.textContent = 'المجموع: ' + dTotal;
-        dEl.className = 'section-total';
-        if (dTotal > 21) dEl.classList.add('bust');
-        else if (dTotal === 21) dEl.classList.add('blackjack');
+        dealerTotalEl.textContent = 'المجموع: ' + dTotal;
+        dealerTotalEl.className = 'section-total';
+        if (dTotal > 21) dealerTotalEl.classList.add('bust');
+        else if (dTotal === 21) dealerTotalEl.classList.add('blackjack');
       } else {
-        dealerContainer.innerHTML = cardDisplay(dealerHand[0]) + cardDisplayBack();
-        document.getElementById('dealerTotal').textContent = 'المجموع: ?';
+        dealerCardsEl.innerHTML = cardDisplay(dealerHand[0]) + cardDisplayBack();
+        dealerTotalEl.textContent = 'المجموع: ?';
       }
 
-      updateBalance();
-    }
-
-    function updateHistory(userData) {
-      const historyEl = document.getElementById('bjHistory');
-      const history = (userData.transactions || []).filter(t => t.game === 'blackjack').slice(0, 8);
-      if (history.length) {
-        historyEl.innerHTML = history.map(t => `
-          <div class="history-item ${t.amount > 0 ? 'win' : t.amount === 0 ? 'draw' : 'lose'}">
-            <span>${t.type}</span>
-            <span>${t.amount > 0 ? '+' : ''}$${Number(t.amount).toFixed(2)}</span>
-          </div>
-        `).join('');
-      } else {
-        historyEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:8px;">لا توجد سجلات بعد</div>';
-      }
+      updateBalanceDisplay();
     }
 
     // =========================================================
-    //   EVENT BINDING
+    //  EVENT BINDING
     // =========================================================
+    bjDeal.addEventListener('click', startGame);
+    bjHit.addEventListener('click', hit);
+    bjStand.addEventListener('click', stand);
+    bjDouble.addEventListener('click', doubleDown);
 
-    document.getElementById('bjDeal').addEventListener('click', startGame);
-    document.getElementById('bjHit').addEventListener('click', hit);
-    document.getElementById('bjStand').addEventListener('click', stand);
-    document.getElementById('bjDouble').addEventListener('click', doubleDown);
-
-    // Enter key
-    document.getElementById('bjBet').addEventListener('keydown', function(e) {
+    bjBet.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') startGame();
     });
 
     // =========================================================
-    //   LANGUAGE MENU
+    //  LANGUAGE MENU & MOBILE TOGGLE
     // =========================================================
-
     document.getElementById('globeBtn')?.addEventListener('click', function(e) {
       e.stopPropagation();
       document.getElementById('langMenu').classList.toggle('show');
@@ -1032,14 +1152,11 @@
     });
 
     // =========================================================
-    //   INIT
+    //  INIT
     // =========================================================
-
-    updateBalance();
-    const userData = JSON.parse(localStorage.getItem('currentUser'));
-    if (userData) updateHistory(userData);
+    fetchCurrentUser();
+    setInterval(fetchCurrentUser, 15000);
   </script>
 
 </body>
-
 </html>
