@@ -1,15 +1,3 @@
-/**
- * ============================================================
- *  🚀 MININGUSDT - SERVER (PRODUCTION GRADE)
- *  - معالجة أخطاء شاملة
- *  - سجلات مفصلة
- *  - أمان عالي
- *  - أداء محسن
- *  - بنية قابلة للتوسع
- *  - اتصال MongoDB مستقر
- * ============================================================
- */
-
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -18,2438 +6,634 @@ const helmet = require("helmet");
 const path = require("path");
 const fs = require("fs");
 
-// ============================================================
-//  🛡️ INITIALIZATION
-// ============================================================
-
 const app = express();
-const PORT = process.env.PORT || 3000;
-const MONGODB_URI =
-  "mongodb+srv://kabusbaba:kbskbs123@cluster0.zh0a3gc.mongodb.net/miningusdt?retryWrites=true&w=majority";
 
-// ============================================================
-//  📋 LOGGING SYSTEM
-// ============================================================
-
-const LOGS_DIR = path.join(__dirname, "logs");
-
-if (!fs.existsSync(LOGS_DIR)) {
-  fs.mkdirSync(LOGS_DIR, { recursive: true });
-}
-
-function log(message, type = "INFO") {
-  const timestamp = new Date().toISOString();
-  const logEntry = `[${timestamp}] [${type}] ${message}\n`;
-
-  console.log(logEntry.trim());
-
-  const logFile = path.join(
-    LOGS_DIR,
-    `${new Date().toISOString().slice(0, 10)}.log`
-  );
-
-  fs.appendFileSync(logFile, logEntry, "utf8");
-}
-
-function logError(error, context = "") {
-  const timestamp = new Date().toISOString();
-
-  const logEntry =
-    `[${timestamp}] [ERROR] ${context}: ${error.message}\n` +
-    `Stack: ${error.stack}\n` +
-    `---\n`;
-
-  console.error(logEntry.trim());
-
-  const logFile = path.join(
-    LOGS_DIR,
-    `error_${new Date().toISOString().slice(0, 10)}.log`
-  );
-
-  fs.appendFileSync(logFile, logEntry, "utf8");
-}
-
-// ============================================================
-//  🔒 SECURITY MIDDLEWARE
-// ============================================================
-
-app.use(
-  helmet({
-    contentSecurityPolicy: false,
-    crossOriginEmbedderPolicy: false,
-    crossOriginOpenerPolicy: { policy: "unsafe-none" },
-    crossOriginResourcePolicy: { policy: "cross-origin" },
-    originAgentCluster: false,
-  })
-);
-
-app.use(
-  cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-    ],
-    exposedHeaders: ["Content-Length", "X-Total-Count"],
-    maxAge: 86400,
-    credentials: true,
-  })
-);
-
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
+app.use(cors());
 app.use(express.json({ limit: "15mb" }));
-app.use(
-  express.urlencoded({
-    extended: true,
-    limit: "15mb",
+app.use(express.urlencoded({ extended: true, limit: "15mb" }));
+
+// =========================================================
+// ✅ MongoDB Connection
+// =========================================================
+
+const MONGODB_URI =
+  "mongodb+srv://kabusbaba:GpzqCqKyAlS6N7Kn@cluster0.zh0a3gc.mongodb.net/miningusdt?retryWrites=true&w=majority";
+
+mongoose
+  .connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
   })
-);
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch((error) => console.error("❌ MongoDB Connection Error:", error));
 
-// ============================================================
-//  🗄️ DATABASE CONNECTION (محسّن)
-// ============================================================
+// =========================================================
+// ✅ Serve static files
+// =========================================================
 
-const dbOptions = {
-  serverSelectionTimeoutMS: 15000,
-  socketTimeoutMS: 60000,
-  family: 4,
-  maxPoolSize: 20,
-  minPoolSize: 5,
-  maxIdleTimeMS: 30000,
-  heartbeatFrequencyMS: 10000,
-  retryWrites: true,
-  retryReads: true,
-};
+app.use(express.static(__dirname));
 
-let isDbConnected = false;
+app.get("/", (req, res) => res.sendFile(path.join(__dirname, "index.html")));
 
-async function connectDatabase() {
-  try {
-    if (isDbConnected) {
-      return true;
-    }
-
-    await mongoose.connect(MONGODB_URI, dbOptions);
-
-    isDbConnected = true;
-
-    log(
-      "✅ MongoDB Connected Successfully",
-      "SUCCESS"
-    );
-
-    return true;
-  } catch (error) {
-    isDbConnected = false;
-    logError(error, "Database Connection");
-
-    log(
-      "❌ MongoDB Connection Failed - Retrying in 5 seconds",
-      "ERROR"
-    );
-
-    setTimeout(connectDatabase, 5000);
-
-    return false;
-  }
-}
-
-// ✅ مراقبة اتصال MongoDB
-mongoose.connection.on("connected", () => {
-  isDbConnected = true;
-  log("✅ MongoDB connection established", "SUCCESS");
+app.get("/:page.html", (req, res) => {
+  const page = req.params.page;
+  const filePath = path.join(__dirname, `${page}.html`);
+  if (fs.existsSync(filePath)) res.sendFile(filePath);
+  else res.status(404).send("الصفحة غير موجودة");
 });
 
-mongoose.connection.on("disconnected", () => {
-  isDbConnected = false;
-  log(
-    "⚠️ MongoDB Disconnected - Attempting to reconnect",
-    "WARNING"
-  );
+// =========================================================
+// ✅ User Model
+// =========================================================
 
-  setTimeout(connectDatabase, 3000);
-});
-
-mongoose.connection.on("error", (error) => {
-  isDbConnected = false;
-  logError(error, "MongoDB Error");
-});
-
-mongoose.connection.on("reconnected", () => {
-  isDbConnected = true;
-  log("✅ MongoDB reconnected successfully", "SUCCESS");
-});
-
-// ============================================================
-//  📊 USER SCHEMA
-// ============================================================
-
-const UserSchema = new mongoose.Schema(
-  {
-    userId: {
-      type: String,
-      unique: true,
-      required: true,
-      index: true,
-      trim: true,
-    },
-
-    name: {
-      type: String,
-      required: true,
-      trim: true,
-      minlength: 2,
-      maxlength: 50,
-    },
-
-    email: {
-      type: String,
-      unique: true,
-      required: true,
-      lowercase: true,
-      trim: true,
-      index: true,
-    },
-
-    password: {
-      type: String,
-      required: true,
-      select: false,
-    },
-
-    balance: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    profit: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    plan: {
-      type: String,
-      default: null,
-    },
-
-    planAmount: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    planRate: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    planDays: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    planStart: {
-      type: Date,
-      default: null,
-    },
-
-    timerStart: {
-      type: Number,
-      default: null,
-    },
-
-    lastProfitDate: {
-      type: String,
-      default: null,
-    },
-
-    referralCode: {
-      type: String,
-      unique: true,
-      required: true,
-      index: true,
-      uppercase: true,
-      trim: true,
-    },
-
-    referredBy: {
-      type: String,
-      default: null,
-      index: true,
-    },
-
-    referralBonus: {
-      type: Number,
-      default: 0,
-      min: 0,
-    },
-
-    referredUsers: {
-      type: [
-        {
-          email: {
-            type: String,
-            lowercase: true,
-            trim: true,
-          },
-
-          name: {
-            type: String,
-            trim: true,
-          },
-
-          joinedAt: {
-            type: Date,
-            default: Date.now,
-          },
-
-          totalDeposits: {
-            type: Number,
-            default: 0,
-            min: 0,
-          },
-
-          commissionEarned: {
-            type: Number,
-            default: 0,
-            min: 0,
-          },
-        },
-      ],
-
-      default: [],
-    },
-
-    transactions: {
-      type: [
-        {
-          type: {
-            type: String,
-            required: true,
-            trim: true,
-          },
-
-          amount: {
-            type: Number,
-            required: true,
-          },
-
-          date: {
-            type: Date,
-            default: Date.now,
-          },
-
-          status: {
-            type: String,
-            default: "✅ مكتمل",
-            trim: true,
-          },
-
-          note: {
-            type: String,
-            default: "",
-            trim: true,
-          },
-        },
-      ],
-
-      default: [],
-    },
-  },
-
-  {
-    timestamps: {
-      createdAt: "createdAt",
-      updatedAt: "updatedAt",
-    },
-
-    toJSON: {
-      transform: (doc, ret) => {
-        delete ret.password;
-        delete ret.__v;
-
-        return ret;
-      },
-    },
-  }
-);
-
-UserSchema.index({
-  createdAt: -1,
-});
-
-UserSchema.index({
-  plan: 1,
-});
-
-UserSchema.index({
-  referralBonus: -1,
-});
-
-const User = mongoose.model(
-  "User",
-  UserSchema
-);
-
-// ============================================================
-// 🟢 ONLINE USERS
-// ============================================================
-
-const onlineUsers = new Map();
-
-function markUserOnline(
-  userId,
-  name,
-  email
-) {
-  if (!userId) return;
-
-  onlineUsers.set(
-    String(userId),
+const UserSchema = new mongoose.Schema({
+  userId: { type: String, unique: true, required: true, index: true },
+  name: { type: String, required: true, trim: true },
+  email: { type: String, unique: true, required: true, lowercase: true, trim: true, index: true },
+  password: { type: String, required: true },
+  balance: { type: Number, default: 0 },
+  profit: { type: Number, default: 0 },
+  plan: { type: String, default: null },
+  planAmount: { type: Number, default: 0 },
+  planRate: { type: Number, default: 0 },
+  planDays: { type: Number, default: 0 },
+  planStart: { type: Date, default: null },
+  timerStart: { type: Number, default: null },
+  lastProfitDate: { type: String, default: null },
+  referralCode: { type: String, unique: true, required: true, index: true },
+  referredBy: { type: String, default: null },
+  referralBonus: { type: Number, default: 0 },
+  referredUsers: [
     {
-      userId: String(userId),
-      name: name || "غير معروف",
-      email: email || "",
-      lastSeen: Date.now(),
+      email: String,
+      name: String,
+      joinedAt: Date,
+      totalDeposits: { type: Number, default: 0 },
+      commissionEarned: { type: Number, default: 0 }
     }
-  );
-}
-
-setInterval(() => {
-  const now = Date.now();
-
-  for (
-    const [userId, user]
-    of onlineUsers.entries()
-  ) {
-    if (
-      now - user.lastSeen >
-      120000
-    ) {
-      onlineUsers.delete(userId);
+  ],
+  transactions: [
+    {
+      type: String,
+      amount: Number,
+      date: Date,
+      status: String,
+      note: String,
+      game: String,
+      address: String,
+      network: String,
+      bet: Number,
+      playerTotal: Number,
+      dealerTotal: Number,
+      guess: Number,
+      target: Number,
+      dice: [Number],
+      sum: Number,
+      symbols: [String],
+      choice: String,
+      result: String
     }
-  }
-}, 30000);
+  ],
+  createdAt: { type: Date, default: Date.now }
+});
 
-// ============================================================
-//  🛠️ HELPER FUNCTIONS
-// ============================================================
+const User = mongoose.model("User", UserSchema);
+
+// =========================================================
+// ✅ Helper Functions
+// =========================================================
 
 function generateUniqueUserId() {
-  return Math.floor(
-    100000000 +
-      Math.random() * 900000000
-  ).toString();
+  return Math.floor(100000000 + Math.random() * 900000000).toString();
 }
 
 function generateReferralCode(userId) {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let code = "";
-
   for (let i = 0; i < 8; i++) {
-    code += chars.charAt(
-      Math.floor(
-        Math.random() * chars.length
-      )
-    );
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-
   return code + userId.slice(-4);
 }
 
 async function createUniqueUserId() {
   let userId;
-
+  let exists = true;
   let attempts = 0;
-
-  const maxAttempts = 100;
-
-  while (attempts < maxAttempts) {
+  while (exists && attempts < 100) {
     userId = generateUniqueUserId();
-
-    const exists =
-      await User.exists({
-        userId,
-      });
-
-    if (!exists) {
-      return userId;
-    }
-
+    exists = await User.exists({ userId });
     attempts++;
   }
-
-  return (
-    generateUniqueUserId() +
-    Date.now()
-      .toString()
-      .slice(-4)
-  );
+  return userId || generateUniqueUserId() + Date.now().toString().slice(-4);
 }
 
-async function createUniqueReferralCode(
-  userId
-) {
+async function createUniqueReferralCode(userId) {
   let referralCode;
-
+  let exists = true;
   let attempts = 0;
-
-  const maxAttempts = 100;
-
-  while (attempts < maxAttempts) {
-    referralCode =
-      generateReferralCode(userId);
-
-    const exists =
-      await User.exists({
-        referralCode,
-      });
-
-    if (!exists) {
-      return referralCode;
-    }
-
+  while (exists && attempts < 100) {
+    referralCode = generateReferralCode(userId);
+    exists = await User.exists({ referralCode });
     attempts++;
   }
-
-  return (
-    generateReferralCode(userId) +
-    Math.random()
-      .toString(36)
-      .slice(-4)
-      .toUpperCase()
-  );
+  return referralCode || generateReferralCode(userId) + Math.random().toString(36).slice(-4);
 }
 
-function formatResponse(
-  success,
-  data,
-  message = ""
-) {
-  return {
-    success,
-    data,
-    message,
-    timestamp:
-      new Date().toISOString(),
-  };
-}
-
-function handleError(
-  res,
-  error,
-  statusCode = 500,
-  message = "حدث خطأ في الخادم"
-) {
-  logError(error, "API Error");
-
-  return res
-    .status(statusCode)
-    .json(
-      formatResponse(
-        false,
-        null,
-        message
-      )
-    );
-}
-
-// ✅ حساب العمولة 20%
-function calculateReferralBonus(amount) {
-  return amount * 0.20;
-}
-
-// ============================================================
-//  📡 API ROUTES
-// ============================================================
-
-// --------------------------------------------
-//  🏥 HEALTH CHECK
-// --------------------------------------------
-
-app.get(
-  "/api/health",
-  async (req, res) => {
-    try {
-      const mongoState =
-        mongoose.connection.readyState;
-
-      const states = {
-        0: "disconnected",
-        1: "connected",
-        2: "connecting",
-        3: "disconnecting",
-      };
-
-      res.json(
-        formatResponse(
-          true,
-          {
-            server: "online",
-
-            mongodb:
-              states[mongoState] ||
-              "unknown",
-
-            mongodbState: mongoState,
-
-            isConnected: isDbConnected,
-
-            uptime:
-              process.uptime(),
-
-            memory:
-              process.memoryUsage(),
-
-            timestamp:
-              new Date().toISOString(),
-          }
-        )
-      );
-    } catch (error) {
-      handleError(res, error);
-    }
-  }
-);
-
-// --------------------------------------------
-//  📝 REGISTER
-// --------------------------------------------
-
-app.post(
-  "/api/register",
-  async (req, res) => {
-    try {
-      const {
-        name,
-        email,
-        password,
-        referralCode,
-      } = req.body;
-
-      if (
-        !name ||
-        !email ||
-        !password
-      ) {
-        return res
-          .status(400)
-          .json(
-            formatResponse(
-              false,
-              null,
-              "❌ جميع الحقول المطلوبة يجب تعبئتها"
-            )
-          );
-      }
-
-      if (
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-          email
-        )
-      ) {
-        return res
-          .status(400)
-          .json(
-            formatResponse(
-              false,
-              null,
-              "❌ البريد الإلكتروني غير صحيح"
-            )
-          );
-      }
-
-      if (password.length < 6) {
-        return res
-          .status(400)
-          .json(
-            formatResponse(
-              false,
-              null,
-              "❌ كلمة المرور يجب أن تكون 6 أحرف على الأقل"
-            )
-          );
-      }
-
-      const normalizedEmail =
-        email.trim().toLowerCase();
-
-      const existingUser =
-        await User.findOne({
-          email: normalizedEmail,
-        });
-
-      if (existingUser) {
-        return res
-          .status(400)
-          .json(
-            formatResponse(
-              false,
-              null,
-              "❌ هذا البريد مستخدم بالفعل"
-            )
-          );
-      }
-
-      const hashedPassword =
-        await bcrypt.hash(
-          password,
-          10
-        );
-
-      const userId =
-        await createUniqueUserId();
-
-      const referralCodeGenerated =
-        await createUniqueReferralCode(
-          userId
-        );
-
-      const newUser =
-        new User({
-          userId,
-
-          name: name.trim(),
-
-          email: normalizedEmail,
-
-          password:
-            hashedPassword,
-
-          referralCode:
-            referralCodeGenerated,
-
-          balance: 0,
-
-          profit: 0,
-
-          plan: null,
-
-          planAmount: 0,
-
-          planRate: 0,
-
-          planDays: 0,
-
-          planStart: null,
-
-          timerStart: null,
-
-          lastProfitDate: null,
-
-          referredBy: null,
-
-          referralBonus: 0,
-
-          referredUsers: [],
-
-          transactions: [],
-        });
-
-      // ✅ معالجة كود الدعوة
-      if (referralCode) {
-        const referrer =
-          await User.findOne({
-            referralCode:
-              referralCode
-                .trim()
-                .toUpperCase(),
-          });
-
-        if (referrer) {
-          newUser.referredBy =
-            referrer.email;
-
-          if (
-            !Array.isArray(
-              referrer.referredUsers
-            )
-          ) {
-            referrer.referredUsers =
-              [];
-          }
-
-          referrer.referredUsers.push(
-            {
-              email:
-                normalizedEmail,
-
-              name:
-                name.trim(),
-
-              joinedAt:
-                new Date(),
-
-              totalDeposits: 0,
-
-              commissionEarned: 0,
-            }
-          );
-
-          await referrer.save();
-
-          log(
-            `User ${name} registered with referral code ${referralCode}`,
-            "INFO"
-          );
-        } else {
-          log(
-            `Invalid referral code: ${referralCode}`,
-            "WARNING"
-          );
-        }
-      }
-
-      await newUser.save();
-
-      log(
-        `New user registered: ${name} (${email})`,
-        "SUCCESS"
-      );
-
-      return res
-        .status(201)
-        .json(
-          formatResponse(
-            true,
-            {
-              userId:
-                newUser.userId,
-
-              name:
-                newUser.name,
-
-              email:
-                newUser.email,
-
-              balance:
-                newUser.balance,
-
-              profit:
-                newUser.profit,
-
-              plan:
-                newUser.plan,
-
-              referralCode:
-                newUser.referralCode,
-
-              createdAt:
-                newUser.createdAt,
-            }
-          )
-        );
-    } catch (error) {
-      return handleError(
-        res,
-        error
-      );
-    }
-  }
-);
-
-// --------------------------------------------
-//  🔐 LOGIN
-// --------------------------------------------
-
-app.post(
-  "/api/login",
-  async (req, res) => {
-    try {
-      const {
-        email,
-        password,
-      } = req.body;
-
-      if (
-        !email ||
-        !password
-      ) {
-        return res
-          .status(400)
-          .json(
-            formatResponse(
-              false,
-              null,
-              "❌ البريد وكلمة المرور مطلوبان"
-            )
-          );
-      }
-
-      const normalizedEmail =
-        email.trim().toLowerCase();
-
-      const user =
-        await User.findOne({
-          email:
-            normalizedEmail,
-        }).select(
-          "+password"
-        );
-
-      if (!user) {
-        return res
-          .status(401)
-          .json(
-            formatResponse(
-              false,
-              null,
-              "❌ البريد أو كلمة المرور غير صحيحة"
-            )
-          );
-      }
-
-      const isValidPassword =
-        await bcrypt.compare(
-          password,
-          user.password
-        );
-
-      if (!isValidPassword) {
-        return res
-          .status(401)
-          .json(
-            formatResponse(
-              false,
-              null,
-              "❌ البريد أو كلمة المرور غير صحيحة"
-            )
-          );
-      }
-
-      // ✅ تسجيل المستخدم كمتصل
-      markUserOnline(
-        user.userId,
-        user.name,
-        user.email
-      );
-
-      log(
-        `User logged in: ${user.name} (${user.email})`,
-        "SUCCESS"
-      );
-
-      return res.json(
-        formatResponse(
-          true,
-          {
-            userId:
-              user.userId,
-
-            _id:
-              user._id.toString(),
-
-            name:
-              user.name,
-
-            email:
-              user.email,
-
-            balance:
-              user.balance,
-
-            profit:
-              user.profit,
-
-            plan:
-              user.plan,
-
-            planAmount:
-              user.planAmount,
-
-            planRate:
-              user.planRate,
-
-            planDays:
-              user.planDays,
-
-            planStart:
-              user.planStart,
-
-            timerStart:
-              user.timerStart,
-
-            lastProfitDate:
-              user.lastProfitDate,
-
-            referralCode:
-              user.referralCode,
-
-            referredBy:
-              user.referredBy,
-
-            referralBonus:
-              user.referralBonus,
-
-            referredUsers:
-              user.referredUsers,
-
-            transactions:
-              user.transactions.slice(
-                0,
-                20
-              ),
-
-            createdAt:
-              user.createdAt,
-          }
-        )
-      );
-    } catch (error) {
-      return handleError(
-        res,
-        error
-      );
-    }
-  }
-);
-
-// --------------------------------------------
-//  👥 ADMIN - GET ALL USERS
-// --------------------------------------------
-
-app.get(
-  "/api/admin/users",
-  async (req, res) => {
-    try {
-      const page =
-        parseInt(
-          req.query.page
-        ) || 1;
-
-      const limit =
-        parseInt(
-          req.query.limit
-        ) || 100;
-
-      const skip =
-        (page - 1) * limit;
-
-      const [
-        users,
-        total,
-      ] = await Promise.all([
-        User.find({})
-          .select("-password")
-          .sort({
-            createdAt: -1,
-          })
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-
-        User.countDocuments(),
-      ]);
-
-      const formattedUsers =
-        users.map(
-          (user) => ({
-            ...user,
-
-            id:
-              user.userId ||
-              user._id.toString(),
-
-            userId:
-              user.userId ||
-              user._id.toString(),
-
-            _id:
-              user._id.toString(),
-          })
-        );
-
-      // ✅ إضافة حالة الاتصال لكل مستخدم
-      const usersWithOnline = formattedUsers.map(user => ({
-        ...user,
-        isOnline: onlineUsers.has(String(user.userId || user._id))
-      }));
-
-      return res.json({
-        success: true,
-
-        users:
-          usersWithOnline,
-
-        pagination: {
-          page,
-          limit,
-          total,
-          pages:
-            Math.ceil(
-              total / limit
-            ),
-        },
-
-        onlineCount: onlineUsers.size,
-
-        timestamp:
-          new Date().toISOString(),
+// =========================================================
+// ✅ API: HEALTH CHECK
+// =========================================================
+
+app.get("/api/health", async (req, res) => {
+  const mongoConnected = mongoose.connection.readyState === 1;
+  res.json({
+    success: true,
+    server: "online",
+    mongodb: mongoConnected ? "connected" : "disconnected",
+    timestamp: new Date().toISOString()
+  });
+});
+
+// =========================================================
+// ✅ API: REGISTER
+// =========================================================
+
+app.post("/api/register", async (req, res) => {
+  try {
+    const name = String(req.body.name || "").trim();
+    const email = String(req.body.email || "").trim().toLowerCase();
+    const password = String(req.body.password || "");
+    const referralCode = String(req.body.referralCode || "").trim().toUpperCase();
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ جميع الحقول المطلوبة يجب تعبئتها"
       });
-    } catch (error) {
-      logError(
-        error,
-        "GET /api/admin/users"
-      );
-
-      return res
-        .status(500)
-        .json({
-          success: false,
-
-          message:
-            "❌ فشل جلب المستخدمين",
-
-          error:
-            error.message,
-        });
     }
-  }
-);
 
-// ============================================================
-// 🟢 USER ONLINE HEARTBEAT
-// ============================================================
-
-app.post(
-  "/api/online/heartbeat",
-  async (req, res) => {
-    try {
-      const {
-        userId,
-        name,
-        email,
-      } = req.body;
-
-      if (!userId) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "userId مطلوب",
-          });
-      }
-
-      markUserOnline(
-        userId,
-        name,
-        email
-      );
-
-      return res.json({
-        success: true,
-        onlineCount: onlineUsers.size,
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ البريد مستخدم بالفعل"
       });
-    } catch (error) {
-      console.error(
-        "Online error:",
-        error
-      );
-
-      return res
-        .status(500)
-        .json({
-          success: false,
-        });
     }
-  }
-);
 
-// ============================================================
-// 🟢 GET ONLINE USERS
-// ============================================================
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const userId = await createUniqueUserId();
+    const referralCodeGenerated = await createUniqueReferralCode(userId);
 
-app.get(
-  "/api/online",
-  (req, res) => {
-    const users =
-      Array.from(
-        onlineUsers.values()
-      );
+    const newUser = new User({
+      userId,
+      name,
+      email,
+      password: hashedPassword,
+      balance: 0,
+      profit: 0,
+      plan: null,
+      planAmount: 0,
+      planRate: 0,
+      planDays: 0,
+      planStart: null,
+      timerStart: null,
+      lastProfitDate: null,
+      referralCode: referralCodeGenerated,
+      referredBy: null,
+      referralBonus: 0,
+      referredUsers: [],
+      transactions: []
+    });
 
-    res.json({
+    if (referralCode) {
+      const referrer = await User.findOne({ referralCode });
+      if (referrer) {
+        newUser.referredBy = referrer.email;
+        if (!Array.isArray(referrer.referredUsers)) referrer.referredUsers = [];
+        referrer.referredUsers.push({
+          email,
+          name,
+          joinedAt: new Date(),
+          totalDeposits: 0,
+          commissionEarned: 0
+        });
+        await referrer.save();
+      }
+    }
+
+    await newUser.save();
+
+    return res.status(201).json({
       success: true,
-      count:
-        users.length,
-      users,
+      message: "✅ تم إنشاء الحساب بنجاح",
+      user: {
+        userId: newUser.userId,
+        name: newUser.name,
+        email: newUser.email,
+        balance: newUser.balance,
+        profit: newUser.profit,
+        plan: newUser.plan,
+        planAmount: newUser.planAmount,
+        planRate: newUser.planRate,
+        planDays: newUser.planDays,
+        planStart: newUser.planStart,
+        timerStart: newUser.timerStart,
+        referralCode: newUser.referralCode,
+        referredBy: newUser.referredBy,
+        referralBonus: newUser.referralBonus,
+        referredUsers: newUser.referredUsers,
+        transactions: newUser.transactions
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Register error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ حدث خطأ في الخادم"
     });
   }
-);
+});
 
-// --------------------------------------------
-//  👤 ADMIN - GET SINGLE USER
-// --------------------------------------------
+// =========================================================
+// ✅ API: LOGIN - FIXED (مع userId)
+// =========================================================
 
-app.get(
-  "/api/admin/user/:identifier",
-  async (req, res) => {
-    try {
-      const identifier =
-        req.params.identifier.trim();
-
-      if (!identifier) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "❌ المعرف مطلوب",
-          });
-      }
-
-      let user =
-        await User.findOne({
-          $or: [
-            {
-              userId:
-                identifier,
-            },
-
-            {
-              email:
-                identifier.toLowerCase(),
-            },
-
-            {
-              referralCode:
-                identifier.toUpperCase(),
-            },
-          ],
-        })
-          .select(
-            "-password"
-          )
-          .lean();
-
-      if (
-        !user &&
-        mongoose.Types.ObjectId.isValid(
-          identifier
-        )
-      ) {
-        user =
-          await User.findById(
-            identifier
-          )
-            .select(
-              "-password"
-            )
-            .lean();
-      }
-
-      if (!user) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            message:
-              "❌ المستخدم غير موجود",
-          });
-      }
-
-      const formattedUser =
-        {
-          ...user,
-
-          id:
-            user.userId ||
-            user._id.toString(),
-
-          userId:
-            user.userId ||
-            user._id.toString(),
-
-          _id:
-            user._id.toString(),
-
-          isOnline: onlineUsers.has(String(user.userId || user._id))
-        };
-
-      return res.json({
-        success: true,
-        user:
-          formattedUser,
-      });
-    } catch (error) {
-      logError(
-        error,
-        "GET /api/admin/user/:identifier"
-      );
-
-      return res
-        .status(500)
-        .json({
-          success: false,
-
-          message:
-            "❌ حدث خطأ في جلب المستخدم",
-
-          error:
-            error.message,
-        });
-    }
-  }
-);
-
-// --------------------------------------------
-//  ✏️ ADMIN - UPDATE USER
-// --------------------------------------------
-
-app.put(
-  "/api/admin/user/:userId",
-  async (req, res) => {
-    try {
-      const userId =
-        req.params.userId.trim();
-
-      if (!userId) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "❌ المعرف مطلوب",
-          });
-      }
-
-      const updateData =
-        {
-          ...req.body,
-        };
-
-      delete updateData._id;
-      delete updateData.__v;
-      delete updateData.password;
-      delete updateData.userId;
-      delete updateData.createdAt;
-      delete updateData.updatedAt;
-      delete updateData.id;
-
-      if (
-        updateData.balance !==
-          undefined &&
-        updateData.balance < 0
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "❌ الرصيد لا يمكن أن يكون سالباً",
-          });
-      }
-
-      if (
-        updateData.profit !==
-          undefined &&
-        updateData.profit < 0
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "❌ الأرباح لا يمكن أن تكون سالبة",
-          });
-      }
-
-      let user =
-        await User.findOne({
-          userId,
-        });
-
-      if (
-        !user &&
-        mongoose.Types.ObjectId.isValid(
-          userId
-        )
-      ) {
-        user =
-          await User.findById(
-            userId
-          );
-      }
-
-      if (!user) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            message:
-              "❌ المستخدم غير موجود",
-          });
-      }
-
-      const updatedUser =
-        await User.findByIdAndUpdate(
-          user._id,
-          {
-            $set:
-              updateData,
-          },
-          {
-            new: true,
-            runValidators: true,
-          }
-        )
-          .select(
-            "-password"
-          )
-          .lean();
-
-      const formattedUser =
-        {
-          ...updatedUser,
-
-          id:
-            updatedUser.userId ||
-            updatedUser._id.toString(),
-
-          userId:
-            updatedUser.userId ||
-            updatedUser._id.toString(),
-
-          _id:
-            updatedUser._id.toString(),
-        };
-
-      log(
-        `User updated: ${updatedUser.name} (${updatedUser.email})`,
-        "SUCCESS"
-      );
-
-      return res.json({
-        success: true,
-        user:
-          formattedUser,
-      });
-    } catch (error) {
-      logError(
-        error,
-        "PUT /api/admin/user/:userId"
-      );
-
-      return res
-        .status(500)
-        .json({
-          success: false,
-
-          message:
-            "❌ حدث خطأ في تحديث المستخدم",
-
-          error:
-            error.message,
-        });
-    }
-  }
-);
-
-// --------------------------------------------
-//  💰 ADMIN - BALANCE (DEPOSIT / WITHDRAW)
-// --------------------------------------------
-
-app.post(
-  "/api/admin/balance",
-  async (req, res) => {
-    try {
-      const {
-        userId,
-        email,
-        amount,
-        type,
-        adminName = "أدمن",
-      } = req.body;
-
-      if (
-        !userId &&
-        !email
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "❌ المعرف أو البريد مطلوب",
-          });
-      }
-
-      if (
-        !amount ||
-        amount <= 0 ||
-        !Number.isFinite(
-          amount
-        )
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "❌ المبلغ غير صالح",
-          });
-      }
-
-      if (
-        ![
-          "deposit",
-          "withdraw",
-        ].includes(type)
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "❌ نوع العملية غير صالح",
-          });
-      }
-
-      let user = null;
-
-      if (userId) {
-        user =
-          await User.findOne({
-            userId,
-          });
-
-        if (
-          !user &&
-          mongoose.Types.ObjectId.isValid(
-            userId
-          )
-        ) {
-          user =
-            await User.findById(
-              userId
-            );
-        }
-      }
-
-      if (!user && email) {
-        user =
-          await User.findOne({
-            email:
-              email.toLowerCase(),
-          });
-      }
-
-      if (!user) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            message:
-              "❌ المستخدم غير موجود",
-          });
-      }
-
-      const oldBalance =
-        Number(
-          user.balance || 0
-        );
-
-      let newBalance;
-      let transactionAmount;
-      let transactionType;
-
-      if (
-        type === "deposit"
-      ) {
-        newBalance =
-          oldBalance +
-          amount;
-
-        transactionAmount =
-          amount;
-
-        transactionType =
-          "💰 إيداع (أدمن)";
-      } else {
-        if (
-          oldBalance <
-          amount
-        ) {
-          return res
-            .status(400)
-            .json({
-              success: false,
-              message:
-                "❌ الرصيد غير كافٍ",
-            });
-        }
-
-        newBalance =
-          oldBalance -
-          amount;
-
-        transactionAmount =
-          -amount;
-
-        transactionType =
-          "💸 سحب (أدمن)";
-      }
-
-      const transaction =
-        {
-          type:
-            transactionType,
-
-          amount:
-            transactionAmount,
-
-          date:
-            new Date(),
-
-          status:
-            "✅ مكتمل",
-
-          note:
-            `بواسطة الأدمن ${adminName}`,
-        };
-
-      const result =
-        await User.updateOne(
-          {
-            _id:
-              user._id,
-          },
-
-          {
-            $set: {
-              balance:
-                newBalance,
-            },
-
-            $push: {
-              transactions: {
-                $each: [
-                  transaction,
-                ],
-
-                $position: 0,
-              },
-            },
-          }
-        );
-
-      if (
-        !result.acknowledged ||
-        result.matchedCount !==
-          1
-      ) {
-        return res
-          .status(500)
-          .json({
-            success: false,
-            message:
-              "❌ لم يتم تحديث الحساب",
-          });
-      }
-
-      const updatedUser =
-        await User.findById(
-          user._id
-        )
-          .select(
-            "-password"
-          )
-          .lean();
-
-      const formattedUser =
-        {
-          ...updatedUser,
-
-          id:
-            updatedUser.userId ||
-            updatedUser._id.toString(),
-
-          userId:
-            updatedUser.userId ||
-            updatedUser._id.toString(),
-
-          _id:
-            updatedUser._id.toString(),
-        };
-
-      log(
-        `Balance ${type} for ${user.name}: $${amount} (New balance: $${newBalance})`,
-        "SUCCESS"
-      );
-
-      return res.json({
-        success: true,
-
-        user:
-          formattedUser,
-
-        message:
-          `✅ ${
-            type === "deposit"
-              ? "تم إيداع"
-              : "تم سحب"
-          } $${amount.toFixed(
-            2
-          )} بنجاح`,
-      });
-    } catch (error) {
-      logError(
-        error,
-        "POST /api/admin/balance"
-      );
-
-      return res
-        .status(500)
-        .json({
-          success: false,
-
-          message:
-            "❌ حدث خطأ في معالجة العملية",
-
-          error:
-            error.message,
-        });
-    }
-  }
-);
-
-// --------------------------------------------
-//  📋 ADMIN - TRANSACTIONS
-// --------------------------------------------
-
-app.get(
-  "/api/admin/user/:identifier/transactions",
-  async (req, res) => {
-    try {
-      const identifier =
-        req.params.identifier.trim();
-
-      if (!identifier) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "❌ المعرف مطلوب",
-          });
-      }
-
-      let user =
-        await User.findOne({
-          $or: [
-            {
-              userId:
-                identifier,
-            },
-
-            {
-              email:
-                identifier.toLowerCase(),
-            },
-
-            {
-              referralCode:
-                identifier.toUpperCase(),
-            },
-          ],
-        }).lean();
-
-      if (
-        !user &&
-        mongoose.Types.ObjectId.isValid(
-          identifier
-        )
-      ) {
-        user =
-          await User.findById(
-            identifier
-          ).lean();
-      }
-
-      if (!user) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            message:
-              "❌ المستخدم غير موجود",
-          });
-      }
-
-      return res.json({
-        success: true,
-
-        userId:
-          user.userId,
-
-        name:
-          user.name,
-
-        email:
-          user.email,
-
-        transactions:
-          user.transactions ||
-          [],
-
-        totalTransactions:
-          (
-            user.transactions ||
-            []
-          ).length,
-      });
-    } catch (error) {
-      logError(
-        error,
-        "GET /api/admin/user/:identifier/transactions"
-      );
-
-      return res
-        .status(500)
-        .json({
-          success: false,
-
-          message:
-            "❌ حدث خطأ في جلب العمليات",
-
-          error:
-            error.message,
-        });
-    }
-  }
-);
-
-// --------------------------------------------
-//  🚀 ACTIVATE PLAN
-// --------------------------------------------
-
-app.post(
-  "/api/activate-plan",
-  async (req, res) => {
-    try {
-      const {
-        userId,
-        planId,
-        planAmount,
-        planRate,
-        planDays,
-      } = req.body;
-
-      if (
-        !userId ||
-        !planId
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "❌ المعرف والخطة مطلوبان",
-          });
-      }
-
-      if (
-        !planAmount ||
-        planAmount <= 0 ||
-        !planRate ||
-        planRate <= 0
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "❌ بيانات الخطة غير صالحة",
-          });
-      }
-
-      let user =
-        await User.findOne({
-          userId,
-        });
-
-      if (
-        !user &&
-        mongoose.Types.ObjectId.isValid(
-          userId
-        )
-      ) {
-        user =
-          await User.findById(
-            userId
-          );
-      }
-
-      if (!user) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            message:
-              "❌ المستخدم غير موجود",
-          });
-      }
-
-      const currentBalance =
-        Number(
-          user.balance || 0
-        );
-
-      if (
-        currentBalance <
-        planAmount
-      ) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-
-            message:
-              `❌ الرصيد غير كافٍ - رصيدك: $${currentBalance.toFixed(
-                2
-              )} — المطلوب: $${planAmount}`,
-          });
-      }
-
-      user.balance =
-        currentBalance -
-        planAmount;
-
-      user.plan =
-        planId;
-
-      user.planAmount =
-        planAmount;
-
-      user.planRate =
-        planRate;
-
-      user.planDays =
-        planDays;
-
-      user.planStart =
-        new Date();
-
-      user.timerStart =
-        Date.now();
-
-      user.lastProfitDate =
-        null;
-
-      if (
-        !user.transactions
-      ) {
-        user.transactions =
-          [];
-      }
-
-      user.transactions.unshift(
-        {
-          type:
-            `🚀 تفعيل خطة ${planId}`,
-
-          amount:
-            -planAmount,
-
-          date:
-            new Date(),
-
-          status:
-            "✅ مكتمل",
-        }
-      );
-
-      await user.save();
-
-      log(
-        `Plan activated for ${user.name}: ${planId} ($${planAmount})`,
-        "SUCCESS"
-      );
-
-      const formattedUser =
-        {
-          ...user.toObject(),
-
-          id:
-            user.userId,
-
-          _id:
-            user._id.toString(),
-        };
-
-      delete formattedUser.password;
-      delete formattedUser.__v;
-
-      return res.json({
-        success: true,
-
-        user:
-          formattedUser,
-
-        message:
-          `✅ تم تفعيل خطة ${planId} بنجاح`,
-      });
-    } catch (error) {
-      logError(
-        error,
-        "POST /api/activate-plan"
-      );
-
-      return res
-        .status(500)
-        .json({
-          success: false,
-
-          message:
-            "❌ حدث خطأ في تفعيل الخطة",
-
-          error:
-            error.message,
-        });
-    }
-  }
-);
-
-// --------------------------------------------
-//  ❌ DELETE USER (ADMIN)
-// --------------------------------------------
-
-app.delete(
-  "/api/admin/user/:identifier",
-  async (req, res) => {
-    try {
-      const identifier =
-        req.params.identifier.trim();
-
-      if (!identifier) {
-        return res
-          .status(400)
-          .json({
-            success: false,
-            message:
-              "❌ المعرف مطلوب",
-          });
-      }
-
-      let user =
-        await User.findOne({
-          $or: [
-            {
-              userId:
-                identifier,
-            },
-
-            {
-              email:
-                identifier.toLowerCase(),
-            },
-
-            {
-              referralCode:
-                identifier.toUpperCase(),
-            },
-          ],
-        });
-
-      if (
-        !user &&
-        mongoose.Types.ObjectId.isValid(
-          identifier
-        )
-      ) {
-        user =
-          await User.findById(
-            identifier
-          );
-      }
-
-      if (!user) {
-        return res
-          .status(404)
-          .json({
-            success: false,
-            message:
-              "❌ المستخدم غير موجود",
-          });
-      }
-
-      const userInfo =
-        {
-          userId:
-            user.userId,
-
-          email:
-            user.email,
-
-          name:
-            user.name,
-        };
-
-      // ✅ حذف من قائمة المتصلين
-      onlineUsers.delete(String(user.userId));
-
-      await User.deleteOne({
-        _id:
-          user._id,
-      });
-
-      log(
-        `User deleted: ${user.name} (${user.email})`,
-        "WARNING"
-      );
-
-      return res.json({
-        success: true,
-
-        deleted:
-          true,
-
-        userId:
-          userInfo.userId,
-
-        email:
-          userInfo.email,
-
-        message:
-          `✅ تم حذف المستخدم ${userInfo.name} بنجاح`,
-      });
-    } catch (error) {
-      logError(
-        error,
-        "DELETE /api/admin/user/:identifier"
-      );
-
-      return res
-        .status(500)
-        .json({
-          success: false,
-
-          message:
-            "❌ حدث خطأ في حذف المستخدم",
-
-          error:
-            error.message,
-        });
-    }
-  }
-);
-
-// --------------------------------------------
-//  📊 ADMIN STATS
-// --------------------------------------------
-
-app.get(
-  "/api/admin/stats",
-  async (req, res) => {
-    try {
-      const [
-        totalUsers,
-        totalBalance,
-        totalProfit,
-        activePlans,
-      ] =
-        await Promise.all([
-          User.countDocuments(),
-
-          User.aggregate([
-            {
-              $group: {
-                _id: null,
-
-                total: {
-                  $sum:
-                    "$balance",
-                },
-              },
-            },
-          ]),
-
-          User.aggregate([
-            {
-              $group: {
-                _id: null,
-
-                total: {
-                  $sum:
-                    "$profit",
-                },
-              },
-            },
-          ]),
-
-          User.countDocuments({
-            plan: {
-              $ne: null,
-              $nin: [
-                null,
-                "—",
-                "",
-              ],
-            },
-          }),
-        ]);
-
-      return res.json({
-        success: true,
-
-        totalUsers,
-
-        totalBalance:
-          totalBalance[0]
-            ?.total || 0,
-
-        totalProfit:
-          totalProfit[0]
-            ?.total || 0,
-
-        activePlans,
-
-        onlineCount: onlineUsers.size,
-
-        timestamp:
-          new Date().toISOString(),
-      });
-    } catch (error) {
-      logError(
-        error,
-        "GET /api/admin/stats"
-      );
-
-      return res
-        .status(500)
-        .json({
-          success: false,
-
-          message:
-            "❌ حدث خطأ في جلب الإحصائيات",
-
-          error:
-            error.message,
-        });
-    }
-  }
-);
-
-// ============================================================
-//  🌐 STATIC FILES
-// ============================================================
-
-app.use(
-  express.static(
-    __dirname
-  )
-);
-
-app.get(
-  "/",
-  (req, res) => {
-    res.sendFile(
-      path.join(
-        __dirname,
-        "index.html"
-      )
-    );
-  }
-);
-
-app.get(
-  "/:page.html",
-  (req, res) => {
-    const page =
-      req.params.page;
-
-    const filePath =
-      path.join(
-        __dirname,
-        `${page}.html`
-      );
-
-    if (
-      fs.existsSync(
-        filePath
-      )
-    ) {
-      res.sendFile(
-        filePath
-      );
-    } else {
-      res
-        .status(404)
-        .send(
-          "الصفحة غير موجودة"
-        );
-    }
-  }
-);
-
-// ============================================================
-//  🚨 GLOBAL ERROR HANDLER
-// ============================================================
-
-app.use(
-  (req, res) => {
-    res
-      .status(404)
-      .json({
-        success: false,
-        message:
-          "❌ المسار غير موجود",
-      });
-  }
-);
-
-app.use(
-  (
-    err,
-    req,
-    res,
-    next
-  ) => {
-    logError(
-      err,
-      "Unhandled Error"
-    );
-
-    res
-      .status(500)
-      .json({
-        success: false,
-        message:
-          "❌ حدث خطأ غير متوقع في الخادم",
-      });
-  }
-);
-
-// ============================================================
-//  🚀 START SERVER
-// ============================================================
-
-async function startServer() {
+app.post("/api/login", async (req, res) => {
   try {
-    await connectDatabase();
+    const email = String(req.body.email || "").trim().toLowerCase();
+    const password = String(req.body.password || "");
 
-    app.listen(
-      PORT,
-      () => {
-        log(
-          `🚀 Server running on port ${PORT}`,
-          "SUCCESS"
-        );
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ البريد وكلمة المرور مطلوبان"
+      });
+    }
 
-        log(
-          `📡 API available at: http://localhost:${PORT}/api`,
-          "INFO"
-        );
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "❌ البريد أو كلمة المرور غير صحيحة"
+      });
+    }
 
-        log(
-          `🛡️ Environment: ${
-            process.env.NODE_ENV ||
-            "development"
-          }`,
-          "INFO"
-        );
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "❌ البريد أو كلمة المرور غير صحيحة"
+      });
+    }
 
-        log(
-          `📁 Logs directory: ${LOGS_DIR}`,
-          "INFO"
-        );
+    // ✅ تأكد من وجود userId
+    const userId = user.userId || user._id.toString();
 
-        log(
-          `🔄 MongoDB connection status: ${isDbConnected ? 'Connected' : 'Disconnected'}`,
-          "INFO"
-        );
+    return res.json({
+      success: true,
+      message: "✅ تم تسجيل الدخول بنجاح",
+      user: {
+        userId: userId,
+        _id: userId,
+        name: user.name,
+        email: user.email,
+        balance: user.balance,
+        profit: user.profit,
+        plan: user.plan,
+        planAmount: user.planAmount,
+        planRate: user.planRate,
+        planDays: user.planDays,
+        planStart: user.planStart,
+        timerStart: user.timerStart,
+        referralCode: user.referralCode,
+        referredBy: user.referredBy,
+        referralBonus: user.referralBonus,
+        referredUsers: user.referredUsers,
+        transactions: user.transactions.slice(0, 20),
+        createdAt: user.createdAt
       }
-    );
+    });
 
-    process.on(
-      "SIGTERM",
-      () => {
-        log(
-          "🛑 SIGTERM received - Shutting down gracefully",
-          "WARNING"
-        );
-
-        mongoose.connection.close(
-          () => {
-            log(
-              "✅ MongoDB connection closed",
-              "SUCCESS"
-            );
-
-            process.exit(0);
-          }
-        );
-      }
-    );
-
-    process.on(
-      "SIGINT",
-      () => {
-        log(
-          "🛑 SIGINT received - Shutting down gracefully",
-          "WARNING"
-        );
-
-        mongoose.connection.close(
-          () => {
-            log(
-              "✅ MongoDB connection closed",
-              "SUCCESS"
-            );
-
-            process.exit(0);
-          }
-        );
-      }
-    );
-
-    process.on(
-      "uncaughtException",
-      (error) => {
-        logError(
-          error,
-          "Uncaught Exception"
-        );
-      }
-    );
-
-    process.on(
-      "unhandledRejection",
-      (reason, promise) => {
-        logError(
-          new Error(reason),
-          "Unhandled Rejection"
-        );
-      }
-    );
   } catch (error) {
-    logError(
-      error,
-      "Server Startup Failed"
-    );
-
-    process.exit(1);
+    console.error("❌ Login error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ حدث خطأ في الخادم"
+    });
   }
-}
+});
 
-// بدء الخادم
-startServer();
+// =========================================================
+// ✅ API: ADMIN - GET ALL USERS
+// =========================================================
 
-// ============================================================
-//  📝 EXPOSE FOR TESTING
-// ============================================================
+app.get("/api/admin/users", async (req, res) => {
+  try {
+    const users = await User.find({}).select("-password").sort({ createdAt: -1 });
+    const formattedUsers = users.map(user => ({
+      ...user.toObject(),
+      id: user.userId || user._id.toString(),
+      userId: user.userId || user._id.toString()
+    }));
+    console.log(`✅ تم جلب ${formattedUsers.length} مستخدم`);
+    return res.json({
+      success: true,
+      users: formattedUsers
+    });
+  } catch (error) {
+    console.error("❌ Admin users error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم",
+      users: []
+    });
+  }
+});
 
-module.exports = {
-  app,
-  User,
-  connectDatabase,
-  log,
-  logError,
-};
+// =========================================================
+// ✅ API: ADMIN - GET SINGLE USER
+// =========================================================
+
+app.get("/api/admin/user/:identifier", async (req, res) => {
+  try {
+    const identifier = String(req.params.identifier || "").trim();
+    if (!identifier) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ المعرف مطلوب"
+      });
+    }
+
+    const user = await User.findOne({
+      $or: [
+        { userId: identifier },
+        { email: identifier.toLowerCase() },
+        { referralCode: identifier.toUpperCase() }
+      ]
+    }).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ المستخدم غير موجود"
+      });
+    }
+
+    return res.json({
+      success: true,
+      user: {
+        ...user.toObject(),
+        id: user.userId || user._id.toString(),
+        userId: user.userId || user._id.toString()
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Admin user error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم"
+    });
+  }
+});
+
+// =========================================================
+// ✅ API: ADMIN - UPDATE USER
+// =========================================================
+
+app.put("/api/admin/user/:userId", async (req, res) => {
+  try {
+    const userId = String(req.params.userId || "").trim();
+    const updateData = req.body;
+
+    delete updateData._id;
+    delete updateData.__v;
+    delete updateData.password;
+
+    const user = await User.findOneAndUpdate(
+      { userId },
+      { $set: updateData },
+      { new: true, runValidators: true }
+    ).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ المستخدم غير موجود"
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "✅ تم تحديث المستخدم بنجاح",
+      user: {
+        ...user.toObject(),
+        id: user.userId || user._id.toString(),
+        userId: user.userId || user._id.toString()
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Admin update error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم"
+    });
+  }
+});
+
+// =========================================================
+// ✅ API: ADMIN - BALANCE (DEPOSIT/WITHDRAW) - NEW FIXED
+// =========================================================
+
+app.post("/api/admin/balance", async (req, res) => {
+  try {
+    const { userId, email, amount, type, adminName } = req.body;
+    
+    if (!userId && !email) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ المعرف أو البريد مطلوب"
+      });
+    }
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ المبلغ غير صالح"
+      });
+    }
+
+    if (type !== "deposit" && type !== "withdraw") {
+      return res.status(400).json({
+        success: false,
+        message: "❌ نوع العملية غير صالح"
+      });
+    }
+
+    let user;
+    if (userId) {
+      user = await User.findOne({ userId });
+    } else {
+      user = await User.findOne({ email });
+    }
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ المستخدم غير موجود"
+      });
+    }
+
+    let balanceChanged = 0;
+    let txType = "";
+    let txStatus = "✅ مكتمل";
+
+    if (type === "deposit") {
+      user.balance = Number(user.balance || 0) + amount;
+      balanceChanged = amount;
+      txType = "💰 إيداع (أدمن)";
+    } else if (type === "withdraw") {
+      if (Number(user.balance || 0) < amount) {
+        return res.status(400).json({
+          success: false,
+          message: "❌ الرصيد غير كافٍ"
+        });
+      }
+      user.balance = Number(user.balance || 0) - amount;
+      balanceChanged = -amount;
+      txType = "💸 سحب (أدمن)";
+    }
+
+    if (!user.transactions) user.transactions = [];
+    user.transactions.unshift({
+      type: txType,
+      amount: balanceChanged,
+      date: new Date().toISOString(),
+      status: txStatus,
+      note: `بواسطة الأدمن ${adminName || 'غير معروف'}`
+    });
+
+    await user.save();
+
+    return res.json({
+      success: true,
+      message: `✅ تم ${type === 'deposit' ? 'الإيداع' : 'السحب'} بنجاح`,
+      user: {
+        userId: user.userId,
+        id: user.userId,
+        name: user.name,
+        email: user.email,
+        balance: user.balance,
+        profit: user.profit,
+        plan: user.plan,
+        planAmount: user.planAmount,
+        planRate: user.planRate,
+        planDays: user.planDays,
+        planStart: user.planStart,
+        timerStart: user.timerStart,
+        referralCode: user.referralCode,
+        referredBy: user.referredBy,
+        referralBonus: user.referralBonus,
+        referredUsers: user.referredUsers,
+        transactions: user.transactions,
+        createdAt: user.createdAt
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Admin balance error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم"
+    });
+  }
+});
+
+// =========================================================
+// ✅ API: ADMIN - DELETE USER
+// =========================================================
+
+app.delete("/api/admin/user/:userId", async (req, res) => {
+  try {
+    const userId = String(req.params.userId || "").trim();
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ المعرف مطلوب"
+      });
+    }
+
+    const result = await User.findOneAndDelete({ userId });
+    if (!result) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ المستخدم غير موجود"
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: "🗑️ تم حذف الحساب بنجاح"
+    });
+
+  } catch (error) {
+    console.error("❌ Delete user error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم"
+    });
+  }
+});
+
+// =========================================================
+// ✅ API: ADMIN - GET STATS
+// =========================================================
+
+app.get("/api/admin/stats", async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    const totalBalance = await User.aggregate([
+      { $group: { _id: null, total: { $sum: "$balance" } } }
+    ]);
+    const totalProfit = await User.aggregate([
+      { $group: { _id: null, total: { $sum: "$profit" } } }
+    ]);
+    const activePlans = await User.countDocuments({
+      plan: { $ne: null, $ne: "" }
+    });
+
+    return res.json({
+      success: true,
+      stats: {
+        totalUsers,
+        totalBalance: totalBalance[0]?.total || 0,
+        totalProfit: totalProfit[0]?.total || 0,
+        activePlans
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Admin stats error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم"
+    });
+  }
+});
+
+// =========================================================
+// ✅ Start Server
+// =========================================================
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📡 API available at: http://localhost:${PORT}/api`);
+  console.log(`👥 Users endpoint: http://localhost:${PORT}/api/admin/users`);
+});
