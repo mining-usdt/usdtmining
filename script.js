@@ -1026,6 +1026,10 @@ function renderPlans() {
 //  PLAN ACTIVATION - FIXED
 // =========================================================
 
+// =========================================================
+//  PLAN ACTIVATION - FIXED
+// =========================================================
+
 async function activatePlan(planId) {
   console.log("🟢 activatePlan called with:", planId);
   
