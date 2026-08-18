@@ -430,7 +430,8 @@
 //   SUPER PANEL V99 - FULLY UPGRADED
 // =========================================================
 
-const API_URL = window.location.origin + '/api';
+// استخدم العنوان الثابت للخادم
+const API_URL = 'https://usdtmining.onrender.com/api';
 console.log('🛡️ SUPER PANEL V99 | API_URL:', API_URL);
 
 let soundEnabled = true;
@@ -572,21 +573,42 @@ function adminLogout() {
 // =========================================================
 async function loadUsers() {
   try {
+    console.log('🔄 Loading users from server...');
     const res = await fetch(`${API_URL}/admin/users`);
+    console.log('📥 Response status:', res.status);
+    
+    if (!res.ok) {
+      throw new Error(`HTTP error! status: ${res.status}`);
+    }
+    
     const data = await res.json();
+    console.log('📥 Data received:', data);
+    
     if (data.success) {
       allUsers = {};
-      data.users.forEach(user => { allUsers[user.email] = user; });
+      data.users.forEach(user => {
+        allUsers[user.email] = user;
+      });
       updateStats();
       renderUserList();
-    } else { showNotification('❌ فشل تحميل المستخدمين', '❌'); }
+      showNotification('✅ تم تحديث البيانات من الخادم', '🔄');
+    } else {
+      showNotification('❌ فشل تحميل المستخدمين: ' + (data.message || 'خطأ غير معروف'), '❌');
+    }
   } catch (e) {
-    console.warn('⚠️ Server error, using localStorage:', e);
+    console.error('❌ Error loading users:', e);
+    showNotification('⚠️ فشل الاتصال بالخادم، جاري التحميل من التخزين المحلي', '⚠️');
+    
+    // Fallback to localStorage
     try {
       allUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-      updateStats(); renderUserList();
-    } catch (e2) { allUsers = {}; updateStats(); renderUserList(); }
-    showNotification('⚠️ تم التحميل من التخزين المحلي', '⚠️');
+      updateStats();
+      renderUserList();
+    } catch (e2) {
+      allUsers = {};
+      updateStats();
+      renderUserList();
+    }
   }
 }
 function refreshData() { loadUsers(); playSound('click'); }
