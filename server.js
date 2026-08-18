@@ -357,11 +357,11 @@ const UserSchema = new mongoose.Schema(
     ],
 
     transactions: {
-      type: [mongoose.Schema.Types.Mixed],
-      default: []
-    },
+  type: [mongoose.Schema.Types.Mixed],
+  default: []
+},
 
-    createdAt: {
+        createdAt: {
       type: Date,
       default: Date.now
     }
@@ -461,64 +461,85 @@ function publicUser(user) {
 }
 
 // =========================================================
-// SERVER-SIDE PROFIT CALCULATOR
+//  CORE PROFIT CALCULATION LOGIC
 // =========================================================
-async function syncUserProfits(user) {
-    if (!user.plan || !user.lastProfitDate) return user;
 
-    const now = Date.now();
-    const lastDate = new Date(user.lastProfitDate).getTime();
-    const cycle = 24 * 60 * 60 * 1000;
-    const elapsed = now - lastDate;
-
-    if (elapsed >= cycle) {
-        let cyclesMissed = Math.floor(elapsed / cycle);
-        const planStart = new Date(user.planStart).getTime();
-        const planDuration = (user.planDays || 30) * cycle;
-        const planEndTime = planStart + planDuration;
-
-        let isExpired = false;
-        
-        // التحقق مما إذا كانت الخطة قد تجاوزت مدتها
-        if (lastDate + (cyclesMissed * cycle) >= planEndTime) {
-            isExpired = true;
-            const totalValidCycles = Math.floor(planDuration / cycle);
-            const cyclesGiven = Math.round((lastDate - planStart) / cycle);
-            cyclesMissed = totalValidCycles - cyclesGiven;
-            if (cyclesMissed < 0) cyclesMissed = 0;
-        }
-
-        if (cyclesMissed > 0) {
-            const profitPerCycle = (user.planAmount * user.planRate) / 100;
-            const totalAdded = cyclesMissed * profitPerCycle;
-
-            user.balance = (user.balance || 0) + totalAdded;
-            user.profit = (user.profit || 0) + totalAdded;
-            
-            user.transactions.unshift({
-                type: `📈 ربح مستحق (${user.plan})`,
-                amount: totalAdded,
-                date: new Date().toISOString(),
-                status: '✅ مكتمل',
-                note: `عن ${cyclesMissed} دورات`
-            });
-
-            // تحديث وقت الربح الأخير مع الحفاظ على التوقيت الدقيق
-            user.lastProfitDate = new Date(lastDate + (cyclesMissed * cycle)).toISOString();
-        }
-
-        if (isExpired) {
-            user.plan = null;
-            user.planStart = null;
-            user.lastProfitDate = null;
-            user.timerStart = null;
-        }
-
-        await user.save();
-    }
+async function calculateAndAddProfit(user) {
+  if (!user || !user.plan || !user.planStart || !user.timerStart) {
     return user;
-}
+  }
 
+  const now = Date.now();
+  const lastProfitDate = user.lastProfitDate ? new Date(user.lastProfitDate).getTime() : null;
+
+  // If the plan has already expired
+  const planEnd = new Date(user.planStart);
+  planEnd.setDate(planEnd.getDate() + user.planDays);
+  
+  if (now > planEnd.getTime()) {
+    user.plan = null;
+    user.planAmount = 0;
+    user.planRate = 0;
+    user.planDays = 0;
+    user.planStart = null;
+    user.timerStart = null;
+    user.lastProfitDate = null;
+    await user.save();
+    return user;
+  }
+
+  // If no profit has been added yet, start from planStart
+  const startTime = lastProfitDate || new Date(user.planStart).getTime();
+  const elapsed = now - startTime;
+  
+  if (elapsed < 24 * 60 * 60 * 1000) {
+    // Not enough time has passed
+    return user;
+  }
+
+  // Calculate how many full 24-hour cycles have passed
+  const cycles = Math.floor(elapsed / (24 * 60 * 60 * 1000));
+  if (cycles === 0) {
+    return user;
+  }
+
+  const dailyProfit = (user.planAmount * user.planRate) / 100;
+  const totalProfitToAdd = dailyProfit * cycles;
+
+  user.balance = Number(user.balance || 0) + totalProfitToAdd;
+  user.profit = Number(user.profit || 0) + totalProfitToAdd;
+
+  // Update lastProfitDate to the last completed cycle
+  const lastCycleDate = new Date(startTime + cycles * 24 * 60 * 60 * 1000);
+  user.lastProfitDate = lastCycleDate.toISOString();
+
+  // Add transactions for each cycle
+  for (let i = 0; i < cycles; i++) {
+    user.transactions.unshift({
+      type: `📈 ربح يومي (${user.plan})`,
+      amount: dailyProfit,
+      date: new Date(startTime + (i + 1) * 24 * 60 * 60 * 1000).toISOString(),
+      status: "✅ مكتمل"
+    });
+  }
+
+  // If the plan has expired after this cycle
+  if (now > planEnd.getTime()) {
+    user.plan = null;
+    user.planAmount = 0;
+    user.planRate = 0;
+    user.planDays = 0;
+    user.planStart = null;
+    user.timerStart = null;
+    user.lastProfitDate = null;
+  } else {
+    // Reset timerStart to continue the countdown from the last cycle
+    user.timerStart = lastCycleDate.getTime();
+  }
+
+  await user.save();
+  return user;
+}
 
 // =========================================================
 // HEALTH
@@ -571,7 +592,7 @@ app.post("/api/register", async (req, res) => {
     if (!name || name.length < 2) {
       return res.status(400).json({
         success: false,
-        message: "❌ الاسم يجب أن يكون حرفين على الأقل"
+        message: "❌ الاسم يجب أن يكون 2 أحرف على الأقل"
       });
     }
 
@@ -666,13 +687,29 @@ app.post("/api/register", async (req, res) => {
         );
       }
     }
-    
-    await newUser.save();
-    return res.json({ success: true, user: publicUser(newUser) });
 
+    await newUser.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "✅ تم إنشاء الحساب بنجاح",
+      user: publicUser(newUser)
+    });
   } catch (error) {
-    console.error("Register Error:", error);
-    return res.status(500).json({ success: false, message: "Server error" });
+    console.error("❌ Register error:", error);
+
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "❌ البريد أو معرف المستخدم أو كود الدعوة مستخدم بالفعل"
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "❌ حدث خطأ في الخادم"
+    });
   }
 });
 
@@ -681,131 +718,929 @@ app.post("/api/register", async (req, res) => {
 // =========================================================
 
 app.post("/api/login", async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        let user = await User.findOne({ email: String(email || "").toLowerCase().trim() });
-        
-        if (!user) {
-            return res.status(400).json({ success: false, message: "User not found" });
-        }
+  try {
+    const email = String(req.body.email || "")
+      .trim()
+      .toLowerCase();
 
-        const isMatch = await bcrypt.compare(String(password || ""), user.password);
-        if (!isMatch) {
-            return res.status(400).json({ success: false, message: "Wrong password" });
-        }
+    const password = String(req.body.password || "");
 
-        // تحديث الأرباح بشكل دوري عند تسجيل الدخول
-        user = await syncUserProfits(user);
-
-        return res.json({ success: true, user: publicUser(user) });
-    } catch (err) {
-        console.error("Login Error:", err);
-        return res.status(500).json({ success: false, message: "Server error" });
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ البريد وكلمة المرور مطلوبان"
+      });
     }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "❌ البريد أو كلمة المرور غير صحيحة"
+      });
+    }
+
+    const isPasswordValid =
+      await bcrypt.compare(
+        password,
+        user.password
+      );
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message:
+          "❌ البريد أو كلمة المرور غير صحيحة"
+      });
+    }
+
+    // Calculate and add any pending profits
+    await calculateAndAddProfit(user);
+
+    return res.json({
+      success: true,
+      message: "✅ تم تسجيل الدخول بنجاح",
+      user: {
+        ...publicUser(user),
+        transactions: (
+          user.transactions || []
+        ).slice(0, 20)
+      }
+    });
+  } catch (error) {
+    console.error("❌ Login error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "❌ حدث خطأ في الخادم"
+    });
+  }
 });
 
 // =========================================================
-// PLAN ACTIVATION (SECURE SERVER SIDE)
+// GET USER
 // =========================================================
 
-app.post("/api/activate-plan", async (req, res) => {
+app.get("/api/user/:identifier", async (req, res) => {
+  try {
+    const identifier = String(
+      req.params.identifier || ""
+    ).trim();
+
+    if (!identifier) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ المعرف مطلوب"
+      });
+    }
+
+    const user = await User.findOne({
+      $or: [
+        {
+          userId: identifier
+        },
+        {
+          email: identifier.toLowerCase()
+        },
+        {
+          referralCode: identifier.toUpperCase()
+        }
+      ]
+    }).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ المستخدم غير موجود"
+      });
+    }
+
+    // Calculate and add any pending profits
+    await calculateAndAddProfit(user);
+
+    return res.json({
+      success: true,
+      user: publicUser(user)
+    });
+  } catch (error) {
+    console.error("❌ Get user error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم"
+    });
+  }
+});
+
+// =========================================================
+// // =========================================================
+// ACTIVATE PLAN
+// =========================================================
+// =========================================================
+// ADMIN - BALANCE (تم تعديله لضمان التوافق)
+// =========================================================
+
+app.post(
+  "/api/admin/balance",
+  async (req, res) => {
     try {
-        const { userId, planId, planAmount, planRate, planDays } = req.body;
-        
-        // جلب بيانات المستخدم وتأمين الخصم المزدوج
-        let user = await User.findOne({ userId });
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found" });
+      const userId = String(
+        req.body.userId || ""
+      ).trim();
+
+      const email = String(
+        req.body.email || ""
+      )
+        .trim()
+        .toLowerCase();
+
+      const amount = Number(
+        req.body.amount
+      );
+
+      const type = String(
+        req.body.type || ""
+      ).trim();
+
+      const adminName = String(
+        req.body.adminName || "غير معروف"
+      ).trim();
+
+      if (!userId && !email) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "❌ المعرف أو البريد مطلوب"
+        });
+      }
+
+      if (
+        !Number.isFinite(amount) ||
+        amount <= 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "❌ المبلغ غير صالح"
+        });
+      }
+
+      if (
+        type !== "deposit" &&
+        type !== "withdraw"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "❌ نوع العملية غير صالح"
+        });
+      }
+
+      let user = null;
+
+      if (userId) {
+        user = await User.findOne({
+          userId: userId // تأكد من أن الحقل userId يستخدم بشكل صحيح
+        });
+      }
+
+      if (!user && email) {
+        user = await User.findOne({
+          email
+        });
+      }
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "❌ المستخدم غير موجود"
+        });
+      }
+
+      const currentBalance = Number(
+        user.balance || 0
+      );
+
+      let balanceChanged = 0;
+      let txType = "";
+
+      if (type === "deposit") {
+        user.balance =
+          currentBalance + amount;
+
+        balanceChanged = amount;
+        txType = "💰 إيداع (أدمن)";
+      }
+
+      if (type === "withdraw") {
+        if (currentBalance < amount) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "❌ الرصيد غير كافٍ"
+          });
         }
 
-        if (user.balance < planAmount) {
-            return res.status(400).json({ success: false, message: "Insufficient balance" });
+        user.balance =
+          currentBalance - amount;
+
+        balanceChanged = -amount;
+        txType = "💸 سحب (أدمن)";
+      }
+
+      if (!Array.isArray(user.transactions)) {
+        user.transactions = [];
+      }
+
+      user.transactions.unshift({
+        type: txType,
+        amount: balanceChanged,
+        date: new Date(),
+        status: "✅ مكتمل",
+        note: `بواسطة الأدمن ${adminName}`
+      });
+
+      await user.save();
+
+      // إعادة حساب الأرباح بعد التعديل
+      await calculateAndAddProfit(user);
+
+      return res.json({
+        success: true,
+        message:
+          type === "deposit"
+            ? "✅ تم الإيداع بنجاح"
+            : "✅ تم السحب بنجاح",
+        user: publicUser(user)
+      });
+    } catch (error) {
+      console.error(
+        "❌ Admin balance error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "❌ خطأ في الخادم"
+      });
+    }
+  }
+);
+
+// =========================================================
+// ADMIN - UPDATE USER (تم تعديله لضمان التوافق)
+// =========================================================
+
+app.put(
+  "/api/admin/user/:userId",
+  async (req, res) => {
+    try {
+      const userId = String(
+        req.params.userId || ""
+      ).trim();
+
+      const updateData = {
+        ...(req.body || {})
+      };
+
+      delete updateData._id;
+      delete updateData.__v;
+      delete updateData.password;
+      delete updateData.id;
+      delete updateData.userId;
+      delete updateData.email;
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: "❌ معرف المستخدم مطلوب"
+        });
+      }
+
+      const user =
+        await User.findOneAndUpdate(
+          { userId: userId }, // تأكد من أن الحقل userId يستخدم بشكل صحيح
+          { $set: updateData },
+          {
+            new: true,
+            runValidators: true
+          }
+        ).select("-password");
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "❌ المستخدم غير موجود"
+        });
+      }
+
+      // إعادة حساب الأرباح بعد التعديل
+      await calculateAndAddProfit(user);
+
+      return res.json({
+        success: true,
+        message:
+          "✅ تم تحديث المستخدم بنجاح",
+        user: {
+          ...user.toObject(),
+          id:
+            user.userId ||
+            user._id.toString(),
+          userId:
+            user.userId ||
+            user._id.toString()
+        }
+      });
+    } catch (error) {
+      console.error(
+        "❌ Admin update error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "❌ خطأ في الخادم"
+      });
+    }
+  }
+);
+// =========================================================
+// ADMIN - GET ALL USERS
+// =========================================================
+
+app.get("/api/admin/users", async (req, res) => {
+  try {
+    const users = await User.find({})
+      .select("-password")
+      .sort({
+        createdAt: -1
+      });
+
+    const formattedUsers = users.map(
+      (user) => ({
+        ...user.toObject(),
+        id:
+          user.userId ||
+          user._id.toString(),
+        userId:
+          user.userId ||
+          user._id.toString()
+      })
+    );
+
+    console.log(
+      `✅ تم جلب ${formattedUsers.length} مستخدم`
+    );
+
+    return res.json({
+      success: true,
+      users: formattedUsers
+    });
+  } catch (error) {
+    console.error(
+      "❌ Admin users error:",
+      error
+    );
+
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم",
+      users: []
+    });
+  }
+});
+
+// =========================================================
+// ADMIN - GET SINGLE USER
+// =========================================================
+
+app.get(
+  "/api/admin/user/:identifier",
+  async (req, res) => {
+    try {
+      const identifier = String(
+        req.params.identifier || ""
+      ).trim();
+
+      if (!identifier) {
+        return res.status(400).json({
+          success: false,
+          message: "❌ المعرف مطلوب"
+        });
+      }
+
+      const user = await User.findOne({
+        $or: [
+          {
+            userId: identifier
+          },
+          {
+            email:
+              identifier.toLowerCase()
+          },
+          {
+            referralCode:
+              identifier.toUpperCase()
+          }
+        ]
+      }).select("-password");
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "❌ المستخدم غير موجود"
+        });
+      }
+
+      return res.json({
+        success: true,
+        user: {
+          ...user.toObject(),
+          id:
+            user.userId ||
+            user._id.toString(),
+          userId:
+            user.userId ||
+            user._id.toString()
+        }
+      });
+    } catch (error) {
+      console.error(
+        "❌ Admin user error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "❌ خطأ في الخادم"
+      });
+    }
+  }
+);
+
+// =========================================================
+// ADMIN - UPDATE USER
+// =========================================================
+
+app.put(
+  "/api/admin/user/:userId",
+  async (req, res) => {
+    try {
+      const userId = String(
+        req.params.userId || ""
+      ).trim();
+
+      const updateData = {
+        ...(req.body || {})
+      };
+
+      delete updateData._id;
+      delete updateData.__v;
+      delete updateData.password;
+      delete updateData.id;
+      delete updateData.userId;
+      delete updateData.email;
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: "❌ معرف المستخدم مطلوب"
+        });
+      }
+
+      const user =
+        await User.findOneAndUpdate(
+          { userId },
+          { $set: updateData },
+          {
+            new: true,
+            runValidators: true
+          }
+        ).select("-password");
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "❌ المستخدم غير موجود"
+        });
+      }
+
+      return res.json({
+        success: true,
+        message:
+          "✅ تم تحديث المستخدم بنجاح",
+        user: {
+          ...user.toObject(),
+          id:
+            user.userId ||
+            user._id.toString(),
+          userId:
+            user.userId ||
+            user._id.toString()
+        }
+      });
+    } catch (error) {
+      console.error(
+        "❌ Admin update error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "❌ خطأ في الخادم"
+      });
+    }
+  }
+);
+
+// =========================================================
+// ADMIN - BALANCE
+// =========================================================
+
+app.post(
+  "/api/admin/balance",
+  async (req, res) => {
+    try {
+      const userId = String(
+        req.body.userId || ""
+      ).trim();
+
+      const email = String(
+        req.body.email || ""
+      )
+        .trim()
+        .toLowerCase();
+
+      const amount = Number(
+        req.body.amount
+      );
+
+      const type = String(
+        req.body.type || ""
+      ).trim();
+
+      const adminName = String(
+        req.body.adminName || "غير معروف"
+      ).trim();
+
+      if (!userId && !email) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "❌ المعرف أو البريد مطلوب"
+        });
+      }
+
+      if (
+        !Number.isFinite(amount) ||
+        amount <= 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "❌ المبلغ غير صالح"
+        });
+      }
+
+      if (
+        type !== "deposit" &&
+        type !== "withdraw"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "❌ نوع العملية غير صالح"
+        });
+      }
+
+      let user = null;
+
+      if (userId) {
+        user = await User.findOne({
+          userId
+        });
+      }
+
+      if (!user && email) {
+        user = await User.findOne({
+          email
+        });
+      }
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "❌ المستخدم غير موجود"
+        });
+      }
+
+      const currentBalance = Number(
+        user.balance || 0
+      );
+
+      let balanceChanged = 0;
+      let txType = "";
+
+      if (type === "deposit") {
+        user.balance =
+          currentBalance + amount;
+
+        balanceChanged = amount;
+        txType = "💰 إيداع (أدمن)";
+      }
+
+      if (type === "withdraw") {
+        if (currentBalance < amount) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "❌ الرصيد غير كافٍ"
+          });
         }
 
-        if (user.plan) {
-            return res.status(400).json({ success: false, message: "Plan already active" });
-        }
+        user.balance =
+          currentBalance - amount;
 
-        // تنفيذ الخصم وبدء الخطة
-        user.balance -= planAmount;
-        user.plan = planId;
-        user.planAmount = planAmount;
-        user.planRate = planRate;
-        user.planDays = planDays;
-        
-        const now = new Date();
-        user.planStart = now;
-        user.lastProfitDate = now.toISOString();
-        user.timerStart = now.getTime();
+        balanceChanged = -amount;
+        txType = "💸 سحب (أدمن)";
+      }
 
-        user.transactions.unshift({
-            type: `🚀 تفعيل خطة ${planId}`,
-            amount: -planAmount,
-            date: now.toISOString(),
-            status: '✅ مكتمل'
+      if (!Array.isArray(user.transactions)) {
+        user.transactions = [];
+      }
+
+      user.transactions.unshift({
+        type: txType,
+        amount: balanceChanged,
+        date: new Date(),
+        status: "✅ مكتمل",
+        note: `بواسطة الأدمن ${adminName}`
+      });
+
+      await user.save();
+
+      return res.json({
+        success: true,
+        message:
+          type === "deposit"
+            ? "✅ تم الإيداع بنجاح"
+            : "✅ تم السحب بنجاح",
+        user: publicUser(user)
+      });
+    } catch (error) {
+      console.error(
+        "❌ Admin balance error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "❌ خطأ في الخادم"
+      });
+    }
+  }
+);
+
+// =========================================================
+// ADMIN - DELETE USER
+// =========================================================
+
+app.delete(
+  "/api/admin/user/:userId",
+  async (req, res) => {
+    try {
+      const userId = String(
+        req.params.userId || ""
+      ).trim();
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: "❌ المعرف مطلوب"
+        });
+      }
+
+      const result =
+        await User.findOneAndDelete({
+          userId
         });
 
-        await user.save();
-        return res.json({ success: true, user: publicUser(user) });
-    } catch (err) {
-        console.error("Activate plan error:", err);
-        return res.status(500).json({ success: false, message: "Server error" });
+      if (!result) {
+        return res.status(404).json({
+          success: false,
+          message: "❌ المستخدم غير موجود"
+        });
+      }
+
+      return res.json({
+        success: true,
+        message:
+          "🗑️ تم حذف الحساب بنجاح"
+      });
+    } catch (error) {
+      console.error(
+        "❌ Delete user error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "❌ خطأ في الخادم"
+      });
     }
+  }
+);
+
+// =========================================================
+// ADMIN - STATS
+// =========================================================
+
+app.get(
+  "/api/admin/stats",
+  async (req, res) => {
+    try {
+      const totalUsers =
+        await User.countDocuments();
+
+      const totalBalance =
+        await User.aggregate([
+          {
+            $group: {
+              _id: null,
+              total: {
+                $sum: "$balance"
+              }
+            }
+          }
+        ]);
+
+      const totalProfit =
+        await User.aggregate([
+          {
+            $group: {
+              _id: null,
+              total: {
+                $sum: "$profit"
+              }
+            }
+          }
+        ]);
+
+      const activePlans =
+        await User.countDocuments({
+          plan: {
+            $nin: [null, ""]
+          }
+        });
+
+      return res.json({
+        success: true,
+        stats: {
+          totalUsers,
+          totalBalance:
+            totalBalance[0]?.total || 0,
+          totalProfit:
+            totalProfit[0]?.total || 0,
+          activePlans
+        }
+      });
+    } catch (error) {
+      console.error(
+        "❌ Admin stats error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "❌ خطأ في الخادم"
+      });
+    }
+  }
+);
+
+// =========================================================
+// CATCH-ALL ROUTE FOR FRONTEND - FIXED
+// =========================================================
+
+// IMPORTANT:
+// Express/path-to-regexp versions that reject "/*"
+// are handled by using a RegExp catch-all route.
+app.get(/.*/, (req, res) => {
+  // Don't interfere with API routes
+  if (req.path.startsWith("/api")) {
+    return res.status(404).json({
+      success: false,
+      message: "❌ API endpoint غير موجود",
+      path: req.originalUrl
+    });
+  }
+
+  // Try to serve the requested HTML file
+  const page = req.path
+    .replace(/^\//, "")
+    .replace(/\.html$/, "");
+
+  const filePath = path.join(
+    __dirname,
+    `${page}.html`
+  );
+
+  if (fs.existsSync(filePath)) {
+    return res.sendFile(filePath);
+  }
+
+  // Fallback to index.html
+  const indexFile = path.join(
+    __dirname,
+    "index.html"
+  );
+
+  if (fs.existsSync(indexFile)) {
+    return res.sendFile(indexFile);
+  }
+
+  return res.status(404).send("الصفحة غير موجودة");
 });
 
 // =========================================================
-// SYNC USER DATA & PROFITS
+// 404 API HANDLER
 // =========================================================
 
-app.post("/api/sync-user", async (req, res) => {
-    try {
-        const { userId } = req.body;
-        let user = await User.findOne({ userId });
-        if (!user) return res.status(404).json({ success: false, message: "User not found" });
-        
-        user = await syncUserProfits(user);
-        return res.json({ success: true, user: publicUser(user) });
-    } catch (err) {
-        console.error("Sync user error:", err);
-        return res.status(500).json({ success: false, message: "Server error" });
-    }
+app.use("/api", (req, res) => {
+  return res.status(404).json({
+    success: false,
+    message: "❌ API endpoint غير موجود",
+    path: req.originalUrl
+  });
 });
 
 // =========================================================
-// UPDATE USER (Legacy support for client-side deposits/withdrawals)
+// ERROR HANDLER
 // =========================================================
 
-app.post("/api/update", async (req, res) => {
-    try {
-         const userData = req.body;
-         if (!userData || !userData.userId) return res.status(400).json({ success: false });
-         
-         let user = await User.findOne({ userId: userData.userId });
-         if (!user) return res.status(404).json({ success: false });
+app.use((err, req, res, next) => {
+  console.error("❌ Express error:", err);
 
-         user.balance = userData.balance !== undefined ? userData.balance : user.balance;
-         user.profit = userData.profit !== undefined ? userData.profit : user.profit;
-         
-         if (userData.transactions) {
-             user.transactions = userData.transactions;
-         }
-         if (userData.referredUsers) {
-             user.referredUsers = userData.referredUsers;
-         }
-         if (userData.referralBonus !== undefined) user.referralBonus = userData.referralBonus;
+  if (res.headersSent) {
+    return next(err);
+  }
 
-         await user.save();
-         return res.json({ success: true, user: publicUser(user) });
-    } catch (err) {
-         console.error("Update Error:", err);
-         return res.status(500).json({ success: false });
-    }
+  return res.status(500).json({
+    success: false,
+    message: "❌ حدث خطأ في الخادم"
+  });
 });
 
 // =========================================================
 // START SERVER
 // =========================================================
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`✅ Server is running on port ${PORT}`);
+
+const server = app.listen(PORT, () => {
+  console.log(
+    `🚀 Server running on port ${PORT}`
+  );
+
+  console.log(
+    `📡 API available at /api`
+  );
+
+  console.log(
+    `👥 Users endpoint: /api/admin/users`
+  );
+
+  console.log(
+    `🔗 MongoDB: ${
+      MONGODB_URI
+        ? "configured"
+        : "NOT CONFIGURED"
+    }`
+  );
 });
+
+// =========================================================
+// PROCESS ERROR HANDLERS
+// =========================================================
+
+process.on(
+  "uncaughtException",
+  (err) => {
+    console.error(
+      "❌ Uncaught Exception:",
+      err
+    );
+  }
+);
+
+process.on(
+  "unhandledRejection",
+  (err) => {
+    console.error(
+      "❌ Unhandled Rejection:",
+      err
+    );
+  }
+);
+
+module.exports = app;
