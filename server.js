@@ -751,69 +751,17 @@ app.get("/api/user/:identifier", async (req, res) => {
 // ACTIVATE PLAN
 // =========================================================
 
-app.post("/api/activate-plan", async (req, res) => {
+// =========================================================
+// CLAIM DAILY MINING PROFIT
+// =========================================================
+app.post("/api/claim-profit", async (req, res) => {
   try {
-    const userId = String(
-      req.body.userId || ""
-    ).trim();
-
-    const planId = String(
-      req.body.planId || ""
-    ).trim();
-
-    const planAmount = Number(
-      req.body.planAmount
-    );
-
-    const planRate = Number(
-      req.body.planRate
-    );
-
-    const planDays = Number(
-      req.body.planDays
-    );
+    const userId = String(req.body.userId || "").trim();
 
     if (!userId) {
       return res.status(400).json({
         success: false,
-        message: "❌ معرف المستخدم مطلوب"
-      });
-    }
-
-    if (!planId) {
-      return res.status(400).json({
-        success: false,
-        message: "❌ معرف الخطة مطلوب"
-      });
-    }
-
-    if (
-      !Number.isFinite(planAmount) ||
-      planAmount <= 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "❌ مبلغ الخطة غير صالح"
-      });
-    }
-
-    if (
-      !Number.isFinite(planRate) ||
-      planRate < 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "❌ نسبة الخطة غير صالحة"
-      });
-    }
-
-    if (
-      !Number.isFinite(planDays) ||
-      planDays <= 0
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "❌ مدة الخطة غير صالحة"
+        message: "معرف المستخدم مطلوب"
       });
     }
 
@@ -822,62 +770,144 @@ app.post("/api/activate-plan", async (req, res) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "❌ المستخدم غير موجود"
+        message: "المستخدم غير موجود"
       });
     }
 
-    const currentBalance = Number(
-      user.balance || 0
+    if (
+      !user.plan ||
+      !user.planAmount ||
+      !user.planRate ||
+      !user.timerStart
+    ) {
+      return res.json({
+        success: true,
+        claimed: false,
+        dueDays: 0,
+        user: publicUser(user)
+      });
+    }
+
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const timerStart = new Date(user.timerStart).getTime();
+
+    if (!Number.isFinite(timerStart)) {
+      return res.json({
+        success: true,
+        claimed: false,
+        dueDays: 0,
+        user: publicUser(user)
+      });
+    }
+
+    let elapsedDays = Math.floor(
+      (now - timerStart) / DAY_MS
     );
 
-    if (currentBalance < planAmount) {
-      return res.status(400).json({
-        success: false,
-        message:
-          "❌ الرصيد غير كافٍ لتفعيل هذه الخطة"
+    if (elapsedDays <= 0) {
+      return res.json({
+        success: true,
+        claimed: false,
+        dueDays: 0,
+        user: publicUser(user)
       });
     }
 
-    // خصم الخطة
-    user.balance =
-      currentBalance - planAmount;
+    const planDays = Number(user.planDays || 0);
 
-    // تفعيل الخطة
-    user.plan = planId;
-    user.planAmount = planAmount;
-    user.planRate = planRate;
-    user.planDays = planDays;
-    user.planStart = new Date();
-    user.timerStart = Date.now();
+    if (planDays > 0) {
+      elapsedDays = Math.min(elapsedDays, planDays);
+    }
+
+    let paidDays = 0;
+
+    if (user.lastProfitDate) {
+      const lastProfitTime =
+        new Date(user.lastProfitDate).getTime();
+
+      if (Number.isFinite(lastProfitTime)) {
+        paidDays = Math.floor(
+          (lastProfitTime - timerStart) / DAY_MS
+        );
+      }
+    }
+
+    if (paidDays < 0) {
+      paidDays = 0;
+    }
+
+    const dueDays = elapsedDays - paidDays;
+
+    if (dueDays <= 0) {
+      return res.json({
+        success: true,
+        claimed: false,
+        dueDays: 0,
+        user: publicUser(user)
+      });
+    }
+
+    const dailyProfit =
+      (Number(user.planAmount) *
+        Number(user.planRate)) / 100;
+
+    const totalProfit =
+      dailyProfit * dueDays;
+
+    user.balance =
+      Number(user.balance || 0) + totalProfit;
+
+    user.profit =
+      Number(user.profit || 0) + totalProfit;
 
     if (!Array.isArray(user.transactions)) {
       user.transactions = [];
     }
 
     user.transactions.unshift({
-      type: `📊 تفعيل خطة ${planId}`,
-      amount: -planAmount,
+      type: `📈 ربح يومي (${user.plan})`,
+      amount: totalProfit,
       date: new Date(),
       status: "✅ مكتمل",
-      note: `تم تفعيل الخطة ${planId}`
+      note: `ربح ${dueDays} يوم`
     });
+
+    user.lastProfitDate = new Date(
+      timerStart + elapsedDays * DAY_MS
+    );
+
+    let planFinished = false;
+
+    if (
+      planDays > 0 &&
+      elapsedDays >= planDays
+    ) {
+      planFinished = true;
+    }
 
     await user.save();
 
+    console.log(
+      `💰 Mining profit: ${userId} +${totalProfit} (${dueDays} days)`
+    );
+
     return res.json({
       success: true,
-      message: "✅ تم تفعيل الخطة بنجاح",
+      claimed: true,
+      dueDays,
+      dailyProfit,
+      totalProfit,
+      planFinished,
       user: publicUser(user)
     });
+
   } catch (error) {
-    console.error(
-      "❌ Activate plan error:",
-      error
-    );
+    console.error("❌ Claim profit error:", error);
 
     return res.status(500).json({
       success: false,
-      message: "❌ حدث خطأ في الخادم"
+      message: "فشل إضافة الربح"
     });
   }
 });
