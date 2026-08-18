@@ -7,6 +7,9 @@
    - 24-hour Timer with auto-profit addition
    - Celebration on plan activation
    - FULL SERVER SUPPORT WITH MONGODB
+   - FIXED: User ID shown after registration
+   - FIXED: Login redirects to dashboard
+   - FIXED: All devices see all users
 ========================================================= */
 
 // =========================================================
@@ -47,7 +50,7 @@ function toast(message) {
   element.textContent = message;
   element.classList.add("show");
   clearTimeout(window.toastTimer);
-  window.toastTimer = setTimeout(() => element.classList.remove("show"), 2600);
+  window.toastTimer = setTimeout(() => element.classList.remove("show"), 3000);
 }
 window.toast = toast;
 
@@ -882,6 +885,8 @@ async function saveUserToServer(user) {
     const data = await res.json();
     if (data.success) {
       console.log('✅ User saved to server:', data.user);
+      // تخزين المستخدم مع userId في localStorage
+      localStorage.setItem('currentUser', JSON.stringify(data.user));
       return data.user;
     } else {
       console.warn('⚠️ Server error:', data.message);
@@ -889,6 +894,13 @@ async function saveUserToServer(user) {
     }
   } catch (e) {
     console.warn('⚠️ Server not available, saving locally:', e);
+    // حفظ محلي كحل احتياطي
+    if (!user.userId) {
+      user.userId = generateUniqueUserId();
+    }
+    if (!user.referralCode) {
+      user.referralCode = generateReferralCode(user.userId);
+    }
     const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
     db[user.email] = user;
     localStorage.setItem('miningUsersDB', JSON.stringify(db));
@@ -907,6 +919,8 @@ async function loginToServer(email, password) {
     const data = await res.json();
     if (data.success) {
       console.log('✅ Login successful:', data.user);
+      // تخزين المستخدم في localStorage
+      localStorage.setItem('currentUser', JSON.stringify(data.user));
       return data.user;
     } else {
       console.warn('⚠️ Login failed:', data.message);
@@ -918,11 +932,18 @@ async function loginToServer(email, password) {
   }
 }
 
-async function getCurrentUser() {
-  const local = JSON.parse(localStorage.getItem('currentUser'));
-  if (local) return local;
-  return null;
+function getCurrentUser() {
+  try {
+    const user = JSON.parse(localStorage.getItem('currentUser'));
+    if (user && user.userId) {
+      return user;
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
 }
+window.getCurrentUser = getCurrentUser;
 
 function logout() {
   localStorage.removeItem('currentUser');
@@ -931,7 +952,8 @@ function logout() {
 window.logout = logout;
 
 function ensureAuth() {
-  if (!getCurrentUser()) {
+  const user = getCurrentUser();
+  if (!user) {
     toast(t("loginFirst"));
     setTimeout(() => {
       window.location.href = "register.html";
@@ -1047,8 +1069,12 @@ function startTimerLoop() {
 function activatePlan(planId) {
   console.log("🟢 activatePlan called with:", planId);
   
-  if (!ensureAuth()) {
-    console.log("❌ Auth failed");
+  const user = getCurrentUser();
+  if (!user) {
+    toast(t("pleaseLoginFirst"));
+    setTimeout(() => {
+      window.location.href = "register.html";
+    }, 700);
     return;
   }
 
@@ -1059,7 +1085,6 @@ function activatePlan(planId) {
     return;
   }
 
-  const user = getCurrentUser();
   console.log("👤 User:", user);
   console.log("💰 User balance:", user.balance);
   console.log("💰 Plan amount:", plan.amount);
@@ -1559,7 +1584,13 @@ function setupDepositForm() {
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!ensureAuth()) {
+    
+    const user = getCurrentUser();
+    if (!user) {
+      toast(t("pleaseLoginFirst"));
+      setTimeout(() => {
+        window.location.href = "register.html";
+      }, 700);
       return;
     }
 
@@ -1570,9 +1601,6 @@ function setupDepositForm() {
       toast(t("invalidAmount"));
       return;
     }
-
-    const user = getCurrentUser();
-    if (!user) return;
 
     user.balance = Number(user.balance || 0) + amount;
     addTransaction(user, t("depositOp"), amount, t("complete"));
@@ -1624,13 +1652,18 @@ function setupWithdrawForm() {
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (!ensureAuth()) {
+    
+    const user = getCurrentUser();
+    if (!user) {
+      toast(t("pleaseLoginFirst"));
+      setTimeout(() => {
+        window.location.href = "register.html";
+      }, 700);
       return;
     }
 
     const amount = Number(document.getElementById("withdrawAmount")?.value || 0);
     const address = document.getElementById("withdrawAddress")?.value.trim();
-    const user = getCurrentUser();
 
     if (!amount || amount <= 0 || !address) {
       toast(t("noFunds"));
@@ -1674,8 +1707,18 @@ function setupRegister() {
     const confirm = document.getElementById("regConfirm")?.value;
     const referralCode = document.getElementById("regReferral")?.value.trim().toUpperCase();
 
+    if (!name || name.length < 2) {
+      toast("⚠️ الاسم يجب أن يكون حرفين على الأقل");
+      return;
+    }
+
     if (password !== confirm) {
       toast(t("wrongConfirm"));
+      return;
+    }
+
+    if (password.length < 6) {
+      toast("⚠️ كلمة المرور يجب أن تكون 6 أحرف على الأقل");
       return;
     }
 
@@ -1688,10 +1731,11 @@ function setupRegister() {
 
     const saved = await saveUserToServer(newUser);
     if (saved) {
-      toast(t("registered"));
+      toast("✅ " + t("registered") + " 🆔 معرفك: " + saved.userId);
+      // التوجيه إلى لوحة التحكم بعد 1.5 ثانية
       setTimeout(() => {
-        window.location.href = "index.html";
-      }, 500);
+        window.location.href = "dashboard.html";
+      }, 1500);
     } else {
       toast("❌ فشل إنشاء الحساب، حاول مرة أخرى");
     }
@@ -1714,13 +1758,18 @@ function setupLogin() {
     const email = document.getElementById("loginEmail")?.value.trim().toLowerCase();
     const password = document.getElementById("loginPassword")?.value;
 
+    if (!email || !password) {
+      toast("⚠️ أدخل البريد وكلمة المرور");
+      return;
+    }
+
     const user = await loginToServer(email, password);
     if (user) {
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      toast(t("logged"));
+      toast("✅ " + t("logged"));
+      // التوجيه إلى لوحة التحكم بعد 0.5 ثانية
       setTimeout(() => {
         window.location.href = "dashboard.html";
-      }, 400);
+      }, 500);
     } else {
       toast(t("badLogin"));
     }
@@ -2277,6 +2326,25 @@ if (document.getElementById('onlineCount')) {
 }
 
 // =========================================================
+//  SHOW USER ID AFTER REGISTRATION
+// =========================================================
+
+function showUserIdAfterRegistration(user) {
+  if (!user || !user.userId) return;
+  
+  const toastMessage = `✅ تم إنشاء الحساب! 🆔 معرفك: ${user.userId}`;
+  toast(toastMessage);
+  
+  const userIdEl = document.getElementById('dashUserId');
+  if (userIdEl) {
+    userIdEl.textContent = user.userId;
+  }
+  
+  console.log('🆔 User ID:', user.userId);
+  console.log('🔗 Referral Code:', user.referralCode);
+}
+
+// =========================================================
 //  PAGE INIT
 // =========================================================
 
@@ -2304,7 +2372,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupAddressCopy();
   setupDepositUI();
 
-  // ✅ ربط الأزرار يدوياً كحل احتياطي
+  // ربط الأزرار يدوياً كحل احتياطي
   document.querySelectorAll('[data-plan]').forEach(btn => {
     const planId = btn.dataset.plan;
     if (planId) {
@@ -2322,7 +2390,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // ✅ ربط أزرار تسجيل الخروج
+  // ربط أزرار تسجيل الخروج
   document.querySelectorAll('[data-logout]').forEach(btn => {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
@@ -2390,6 +2458,7 @@ window.showConfirmDialog = showConfirmDialog;
 window.setLang = setLang;
 window.lang = lang;
 window.API_URL = API_URL;
+window.showUserIdAfterRegistration = showUserIdAfterRegistration;
 
 console.log('✅ TΔWØRM-V99 🜁 loaded successfully');
 console.log('📌 All functions exported globally');
