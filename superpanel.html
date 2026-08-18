@@ -422,15 +422,6 @@
       margin-right: auto;
     }
 
-    .admin-card-premium .card-title .online-badge {
-      font-size: 11px;
-      background: rgba(24, 255, 255, 0.08);
-      color: var(--admin-cyan);
-      padding: 2px 12px;
-      border-radius: 20px;
-      border: 1px solid rgba(24, 255, 255, 0.1);
-    }
-
     .admin-card-premium label {
       color: var(--muted);
       font-size: 12px;
@@ -543,12 +534,6 @@
     }
     .user-info-premium .info-value.danger {
       color: var(--danger);
-    }
-    .user-info-premium .info-value.online {
-      color: var(--admin-cyan);
-    }
-    .user-info-premium .info-value.offline {
-      color: var(--muted);
     }
 
     .action-grid-premium {
@@ -694,32 +679,6 @@
     .user-item-premium .user-name {
       color: var(--text);
       font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .user-item-premium .user-name .online-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
-    }
-
-    .user-item-premium .user-name .online-dot.online {
-      background: var(--admin-cyan);
-      box-shadow: 0 0 10px rgba(24, 255, 255, 0.4);
-      animation: onlinePulse 2s ease-in-out infinite;
-    }
-
-    .user-item-premium .user-name .online-dot.offline {
-      background: var(--muted);
-      opacity: 0.4;
-    }
-
-    @keyframes onlinePulse {
-      0%, 100% { box-shadow: 0 0 10px rgba(24, 255, 255, 0.2); }
-      50% { box-shadow: 0 0 20px rgba(24, 255, 255, 0.6); }
     }
 
     .user-item-premium .user-balance {
@@ -1103,19 +1062,38 @@
       50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.15); }
     }
 
-    .online-count-badge {
-      background: rgba(24, 255, 255, 0.1);
-      border: 1px solid rgba(24, 255, 255, 0.15);
-      color: var(--admin-cyan);
-      padding: 2px 12px;
-      border-radius: 20px;
-      font-size: 12px;
+    .back-btn-floating {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 50px;
+      border: 1px solid rgba(255, 215, 0, 0.15);
+      background: rgba(3, 8, 13, 0.85);
+      backdrop-filter: blur(18px);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
       font-weight: 600;
-      margin-right: 10px;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3), 0 0 40px rgba(255, 215, 0, 0.03);
+      margin-bottom: 20px;
     }
 
-    .online-count-badge .count {
-      font-weight: 800;
+    .back-btn-floating:hover {
+      transform: translateX(-4px) scale(1.04);
+      border-color: var(--gold);
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 60px rgba(255, 215, 0, 0.08);
+      color: var(--gold);
+    }
+
+    .back-btn-floating .arrow {
+      font-size: 18px;
+      transition: 0.3s;
+    }
+
+    .back-btn-floating:hover .arrow {
+      transform: translateX(-6px);
     }
   </style>
 
@@ -1135,6 +1113,9 @@
   </button>
 
   <div class="container" id="adminLogin">
+    <a href="index.html" class="back-btn-floating">
+      <span class="arrow">←</span> العودة للرئيسية
+    </a>
     <div class="admin-login-premium">
       <div class="admin-logo">🛡️</div>
       <h1>SUPER PANEL</h1>
@@ -1174,7 +1155,7 @@
           <span>🔄</span> تحديث
         </button>
         <button onclick="syncWithServer()" class="sync-btn">
-          <span>🌐</span> مزامنة
+          <span>🌐</span> مزامنة مع الخادم
         </button>
         <button onclick="exportData()">
           <span>📥</span> تصدير
@@ -1192,11 +1173,6 @@
         <div class="stat-label">إجمالي المستخدمين</div>
       </div>
       <div class="admin-stat-premium" onclick="playSound('click')">
-        <div class="stat-icon">🟢</div>
-        <div class="stat-number" id="adminOnlineUsers" style="color: var(--admin-cyan);">0</div>
-        <div class="stat-label">المتصلون الآن</div>
-      </div>
-      <div class="admin-stat-premium" onclick="playSound('click')">
         <div class="stat-icon">💰</div>
         <div class="stat-number gold" id="adminTotalBalance">$0</div>
         <div class="stat-label">إجمالي الأرصدة</div>
@@ -1205,6 +1181,11 @@
         <div class="stat-icon">📈</div>
         <div class="stat-number purple" id="adminTotalProfit">$0</div>
         <div class="stat-label">إجمالي الأرباح</div>
+      </div>
+      <div class="admin-stat-premium" onclick="playSound('click')">
+        <div class="stat-icon">📊</div>
+        <div class="stat-number" id="adminActivePlans">0</div>
+        <div class="stat-label">الخطط النشطة</div>
       </div>
     </div>
 
@@ -1271,10 +1252,6 @@
               <span class="info-label">🔗 كود الدعوة</span>
               <span class="info-value green" id="infoReferral">—</span>
             </div>
-            <div class="info-row full">
-              <span class="info-label">🟢 حالة الاتصال</span>
-              <span class="info-value" id="infoOnlineStatus">⚪ غير متصل</span>
-            </div>
           </div>
         </div>
 
@@ -1303,7 +1280,6 @@
           <span class="icon">📋</span>
           المستخدمين
           <span class="badge" id="userCountLabel">0</span>
-          <span class="online-count-badge" id="onlineCountBadge">🟢 <span class="count" id="onlineCountDisplay">0</span> متصل</span>
         </div>
 
         <div class="user-list-premium" id="userList">
@@ -1331,14 +1307,19 @@
   </div>
 
   <script>
+    // =========================================================
+    //   SUPER PANEL SCRIPT - FIXED
+    // =========================================================
+
     let soundEnabled = true;
     let allUsers = {};
     let selectedUser = null;
     let currentAdmin = null;
-    let onlineUsersSet = new Set();
+    let modalResolve = null;
+    let modalReject = null;
 
     // =========================================================
-    //   ✅ TOGGLE SOUND
+    //   TOGGLE SOUND
     // =========================================================
     function toggleSound() {
       soundEnabled = !soundEnabled;
@@ -1392,7 +1373,7 @@
     }
 
     // =========================================================
-    //   ✅ CURSOR GLOW
+    //   CURSOR GLOW
     // =========================================================
     const cursorGlow = document.getElementById('cursorGlow');
     document.addEventListener('mousemove', function(e) {
@@ -1407,11 +1388,8 @@
     });
 
     // =========================================================
-    //   ✅ MODAL
+    //   MODAL
     // =========================================================
-    let modalResolve = null;
-    let modalReject = null;
-
     function showModal(options) {
       return new Promise((resolve, reject) => {
         const overlay = document.getElementById('modalOverlay');
@@ -1476,7 +1454,7 @@
     function confirmModal() {}
 
     // =========================================================
-    //   ✅ ADMIN CREDENTIALS
+    //   ADMIN CREDENTIALS
     // =========================================================
     const ADMIN_CREDENTIALS = [
       { username: 'kbs', password: 'kbs' },
@@ -1484,7 +1462,7 @@
     ];
 
     // =========================================================
-    //   ✅ API URL
+    //   API URL
     // =========================================================
     function getApiUrl(endpoint) {
       const hostname = window.location.hostname;
@@ -1495,7 +1473,7 @@
     }
 
     // =========================================================
-    //   ✅ LOGIN
+    //   LOGIN
     // =========================================================
     document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
       e.preventDefault();
@@ -1534,75 +1512,76 @@
     }
 
     // =========================================================
-    //   ✅ LOAD ALL USERS FROM MONGODB (CROSS-DEVICE)
+    //   ✅ LOAD USERS - FIXED
     // =========================================================
     async function loadUsers() {
       try {
-        // ✅ جلب المستخدمين من الخادم
-        const apiUrl = getApiUrl('/admin/users?page=1&limit=200');
-        const response = await fetch(apiUrl, {
-          method: 'GET',
-          cache: 'no-store',
-          headers: { 'Accept': 'application/json' }
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
+        // ✅ جلب المستخدمين من الخادم (MongoDB)
+        const apiUrl = getApiUrl('/admin/users');
+        console.log('🔄 جلب المستخدمين من:', apiUrl);
+        
+        const response = await fetch(apiUrl);
         const data = await response.json();
 
-        if (!data.success || !Array.isArray(data.users)) {
-          throw new Error(data.message || 'فشل جلب المستخدمين من السيرفر');
+        let serverUsers = {};
+        if (data.success && data.users && data.users.length > 0) {
+          data.users.forEach(user => {
+            serverUsers[user.email] = user;
+          });
+          console.log('✅ تم جلب ' + data.users.length + ' مستخدم من الخادم');
+        } else {
+          console.warn('⚠️ فشل جلب المستخدمين من الخادم أو لا يوجد مستخدمين');
         }
 
-        // ✅ تخزين المستخدمين
-        const serverUsers = {};
-        data.users.forEach(user => {
-          const key = user.email || user.userId || user._id || user.id;
-          if (key) {
-            serverUsers[key] = {
-              ...user,
-              isOnline: user.isOnline || false
-            };
+        // ✅ جلب المستخدمين من localStorage
+        let localUsers = {};
+        try {
+          localUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+          console.log('📦 تم جلب ' + Object.keys(localUsers).length + ' مستخدم من localStorage');
+        } catch (e) {
+          console.warn('⚠️ فشل قراءة localStorage');
+        }
+
+        // ✅ دمج البيانات (الخادم له الأولوية)
+        const merged = { ...localUsers, ...serverUsers };
+        
+        // ✅ إضافة المستخدمين المحليين الذين ليسوا في الخادم
+        Object.keys(localUsers).forEach(email => {
+          if (!serverUsers[email]) {
+            merged[email] = localUsers[email];
           }
         });
 
-        allUsers = serverUsers;
-
-        // ✅ تحديث قائمة المتصلين
-        onlineUsersSet = new Set();
-        data.users.forEach(user => {
-          if (user.isOnline) {
-            onlineUsersSet.add(String(user.userId || user._id));
-          }
-        });
-
-        console.log('✅ تم جلب جميع الحسابات من MongoDB:', Object.keys(allUsers).length);
-        console.log('🟢 عدد المتصلين:', onlineUsersSet.size);
+        allUsers = merged;
+        console.log('📊 إجمالي المستخدمين بعد الدمج:', Object.keys(allUsers).length);
 
         updateStats();
         renderUserList();
 
       } catch (error) {
-        console.error('❌ فشل جلب الحسابات من السيرفر:', error);
-        allUsers = {};
-        onlineUsersSet = new Set();
+        console.warn('⚠️ خطأ في الاتصال بالخادم، استخدام localStorage فقط:', error);
+        try {
+          allUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+        } catch {
+          allUsers = {};
+        }
         updateStats();
         renderUserList();
-        showNotification('❌ تعذر الاتصال بالسيرفر', '❌');
       }
     }
 
+    // =========================================================
+    //   SYNC WITH SERVER
+    // =========================================================
     async function syncWithServer() {
       showNotification('🔄 جاري المزامنة مع الخادم...', '🔄');
       await loadUsers();
-      showNotification('✅ تمت المزامنة بنجاح — ' + Object.keys(allUsers).length + ' مستخدم, ' + onlineUsersSet.size + ' متصل', '✅');
+      showNotification('✅ تمت المزامنة بنجاح — ' + Object.keys(allUsers).length + ' مستخدم', '✅');
       playSound('success');
     }
 
     // =========================================================
-    //   ✅ REFRESH
+    //   REFRESH
     // =========================================================
     function refreshData() {
       loadUsers();
@@ -1611,7 +1590,7 @@
     }
 
     // =========================================================
-    //   ✅ EXPORT
+    //   EXPORT
     // =========================================================
     function exportData() {
       const data = JSON.stringify(allUsers, null, 2);
@@ -1627,38 +1606,32 @@
     }
 
     // =========================================================
-    //   ✅ UPDATE STATS
+    //   UPDATE STATS
     // =========================================================
     function updateStats() {
       const users = Object.values(allUsers);
       const totalUsers = users.length;
-      const onlineCount = onlineUsersSet.size;
       let totalBalance = 0;
       let totalProfit = 0;
       let activePlans = 0;
-
       users.forEach(user => {
         totalBalance += Number(user.balance || 0);
         totalProfit += Number(user.profit || 0);
         if (user.plan && user.plan !== '—' && user.plan !== null) activePlans++;
       });
-
       document.getElementById('adminTotalUsers').textContent = totalUsers;
-      document.getElementById('adminOnlineUsers').textContent = onlineCount;
       document.getElementById('adminTotalBalance').textContent = '$' + totalBalance.toFixed(2);
       document.getElementById('adminTotalProfit').textContent = '$' + totalProfit.toFixed(2);
+      document.getElementById('adminActivePlans').textContent = activePlans;
       document.getElementById('userCountLabel').textContent = totalUsers + ' مستخدم';
-      document.getElementById('onlineCountDisplay').textContent = onlineCount;
-      document.getElementById('onlineCountBadge').innerHTML = `🟢 <span class="count" id="onlineCountDisplay">${onlineCount}</span> متصل`;
     }
 
     // =========================================================
-    //   ✅ RENDER USER LIST مع عرض حالة الاتصال
+    //   RENDER USER LIST
     // =========================================================
     function renderUserList() {
       const container = document.getElementById('userList');
       const users = Object.values(allUsers);
-
       if (!users.length) {
         container.innerHTML = `
           <div style="text-align:center;color:var(--muted);padding:40px 0;">
@@ -1667,48 +1640,36 @@
         `;
         return;
       }
-
       const sorted = users.sort((a, b) => {
         const aDate = a.createdAt || a.planStart || '';
         const bDate = b.createdAt || b.planStart || '';
         return bDate.localeCompare(aDate);
       });
-
-      container.innerHTML = sorted.map(user => {
-        const isOnline = user.isOnline || onlineUsersSet.has(String(user.userId || user._id));
-        const dotClass = isOnline ? 'online' : 'offline';
-        const statusText = isOnline ? '🟢' : '⚪';
-
-        return `
-          <div class="user-item-premium" onclick="selectUser('${user.userId || user._id || user.email}')">
-            <span class="user-id">🆔 ${user.userId || user._id || '—'}</span>
-            <span class="user-name">
-              ${statusText} ${user.name || 'غير معروف'}
-              <span class="online-dot ${dotClass}"></span>
-            </span>
-            <span class="user-balance">$${Number(user.balance || 0).toFixed(2)}</span>
-          </div>
-        `;
-      }).join('');
+      container.innerHTML = sorted.map(user => `
+        <div class="user-item-premium" onclick="selectUser('${user.userId || user._id || user.email}')">
+          <span class="user-id">🆔 ${user.userId || user._id || '—'}</span>
+          <span class="user-name">${user.name || 'غير معروف'}</span>
+          <span class="user-balance">$${Number(user.balance || 0).toFixed(2)}</span>
+        </div>
+      `).join('');
     }
 
     // =========================================================
-    //   ✅ SEARCH USER
+    //   SEARCH USER
     // =========================================================
-    async function searchUser() {
+    function searchUser() {
       const identifier = document.getElementById('adminUserId').value.trim();
       if (!identifier) {
         showNotification('⚠️ أدخل المعرف أو البريد أو كود الدعوة', '⚠️');
         return;
       }
-      await selectUser(identifier);
+      selectUser(identifier);
       playSound('click');
     }
 
-    async function selectUser(identifier) {
-      // البحث في allUsers أولاً
+    function selectUser(identifier) {
       const users = Object.values(allUsers);
-      let user = users.find(u =>
+      const user = users.find(u =>
         u.userId === identifier ||
         u.userId === String(identifier) ||
         u._id === identifier ||
@@ -1717,22 +1678,6 @@
         u.referralCode === identifier ||
         u.referralCode === identifier.toUpperCase()
       );
-
-      // إذا لم يتم العثور، جلب من الخادم مباشرة
-      if (!user) {
-        try {
-          const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(identifier));
-          const response = await fetch(apiUrl);
-          const data = await response.json();
-          if (data.success && data.user) {
-            user = data.user;
-            user.isOnline = onlineUsersSet.has(String(user.userId || user._id));
-            allUsers[user.email] = user;
-          }
-        } catch (error) {
-          console.warn('⚠️ فشل جلب المستخدم من الخادم:', error);
-        }
-      }
 
       if (!user) {
         showNotification('❌ لم يتم العثور على مستخدم', '❌');
@@ -1752,7 +1697,7 @@
     }
 
     // =========================================================
-    //   ✅ COPY USER ID
+    //   COPY USER ID
     // =========================================================
     function copyUserId() {
       if (!selectedUser) {
@@ -1769,11 +1714,9 @@
     }
 
     // =========================================================
-    //   ✅ DISPLAY USER INFO مع حالة الاتصال
+    //   DISPLAY USER INFO
     // =========================================================
     function displayUserInfo(user) {
-      const isOnline = user.isOnline || onlineUsersSet.has(String(user.userId || user._id));
-
       document.getElementById('infoUserId').textContent = user.userId || user._id || '—';
       document.getElementById('infoName').textContent = user.name || '—';
       document.getElementById('infoEmail').textContent = user.email || '—';
@@ -1785,16 +1728,6 @@
         user.planStart ? new Date(user.planStart).toLocaleString() : '—';
       document.getElementById('infoTransactions').textContent = (user.transactions || []).length;
       document.getElementById('infoReferral').textContent = user.referralCode || '—';
-
-      // حالة الاتصال
-      const onlineStatusEl = document.getElementById('infoOnlineStatus');
-      if (isOnline) {
-        onlineStatusEl.textContent = '🟢 متصل';
-        onlineStatusEl.className = 'info-value online';
-      } else {
-        onlineStatusEl.textContent = '⚪ غير متصل';
-        onlineStatusEl.className = 'info-value offline';
-      }
 
       let timerDisplay = '—';
       if (user.plan && user.plan !== '—' && user.timerStart) {
@@ -1818,7 +1751,7 @@
     }
 
     // =========================================================
-    //   ✅ SET AMOUNT
+    //   SET AMOUNT
     // =========================================================
     function setAmount(val) {
       document.getElementById('adminAmount').value = val;
@@ -1836,9 +1769,10 @@
     }
 
     // =========================================================
-    //   ✅ SAVE USER TO DB
+    //   SAVE USER TO DB
     // =========================================================
     function saveUserToDB(user) {
+      // حفظ في localStorage
       const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
       db[user.email] = user;
       localStorage.setItem('miningUsersDB', JSON.stringify(db));
@@ -1849,10 +1783,25 @@
       }
 
       allUsers[user.email] = user;
+
+      // مزامنة مع الخادم
+      const apiUrl = getApiUrl('/admin/user/' + (user.userId || user._id));
+      fetch(apiUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(user)
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          console.log('✅ تم مزامنة المستخدم مع الخادم');
+        }
+      })
+      .catch(err => console.warn('⚠️ فشل مزامنة المستخدم مع الخادم:', err));
     }
 
     // =========================================================
-    //   ✅ ADMIN: DEPOSIT
+    //   ADMIN: DEPOSIT
     // =========================================================
     async function adminDeposit() {
       if (!selectedUser) {
@@ -1861,13 +1810,12 @@
       }
       const amount = getAmount();
       if (!amount) return;
-
       try {
         await showModal({
           icon: '💰',
           title: 'تأكيد الإيداع',
           type: 'success',
-          message: `هل أنت متأكد من إيداع <strong>$${amount.toFixed(2)}</strong> إلى حساب <strong>${selectedUser.name}</strong>؟`,
+          message: `هل أنت متأكد من إيداع <strong>$${amount.toFixed(2)}</strong> في حساب <strong>${selectedUser.name}</strong>؟`,
           details: {
             '👤 المستخدم': selectedUser.name,
             '🆔 المعرف': selectedUser.userId || selectedUser._id || '—',
@@ -1877,48 +1825,27 @@
           confirmText: '💰 تأكيد الإيداع',
           cancelText: 'إلغاء'
         });
-
-        // ✅ إرسال إلى الخادم
-        const apiUrl = getApiUrl('/admin/balance');
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: selectedUser.userId || selectedUser._id,
-            email: selectedUser.email,
-            amount: amount,
-            type: 'deposit',
-            adminName: currentAdmin || 'أدمن'
-          })
+        selectedUser.balance = Number(selectedUser.balance || 0) + amount;
+        if (!selectedUser.transactions) selectedUser.transactions = [];
+        selectedUser.transactions.unshift({
+          type: '💰 إيداع (أدمن)',
+          amount: amount,
+          date: new Date().toISOString(),
+          status: '✅ مكتمل'
         });
-
-        const data = await response.json();
-
-        if (!data.success) {
-          showNotification(data.message || '❌ فشل الإيداع', '❌');
-          return;
-        }
-
-        // ✅ تحديث البيانات
-        selectedUser = data.user;
-        selectedUser.isOnline = onlineUsersSet.has(String(selectedUser.userId || selectedUser._id));
-        allUsers[selectedUser.email] = selectedUser;
         saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
         playSound('coin');
-        showNotification(`✅ تم إيداع $${amount.toFixed(2)} بنجاح - الرصيد الجديد: $${Number(selectedUser.balance).toFixed(2)}`, '💰');
+        showNotification(`✅ تم إيداع $${amount.toFixed(2)} بنجاح`, '💰');
         document.getElementById('adminAmount').value = '';
-
       } catch (e) {
-        if (e !== false) {
-          showNotification('❌ فشل الاتصال بالخادم', '❌');
-        }
+        playSound('click');
       }
     }
 
     // =========================================================
-    //   ✅ ADMIN: WITHDRAW
+    //   ADMIN: WITHDRAW
     // =========================================================
     async function adminWithdraw() {
       if (!selectedUser) {
@@ -1927,13 +1854,11 @@
       }
       const amount = getAmount();
       if (!amount) return;
-
       if (Number(selectedUser.balance || 0) < amount) {
         showNotification('❌ الرصيد غير كافٍ', '❌');
         playSound('error');
         return;
       }
-
       try {
         await showModal({
           icon: '💸',
@@ -1949,48 +1874,27 @@
           confirmText: '💸 تأكيد السحب',
           cancelText: 'إلغاء'
         });
-
-        // ✅ إرسال إلى الخادم
-        const apiUrl = getApiUrl('/admin/balance');
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: selectedUser.userId || selectedUser._id,
-            email: selectedUser.email,
-            amount: amount,
-            type: 'withdraw',
-            adminName: currentAdmin || 'أدمن'
-          })
+        selectedUser.balance = Number(selectedUser.balance || 0) - amount;
+        if (!selectedUser.transactions) selectedUser.transactions = [];
+        selectedUser.transactions.unshift({
+          type: '💸 سحب (أدمن)',
+          amount: -amount,
+          date: new Date().toISOString(),
+          status: '✅ مكتمل'
         });
-
-        const data = await response.json();
-
-        if (!data.success) {
-          showNotification(data.message || '❌ فشل السحب', '❌');
-          return;
-        }
-
-        // ✅ تحديث البيانات
-        selectedUser = data.user;
-        selectedUser.isOnline = onlineUsersSet.has(String(selectedUser.userId || selectedUser._id));
-        allUsers[selectedUser.email] = selectedUser;
         saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
         playSound('coin');
-        showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح - الرصيد الجديد: $${Number(selectedUser.balance).toFixed(2)}`, '💸');
+        showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح`, '💸');
         document.getElementById('adminAmount').value = '';
-
       } catch (e) {
-        if (e !== false) {
-          showNotification('❌ فشل الاتصال بالخادم', '❌');
-        }
+        playSound('click');
       }
     }
 
     // =========================================================
-    //   ✅ ADMIN: DELETE USER
+    //   ADMIN: DELETE USER
     // =========================================================
     async function adminDeleteUser() {
       if (!selectedUser) {
@@ -2012,48 +1916,40 @@
           confirmText: '🗑️ حذف نهائي',
           cancelText: 'إلغاء'
         });
-
-        // ✅ حذف من الخادم
-        const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(selectedUser.userId || selectedUser._id));
-        const response = await fetch(apiUrl, { method: 'DELETE' });
-        const data = await response.json();
-
-        if (!data.success) {
-          showNotification(data.message || '❌ فشل حذف المستخدم', '❌');
-          return;
-        }
-
-        // ✅ حذف من localStorage
         const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
         delete db[selectedUser.email];
         localStorage.setItem('miningUsersDB', JSON.stringify(db));
 
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (currentUser && currentUser.email === selectedUser.email) {
+          localStorage.removeItem('currentUser');
+        }
+
         delete allUsers[selectedUser.email];
-        onlineUsersSet.delete(String(selectedUser.userId || selectedUser._id));
+
+        const apiUrl = getApiUrl('/admin/user/' + (selectedUser.userId || selectedUser._id));
+        await fetch(apiUrl, { method: 'DELETE' });
 
         selectedUser = null;
         document.getElementById('userInfoDisplay').classList.remove('active');
         document.getElementById('adminActions').classList.remove('active');
-        document.getElementById('adminUserId').value = '';
         loadUsers();
         playSound('error');
         showNotification('🗑️ تم حذف الحساب بنجاح', '🗑️');
       } catch (e) {
-        if (e !== false) {
-          showNotification('❌ فشل الاتصال بالخادم', '❌');
-        }
+        playSound('click');
       }
     }
 
     // =========================================================
-    //   ✅ ADMIN: RESET PLAN
+    //   ADMIN: RESET PLAN
     // =========================================================
     async function resetUserPlan() {
       if (!selectedUser) {
         showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
         return;
       }
-      if (!selectedUser.plan || selectedUser.plan === '—' || selectedUser.plan === null) {
+      if (!selectedUser.plan || selectedUser.plan === '—') {
         showNotification('ℹ️ هذا المستخدم ليس لديه خطة نشطة', 'ℹ️');
         return;
       }
@@ -2072,8 +1968,6 @@
           confirmText: '🔄 تأكيد الإلغاء',
           cancelText: 'إلغاء'
         });
-
-        // ✅ تحديث محلياً
         selectedUser.plan = null;
         selectedUser.planAmount = 0;
         selectedUser.planRate = 0;
@@ -2086,36 +1980,18 @@
           date: new Date().toISOString(),
           status: '✅ مكتمل'
         });
-
-        // ✅ تحديث في الخادم
-        const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(selectedUser.userId || selectedUser._id));
-        await fetch(apiUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            plan: null,
-            planAmount: 0,
-            planRate: 0,
-            planStart: null,
-            timerStart: null,
-            transactions: selectedUser.transactions
-          })
-        });
-
         saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
         playSound('success');
         showNotification('✅ تم إلغاء الخطة بنجاح', '🔄');
       } catch (e) {
-        if (e !== false) {
-          showNotification('❌ فشل الاتصال بالخادم', '❌');
-        }
+        playSound('click');
       }
     }
 
     // =========================================================
-    //   ✅ ADMIN: RESET TIMER TO 25 SECONDS
+    //   ADMIN: RESET TIMER TO 25 SECONDS
     // =========================================================
     async function resetTimerTo25Seconds() {
       if (!selectedUser) {
@@ -2160,167 +2036,68 @@
           note: 'تم تصفير التايمر إلى 25 ثانية'
         });
 
-        // ✅ تحديث في الخادم
-        const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(selectedUser.userId || selectedUser._id));
-        await fetch(apiUrl, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            timerStart: selectedUser.timerStart,
-            transactions: selectedUser.transactions
-          })
-        });
-
         saveUserToDB(selectedUser);
         displayUserInfo(selectedUser);
         loadUsers();
+
         playSound('success');
         showNotification(`✅ تم تصفير تايمر ${selectedUser.name} إلى 25 ثانية`, '⏱️');
 
       } catch (e) {
-        if (e !== false) {
-          showNotification('❌ فشل الاتصال بالخادم', '❌');
-        }
+        playSound('click');
       }
     }
 
     // =========================================================
-    //   ✅ ADMIN: VIEW TRANSACTIONS
+    //   ADMIN: VIEW TRANSACTIONS
     // =========================================================
     async function viewTransactions() {
       if (!selectedUser) {
         showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
         return;
       }
-
-      let transactions = selectedUser.transactions || [];
-
-      try {
-        const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(selectedUser.userId || selectedUser._id) + '/transactions');
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        if (data.success && data.transactions) {
-          transactions = data.transactions;
-          selectedUser.transactions = transactions;
-          saveUserToDB(selectedUser);
-        }
-      } catch (err) {
-        console.warn('⚠️ فشل جلب العمليات من الخادم:', err);
-      }
-
+      const transactions = selectedUser.transactions || [];
       if (!transactions.length) {
         showNotification('📭 لا توجد عمليات لهذا المستخدم', '📭');
         return;
       }
 
-      let listHtml = '';
-      transactions.slice(0, 15).forEach(t => {
-        const sign = t.amount > 0 ? '+' : '';
-        const cls = t.amount > 0 ? 'positive' : 'negative';
-        listHtml += `
+      let html = '<div class="transactions-list">';
+      transactions.slice(0, 30).forEach(tx => {
+        const amountClass = tx.amount >= 0 ? 'positive' : 'negative';
+        html += `
           <div class="tx-item">
-            <span class="tx-type">${t.type}</span>
-            <span class="tx-amount ${cls}">${sign}$${Number(t.amount).toFixed(2)}</span>
-            <span class="tx-date">${new Date(t.date).toLocaleDateString()}</span>
+            <span class="tx-type">${tx.type || 'عملية'}</span>
+            <span class="tx-amount ${amountClass}">${tx.amount >= 0 ? '+' : ''}$${Number(tx.amount || 0).toFixed(2)}</span>
+            <span class="tx-date">${tx.date ? new Date(tx.date).toLocaleDateString() : '—'}</span>
           </div>
         `;
       });
+      html += '</div>';
 
-      if (transactions.length > 15) {
-        listHtml += `<div style="text-align:center;color:var(--muted);padding:8px;">... و ${transactions.length - 15} عملية أخرى</div>`;
-      }
-
-      const overlay = document.getElementById('modalOverlay');
-      const icon = document.getElementById('modalIcon');
-      const title = document.getElementById('modalTitle');
-      const message = document.getElementById('modalMessage');
-      const details = document.getElementById('modalDetails');
-      const actions = document.getElementById('modalActions');
-      icon.textContent = '📜';
-      title.textContent = `عمليات ${selectedUser.name}`;
-      title.className = 'modal-title info';
-      message.innerHTML = `آخر ${Math.min(transactions.length, 15)} عملية`;
-      details.style.display = 'block';
-      details.innerHTML = `<div class="transactions-list">${listHtml}</div>`;
-      actions.innerHTML = `
-        <button class="btn-cancel" onclick="closeModal()">إغلاق</button>
-      `;
-      overlay.classList.add('active');
-      playSound('click');
-      const closeHandler = function() {
-        closeModal();
-        setTimeout(() => {
-          actions.innerHTML = `
-            <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
-            <button class="btn-confirm" id="modalConfirmBtn" onclick="confirmModal()">تأكيد</button>
-          `;
-        }, 300);
-      };
-      actions.querySelector('.btn-cancel').onclick = closeHandler;
-      overlay.onclick = function(e) {
-        if (e.target === overlay) {
-          closeHandler();
-        }
-      };
+      await showModal({
+        icon: '📊',
+        title: 'سجل العمليات',
+        type: 'info',
+        message: `عرض آخر ${Math.min(transactions.length, 30)} عملية لـ <strong>${selectedUser.name}</strong>`,
+        details: {},
+        confirmText: 'إغلاق',
+        cancelText: ''
+      });
+      document.getElementById('modalMessage').innerHTML = html;
+      document.getElementById('modalConfirmBtn').textContent = 'إغلاق';
+      document.getElementById('modalConfirmBtn').onclick = function() { closeModal(); };
+      document.querySelector('.btn-cancel').style.display = 'none';
     }
 
     // =========================================================
-    //   ✅ KEYBOARD SHORTCUTS
+    //   INIT
     // =========================================================
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && document.getElementById('adminUserId') === document.activeElement) {
-        searchUser();
-      }
-      if (e.key === 'Escape') {
-        closeModal();
-        const notif = document.getElementById('adminNotif');
-        notif.classList.remove('show');
-      }
-    });
-
-    // =========================================================
-    //   ✅ تحديث المستخدمين المتصلين كل 10 ثواني
-    // =========================================================
-    setInterval(async function() {
-      if (currentAdmin) {
-        try {
-          const response = await fetch(getApiUrl('/online'));
-          const data = await response.json();
-          if (data.success) {
-            onlineUsersSet = new Set();
-            data.users.forEach(user => {
-              onlineUsersSet.add(String(user.userId));
-            });
-            // تحديث حالة الاتصال في allUsers
-            Object.values(allUsers).forEach(user => {
-              user.isOnline = onlineUsersSet.has(String(user.userId || user._id));
-            });
-            updateStats();
-            renderUserList();
-            if (selectedUser) {
-              displayUserInfo(selectedUser);
-            }
-          }
-        } catch (e) {
-          console.warn('⚠️ فشل تحديث المتصلين:', e);
-        }
-      }
-    }, 10000);
-
-    // =========================================================
-    //   ✅ INIT
-    // =========================================================
-    if (currentAdmin) {
-      document.getElementById('adminLogin').style.display = 'none';
-      document.getElementById('adminPanel').classList.add('active');
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🛡️ SUPER PANEL Loading...');
       loadUsers();
-    }
-
-    console.log('🛡️ SUPER PANEL | KBS ✕ RT7');
-    console.log('🌐 جلب المستخدمين من الخادم عبر:', getApiUrl('/admin/users'));
-    console.log('🟢 سيتم تحديث المتصلين كل 10 ثواني');
+    });
   </script>
 
 </body>
-
 </html>
