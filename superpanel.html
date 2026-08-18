@@ -744,6 +744,9 @@ function getAmount() {
 // =========================================================
 //   ADMIN DEPOSIT - FULLY UPGRADED
 // =========================================================
+// =========================================================
+//   ADMIN DEPOSIT - FIXED
+// =========================================================
 async function adminDeposit() {
   console.log('💰 adminDeposit called');
   if (!selectedUser) { showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️'); playSound('error'); return; }
@@ -772,6 +775,8 @@ async function adminDeposit() {
     console.log('📥 Server response:', data);
     if (data.success) {
       selectedUser = data.user;
+      // تحديث allUsers
+      allUsers[selectedUser.email] = selectedUser;
       displayUserInfo(data.user);
       await loadUsers();
       playSound('coin');
@@ -781,6 +786,87 @@ async function adminDeposit() {
   } catch (e) { console.error('❌ Deposit error:', e); showNotification('❌ فشل الإيداع: ' + e.message, '❌'); playSound('error'); }
 }
 
+// =========================================================
+//   ADMIN WITHDRAW - FIXED
+// =========================================================
+async function adminWithdraw() {
+  console.log('💸 adminWithdraw called');
+  if (!selectedUser) { showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️'); playSound('error'); return; }
+  if (!selectedUser.userId) { showNotification('⚠️ هذا المستخدم ليس لديه معرف صحيح', '⚠️'); playSound('error'); return; }
+  const amount = getAmount();
+  if (!amount) return;
+  if (Number(selectedUser.balance || 0) < amount) { showNotification('❌ الرصيد غير كافٍ', '❌'); playSound('error'); return; }
+  try {
+    await showModal({
+      icon: '💸', title: 'تأكيد السحب', type: 'danger',
+      message: `هل أنت متأكد من سحب <strong>$${amount.toFixed(2)}</strong> من حساب <strong>${selectedUser.name}</strong>؟`,
+      details: {
+        '👤 المستخدم': selectedUser.name,
+        '🆔 المعرف': selectedUser.userId || '—',
+        '💸 المبلغ': '$' + amount.toFixed(2),
+        '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
+      },
+      confirmText: '💸 تأكيد السحب', cancelText: 'إلغاء'
+    });
+    console.log('📤 Sending withdraw request... userId:', selectedUser.userId, 'amount:', amount);
+    const res = await fetch(`${API_URL}/admin/balance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: selectedUser.userId, amount: amount, type: 'withdraw', adminName: currentAdmin || 'أدمن' })
+    });
+    const data = await res.json();
+    console.log('📥 Server response:', data);
+    if (data.success) {
+      selectedUser = data.user;
+      // تحديث allUsers
+      allUsers[selectedUser.email] = selectedUser;
+      displayUserInfo(data.user);
+      await loadUsers();
+      playSound('coin');
+      showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح`, '💸');
+      document.getElementById('adminAmount').value = '';
+    } else { showNotification('❌ ' + data.message, '❌'); playSound('error'); }
+  } catch (e) { console.error('❌ Withdraw error:', e); showNotification('❌ فشل السحب: ' + e.message, '❌'); playSound('error'); }
+}
+
+// =========================================================
+//   RESET TIMER - FIXED
+// =========================================================
+async function resetTimerTo25Seconds() {
+  if (!selectedUser) { showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️'); return; }
+  const hasPlan = selectedUser.plan && selectedUser.plan !== '—' && selectedUser.plan !== null;
+  if (!hasPlan) { showNotification('ℹ️ هذا المستخدم ليس لديه خطة نشطة', 'ℹ️'); return; }
+  const dailyProfit = (selectedUser.planAmount * selectedUser.planRate) / 100;
+  try {
+    await showModal({
+      icon: '⏱️', title: 'تصفير التايمر إلى 25 ثانية', type: 'warning',
+      message: `هل أنت متأكد من تصفير تايمر خطة <strong>${selectedUser.plan}</strong> لحساب <strong>${selectedUser.name}</strong> إلى <strong>25 ثانية</strong>؟<br><br><span style="color:#ffd700;">⚡ بعد 25 ثانية سيحصل على مكافأة الربح اليومي!</span>`,
+      details: {
+        '👤 المستخدم': selectedUser.name,
+        '📋 الخطة': selectedUser.plan,
+        '⏱️ التايمر الجديد': '25 ثانية',
+        '💰 الربح اليومي': '$' + dailyProfit.toFixed(2)
+      },
+      confirmText: '⏱️ تصفير إلى 25 ثانية', cancelText: 'إلغاء'
+    });
+    const newTimerStart = Date.now() - (24 * 60 * 60 * 1000) + (25 * 1000);
+    const res = await fetch(`${API_URL}/admin/user/${selectedUser.userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ timerStart: newTimerStart })
+    });
+    const data = await res.json();
+    if (data.success) {
+      selectedUser = data.user;
+      // تحديث allUsers
+      allUsers[selectedUser.email] = selectedUser;
+      displayUserInfo(data.user);
+      await loadUsers();
+      playSound('success');
+      showNotification(`✅ تم تصفير تايمر ${selectedUser.name} إلى 25 ثانية`, '⏱️');
+    } else { showNotification('❌ ' + data.message, '❌'); playSound('error'); }
+  } catch (e) { showNotification('❌ فشل التصفير: ' + e.message, '❌'); playSound('error'); }
+}
 // =========================================================
 //   ADMIN WITHDRAW - FULLY UPGRADED
 // =========================================================
