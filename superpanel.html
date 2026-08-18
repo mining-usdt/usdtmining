@@ -747,7 +747,7 @@ function getAmount() {
 }
 
 // =========================================================
-//   ADMIN DEPOSIT (FIXED)
+//   ADMIN DEPOSIT (FIXED - now uses updated balance from server)
 // =========================================================
 async function adminDeposit() {
   console.log('💰 adminDeposit called');
@@ -788,15 +788,19 @@ async function adminDeposit() {
     console.log('📥 Server response:', data);
 
     if (data.success) {
-      // تحديث المستخدم بالبيانات الجديدة من الخادم
       const updatedUser = data.user;
       if (updatedUser) {
+        // تحديث البيانات محلياً من البيانات التي أرجعها الخادم
         selectedUser = updatedUser;
         if (updatedUser.userId) allUsers[updatedUser.userId] = updatedUser;
         if (updatedUser.email) allUsers[updatedUser.email] = updatedUser;
+        
+        // عرض المعلومات المحدثة فوراً
         displayUserInfo(updatedUser);
-        // إعادة تحميل قائمة المستخدمين لتحديث الرصيد في القائمة
+        
+        // تحديث قائمة المستخدمين من الخادم للتأكد من التطابق
         await loadUsers();
+        
         playSound('coin');
         showNotification(`✅ تم إيداع $${amount.toFixed(2)} بنجاح`, '💰');
         document.getElementById('adminAmount').value = '';
