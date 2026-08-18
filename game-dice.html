@@ -7,263 +7,874 @@
   <title>🎲 رمية النرد — miningusdt</title>
   <link rel="stylesheet" href="style.css">
   <style>
-    body { background: #03080d; overflow-x: hidden; }
-    .game-page { position: relative; min-height: 100vh; padding: 30px 0 60px; }
-    .game-page::before { content: ''; position: fixed; inset: 0; z-index: -1; background: radial-gradient(ellipse at 30% 40%, rgba(256, 215, 0, 0.06), transparent 50%), radial-gradient(ellipse at 70% 60%, rgba(255, 50, 50, 0.04), transparent 40%), #03080d; animation: bgPulse 6s ease-in-out infinite; }
-    @keyframes bgPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-    .particles { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
-    .particle { position: absolute; width: 4px; height: 4px; background: rgba(255, 215, 0, 0.2); border-radius: 50%; animation: floatParticle linear infinite; }
-    @keyframes floatParticle { 0% { transform: translateY(100vh) scale(0); opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { transform: translateY(-10vh) scale(1); opacity: 0; } }
-    .particle:nth-child(1) { left: 10%; animation-duration: 12s; }
-    .particle:nth-child(2) { left: 25%; animation-duration: 15s; animation-delay: 2s; width: 6px; height: 6px; }
-    .particle:nth-child(3) { left: 40%; animation-duration: 10s; animation-delay: 4s; background: rgba(255, 50, 50, 0.15); }
-    .particle:nth-child(4) { left: 55%; animation-duration: 18s; animation-delay: 1s; }
-    .particle:nth-child(5) { left: 70%; animation-duration: 14s; animation-delay: 3s; width: 5px; height: 5px; }
-    .particle:nth-child(6) { left: 85%; animation-duration: 11s; animation-delay: 5s; background: rgba(0, 255, 157, 0.15); }
-    .particle:nth-child(7) { left: 45%; animation-duration: 16s; animation-delay: 2s; width: 7px; height: 7px; }
-    .particle:nth-child(8) { left: 65%; animation-duration: 13s; animation-delay: 4s; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-    .game-container { max-width: 600px; margin: 0 auto; }
-    .game-card-main { padding: 35px 30px 40px; border-radius: 30px; background: rgba(8, 24, 31, 0.88); backdrop-filter: blur(20px); border: 2px solid rgba(255, 215, 0, 0.08); box-shadow: 0 30px 80px rgba(0,0,0,0.4); position: relative; overflow: hidden; }
-    .game-card-main::before { content: ''; position: absolute; inset: -2px; border-radius: 30px; padding: 2px; background: linear-gradient(135deg, rgba(255, 215, 0, 0.1), rgba(255, 50, 50, 0.05)); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
-    .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-    .game-header .back-btn { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02); color: var(--text); text-decoration: none; transition: 0.3s; font-size: 14px; }
-    .game-header .back-btn:hover { border-color: var(--green); color: var(--green); }
-    .game-header .balance-small { padding: 8px 18px; border-radius: 12px; background: rgba(0,255,157,0.04); border: 1px solid rgba(0,255,157,0.06); text-align: center; }
-    .game-header .balance-small .label { font-size: 10px; color: var(--muted); }
-    .game-header .balance-small .amount { font-size: 18px; font-weight: 800; color: var(--gold); }
-    .game-icon-big { text-align: center; font-size: 72px; display: block; margin-bottom: 5px; animation: iconFloat 3s ease-in-out infinite; }
-    @keyframes iconFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-    .game-title-main { text-align: center; font-size: 32px; font-weight: 900; color: var(--gold); margin-bottom: 5px; }
-    .game-desc-main { text-align: center; color: var(--muted); font-size: 14px; margin-bottom: 20px; line-height: 1.8; }
-    .game-result { padding: 18px; border-radius: 16px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.04); margin: 12px 0 18px; text-align: center; font-size: 20px; font-weight: 700; min-height: 65px; display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; transition: 0.3s; }
-    .game-result.win { border-color: var(--green); color: var(--green); background: rgba(0,255,157,0.06); box-shadow: 0 0 40px rgba(0,255,157,0.06); }
-    .game-result.lose { border-color: #ff4444; color: #ff4444; background: rgba(255,50,50,0.06); box-shadow: 0 0 40px rgba(255,50,50,0.06); }
-    .game-bet-input { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 0; }
-    .game-bet-input label { color: var(--muted); font-size: 13px; font-weight: 600; }
-    .game-bet-input input { width: 120px; padding: 12px 16px; border-radius: 12px; border: 2px solid rgba(255,215,0,0.08); background: rgba(6,16,23,0.8); color: white; outline: none; font-size: 16px; transition: 0.3s; }
-    .game-bet-input input:focus { border-color: var(--gold); box-shadow: 0 0 30px rgba(255,215,0,0.06); }
-    .quick-bets { display: flex; gap: 5px; flex-wrap: wrap; }
-    .quick-bets button { padding: 6px 14px; border-radius: 8px; border: 1px solid rgba(255,215,0,0.08); background: rgba(255,215,0,0.04); color: var(--muted); font-size: 12px; cursor: pointer; transition: 0.2s; font-weight: 600; }
-    .quick-bets button:hover { border-color: var(--gold); color: var(--gold); background: rgba(255,215,0,0.08); }
-    .game-btn-play { width: 100%; padding: 18px; border-radius: 16px; border: none; font-weight: 800; font-size: 20px; cursor: pointer; transition: all 0.3s; background: linear-gradient(135deg, #ff1744, #cc0044); color: white; box-shadow: 0 0 40px rgba(255,23,68,0.1); margin-top: 10px; }
-    .game-btn-play:hover { transform: translateY(-3px); box-shadow: 0 0 60px rgba(255,23,68,0.2); }
-    .game-btn-play:active { transform: scale(0.96); }
-    .game-btn-play:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
-    .game-history { margin-top: 15px; max-height: 120px; overflow-y: auto; font-size: 12px; color: var(--muted); border-top: 1px solid rgba(255,255,255,0.03); padding-top: 12px; }
-    .game-history::-webkit-scrollbar { width: 3px; }
-    .game-history::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 10px; }
-    .game-history .history-item { display: flex; justify-content: space-between; padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,0.02); border-radius: 4px; }
-    .game-history .history-item.win { color: var(--green); }
-    .game-history .history-item.lose { color: #ff4444; }
-    .game-badge-top { display: inline-block; padding: 4px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; background: rgba(255,50,50,0.08); color: #ff4444; border: 1px solid rgba(255,50,50,0.08); margin-bottom: 10px; }
+    body {
+      background: #03080d;
+      min-height: 100vh;
+      font-family: 'Cairo', sans-serif;
+      color: #f3fffb;
+      overflow-x: hidden;
+    }
 
-    .dice-container { display: flex; justify-content: center; gap: 30px; padding: 20px 0; }
-    .dice { width: 80px; height: 80px; border-radius: 18px; background: rgba(255,215,0,0.06); border: 2px solid rgba(255,215,0,0.12); display: flex; align-items: center; justify-content: center; font-size: 40px; font-weight: 900; color: var(--gold); transition: all 0.5s; box-shadow: 0 0 30px rgba(255,215,0,0.03); }
-    .dice.rolling { animation: diceRoll 0.6s ease; }
-    @keyframes diceRoll { 0% { transform: rotate(0deg) scale(1); } 25% { transform: rotate(90deg) scale(1.15); } 50% { transform: rotate(180deg) scale(0.85); } 75% { transform: rotate(270deg) scale(1.1); } 100% { transform: rotate(360deg) scale(1); } }
+    .game-page {
+      position: relative;
+      min-height: 100vh;
+      padding: 30px 0 60px;
+    }
+
+    .game-page::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: -2;
+      background:
+        radial-gradient(ellipse at 30% 40%, rgba(255, 215, 0, 0.08), transparent 50%),
+        radial-gradient(ellipse at 70% 60%, rgba(255, 50, 50, 0.06), transparent 40%),
+        #03080d;
+      animation: bgPulse 6s ease-in-out infinite;
+    }
+
+    @keyframes bgPulse {
+      0%,
+      100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.7;
+      }
+    }
+
+    .particles {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      animation: floatParticle linear infinite;
+    }
+
+    .particle:nth-child(1) {
+      left: 10%;
+      animation-duration: 12s;
+      background: rgba(255, 215, 0, 0.2);
+    }
+    .particle:nth-child(2) {
+      left: 25%;
+      animation-duration: 15s;
+      animation-delay: 2s;
+      width: 6px;
+      height: 6px;
+      background: rgba(255, 50, 50, 0.15);
+    }
+    .particle:nth-child(3) {
+      left: 40%;
+      animation-duration: 10s;
+      animation-delay: 4s;
+      background: rgba(0, 255, 157, 0.15);
+    }
+    .particle:nth-child(4) {
+      left: 55%;
+      animation-duration: 18s;
+      animation-delay: 1s;
+      background: rgba(255, 215, 0, 0.15);
+    }
+    .particle:nth-child(5) {
+      left: 70%;
+      animation-duration: 14s;
+      animation-delay: 3s;
+      width: 5px;
+      height: 5px;
+      background: rgba(255, 50, 50, 0.12);
+    }
+    .particle:nth-child(6) {
+      left: 85%;
+      animation-duration: 11s;
+      animation-delay: 5s;
+      background: rgba(0, 255, 157, 0.12);
+    }
+    .particle:nth-child(7) {
+      left: 45%;
+      animation-duration: 16s;
+      animation-delay: 2s;
+      width: 7px;
+      height: 7px;
+      background: rgba(255, 215, 0, 0.1);
+    }
+    .particle:nth-child(8) {
+      left: 65%;
+      animation-duration: 13s;
+      animation-delay: 4s;
+      background: rgba(255, 50, 50, 0.1);
+    }
+
+    @keyframes floatParticle {
+      0% {
+        transform: translateY(100vh) scale(0);
+        opacity: 0;
+      }
+      10% {
+        opacity: 1;
+      }
+      90% {
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(-10vh) scale(1);
+        opacity: 0;
+      }
+    }
+
+    .game-container {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .game-card-main {
+      padding: 35px 30px 40px;
+      border-radius: 30px;
+      background: rgba(8, 24, 31, 0.92);
+      backdrop-filter: blur(20px);
+      border: 2px solid rgba(255, 215, 0, 0.08);
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5), 0 0 60px rgba(255, 215, 0, 0.04);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .game-card-main::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 30px;
+      padding: 2px;
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.12), rgba(255, 50, 50, 0.08));
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+    }
+
+    .game-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .back-btn-floating {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 50px;
+      border: 1px solid rgba(255, 215, 0, 0.12);
+      background: rgba(3, 8, 13, 0.8);
+      backdrop-filter: blur(18px);
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: all 0.3s;
+    }
+
+    .back-btn-floating:hover {
+      transform: translateX(-4px) scale(1.04);
+      border-color: #ffd700;
+      color: #ffd700;
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.1);
+    }
+
+    .balance-small {
+      padding: 8px 20px;
+      border-radius: 14px;
+      background: rgba(0, 255, 157, 0.06);
+      border: 1px solid rgba(0, 255, 157, 0.08);
+      text-align: center;
+      min-width: 100px;
+    }
+
+    .balance-small .label {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .balance-small .amount {
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffd700;
+      text-shadow: 0 0 30px rgba(255, 215, 0, 0.1);
+    }
+
+    .game-icon-big {
+      text-align: center;
+      font-size: 72px;
+      display: block;
+      margin-bottom: 5px;
+      animation: iconFloat 3s ease-in-out infinite;
+    }
+
+    @keyframes iconFloat {
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-12px);
+      }
+    }
+
+    .game-title-main {
+      text-align: center;
+      font-size: 34px;
+      font-weight: 900;
+      color: #ffd700;
+      margin-bottom: 5px;
+      text-shadow: 0 0 40px rgba(255, 215, 0, 0.1);
+    }
+
+    .game-desc-main {
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 20px;
+      line-height: 1.8;
+    }
+
+    .game-badge-top {
+      display: inline-block;
+      padding: 4px 18px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(255, 50, 50, 0.1);
+      color: #ff4444;
+      border: 1px solid rgba(255, 50, 50, 0.1);
+      margin-bottom: 12px;
+    }
+
+    .game-result {
+      padding: 18px;
+      border-radius: 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      margin: 12px 0 18px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: 700;
+      min-height: 65px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      transition: 0.3s;
+    }
+
+    .game-result.win {
+      border-color: #00ff9d;
+      color: #00ff9d;
+      background: rgba(0, 255, 157, 0.08);
+      box-shadow: 0 0 40px rgba(0, 255, 157, 0.08);
+    }
+
+    .game-result.lose {
+      border-color: #ff4444;
+      color: #ff4444;
+      background: rgba(255, 50, 50, 0.08);
+      box-shadow: 0 0 40px rgba(255, 50, 50, 0.08);
+    }
+
+    .game-bet-input {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 12px 0;
+    }
+
+    .game-bet-input label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .game-bet-input input {
+      width: 120px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 2px solid rgba(255, 215, 0, 0.08);
+      background: rgba(6, 16, 23, 0.9);
+      color: white;
+      outline: none;
+      font-size: 16px;
+      font-weight: 600;
+      transition: 0.3s;
+    }
+
+    .game-bet-input input:focus {
+      border-color: #ffd700;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.06);
+    }
+
+    .quick-bets {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .quick-bets button {
+      padding: 6px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 215, 0, 0.08);
+      background: rgba(255, 215, 0, 0.04);
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: 0.2s;
+      font-weight: 600;
+    }
+
+    .quick-bets button:hover {
+      border-color: #ffd700;
+      color: #ffd700;
+      background: rgba(255, 215, 0, 0.08);
+    }
+
+    .game-btn-play {
+      width: 100%;
+      padding: 18px;
+      border-radius: 16px;
+      border: none;
+      font-weight: 800;
+      font-size: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: linear-gradient(135deg, #ff1744, #cc0044);
+      color: white;
+      box-shadow: 0 0 40px rgba(255, 23, 68, 0.15);
+      margin-top: 10px;
+    }
+
+    .game-btn-play:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 0 60px rgba(255, 23, 68, 0.3);
+    }
+
+    .game-btn-play:active:not(:disabled) {
+      transform: scale(0.96);
+    }
+
+    .game-btn-play:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .game-history {
+      margin-top: 15px;
+      max-height: 120px;
+      overflow-y: auto;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid rgba(255, 255, 255, 0.03);
+      padding-top: 12px;
+    }
+
+    .game-history::-webkit-scrollbar {
+      width: 3px;
+    }
+
+    .game-history::-webkit-scrollbar-thumb {
+      background: #ffd700;
+      border-radius: 10px;
+    }
+
+    .game-history .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+      border-radius: 4px;
+    }
+
+    .game-history .history-item.win {
+      color: #00ff9d;
+    }
+
+    .game-history .history-item.lose {
+      color: #ff4444;
+    }
+
+    .dice-container {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      padding: 20px 0;
+    }
+
+    .dice {
+      width: 90px;
+      height: 90px;
+      border-radius: 20px;
+      background: rgba(255, 215, 0, 0.06);
+      border: 2px solid rgba(255, 215, 0, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      font-weight: 900;
+      color: #ffd700;
+      transition: all 0.5s;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.05);
+    }
+
+    .dice.rolling {
+      animation: diceRoll 0.6s ease;
+    }
+
+    @keyframes diceRoll {
+      0% {
+        transform: rotate(0deg) scale(1);
+      }
+      25% {
+        transform: rotate(90deg) scale(1.15);
+      }
+      50% {
+        transform: rotate(180deg) scale(0.85);
+      }
+      75% {
+        transform: rotate(270deg) scale(1.1);
+      }
+      100% {
+        transform: rotate(360deg) scale(1);
+      }
+    }
 
     @media (max-width: 620px) {
-      .game-card-main { padding: 25px 18px 30px; }
-      .game-title-main { font-size: 26px; }
-      .game-icon-big { font-size: 56px; }
-      .game-result { font-size: 17px; min-height: 55px; padding: 14px; }
-      .game-bet-input { flex-direction: column; align-items: stretch; }
-      .game-bet-input input { width: 100%; }
-      .quick-bets { justify-content: center; }
-      .game-btn-play { font-size: 17px; padding: 15px; }
-      .game-header { flex-direction: column; align-items: stretch; text-align: center; }
-      .game-header .back-btn { justify-content: center; }
-      .dice { width: 60px; height: 60px; font-size: 30px; }
-      .dice-container { gap: 20px; }
+      .game-card-main {
+        padding: 25px 18px 30px;
+      }
+      .game-title-main {
+        font-size: 26px;
+      }
+      .game-icon-big {
+        font-size: 56px;
+      }
+      .game-result {
+        font-size: 17px;
+        min-height: 55px;
+        padding: 14px;
+      }
+      .game-bet-input {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .game-bet-input input {
+        width: 100%;
+      }
+      .quick-bets {
+        justify-content: center;
+      }
+      .game-btn-play {
+        font-size: 17px;
+        padding: 15px;
+      }
+      .game-header {
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+      }
+      .back-btn-floating {
+        justify-content: center;
+      }
+      .dice {
+        width: 65px;
+        height: 65px;
+        font-size: 34px;
+      }
+      .dice-container {
+        gap: 20px;
+      }
     }
-    @media (max-width: 400px) { .game-title-main { font-size: 22px; } .game-icon-big { font-size: 44px; } .dice { width: 50px; height: 50px; font-size: 24px; } }
+
+    @media (max-width: 400px) {
+      .game-title-main {
+        font-size: 22px;
+      }
+      .game-icon-big {
+        font-size: 44px;
+      }
+      .dice {
+        width: 55px;
+        height: 55px;
+        font-size: 28px;
+      }
+    }
   </style>
 </head>
 
 <body>
 
-<div class="particles">
-  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
-  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
-  <div class="particle"></div><div class="particle"></div>
-</div>
-
-<header class="navbar">
-  <div class="container nav-inner">
-    <a class="brand" href="index.html"><span class="logo-mark">₮</span><span>mining<span>usdt</span></span></a>
-    <nav class="nav-links">
-      <a href="index.html" data-i18n="home">الرئيسية</a><a href="plans.html" data-i18n="plans">خطط التعدين</a>
-      <a href="deposit.html" data-i18n="deposit">الإيداع</a><a href="withdraw.html" data-i18n="withdraw">السحب</a>
-      <a href="dashboard.html" data-i18n="profits">الأرباح</a><a href="contact.html" data-i18n="contact">تواصل معنا</a>
-    </nav>
-    <div class="nav-actions">
-      <div class="lang-wrap"><button id="globeBtn" class="icon-btn">🌐</button><div id="langMenu" class="lang-menu"><button data-lang="ar">العربية</button><button data-lang="en">English</button><button data-lang="tr">Türkçe</button></div></div>
-      <a class="primary-btn" href="dashboard.html" data-i18n="dashboard">Dashboard</a>
-      <button id="mobileToggle" class="icon-btn mobile-toggle">☰</button>
-    </div>
+  <div class="particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
   </div>
-</header>
 
-<main class="game-page">
-  <div class="container game-container">
-    <div class="game-card-main">
-      <div class="game-header">
-        <a href="games.html" class="back-btn-floating">← <span data-i18n="backGames">العودة للألعاب</span></a>
-        <div class="balance-small"><div class="label">💰 <span data-i18n="balance">رصيدك</span></div><div class="amount" id="gameBalance">$0.00</div></div>
-      </div>
-      <span class="game-icon-big">🎲</span>
-      <div class="game-title-main" data-i18n="gameDiceTitle">رمية النرد</div>
-      <div style="text-align:center;"><span class="game-badge-top" data-i18n="badgeMedium">🔥 صعبة — ×4</span></div>
-      <div class="game-desc-main" data-i18n="gameDiceDesc">ارم النرد — إذا كان المجموع 10 أو 11 أو 12 تربح 4 أضعاف رهانك!</div>
-
-      <div class="dice-container">
-        <div class="dice" id="dice1">⚀</div>
-        <div class="dice" id="dice2">⚀</div>
-      </div>
-
-      <div class="game-result" id="diceResult">🎲 اضغط "ارم" لتجرب حظك!</div>
-
-      <div class="game-bet-input">
-        <label>💰 <span data-i18n="betAmount">الرهان:</span></label>
-        <input type="number" id="diceBet" value="10" min="1" step="1">
-        <div class="quick-bets">
-          <button onclick="setBet('dice', 5)">$5</button>
-          <button onclick="setBet('dice', 10)">$10</button>
-          <button onclick="setBet('dice', 25)">$25</button>
-          <button onclick="setBet('dice', 50)">$50</button>
+  <header class="navbar">
+    <div class="container nav-inner">
+      <a class="brand" href="index.html">
+        <span class="logo-mark">₮</span>
+        <span>mining<span>usdt</span></span>
+      </a>
+      <nav class="nav-links">
+        <a href="index.html" data-i18n="home">الرئيسية</a>
+        <a href="plans.html" data-i18n="plans">خطط التعدين</a>
+        <a href="deposit.html" data-i18n="deposit">الإيداع</a>
+        <a href="withdraw.html" data-i18n="withdraw">السحب</a>
+        <a href="dashboard.html" data-i18n="profits">الأرباح</a>
+        <a href="contact.html" data-i18n="contact">تواصل معنا</a>
+      </nav>
+      <div class="nav-actions">
+        <div class="lang-wrap">
+          <button id="globeBtn" class="icon-btn">🌐</button>
+          <div id="langMenu" class="lang-menu">
+            <button data-lang="ar">العربية</button>
+            <button data-lang="en">English</button>
+            <button data-lang="tr">Türkçe</button>
+          </div>
         </div>
-      </div>
-
-      <button class="game-btn-play" id="diceBtn">🎲 <span data-i18n="diceBtn">ارم النرد!</span></button>
-
-      <div class="game-history" id="diceHistory">
-        <div style="text-align:center;color:var(--muted);padding:8px;" data-i18n="noHistory">لا توجد سجلات بعد</div>
+        <a class="primary-btn" href="dashboard.html" data-i18n="dashboard">Dashboard</a>
+        <button id="mobileToggle" class="icon-btn mobile-toggle">☰</button>
       </div>
     </div>
-  </div>
-</main>
+  </header>
 
-<div id="toast" class="toast"></div>
+  <main class="game-page">
+    <div class="container game-container">
+      <div class="game-card-main">
 
-<footer class="footer"><div class="container"><div class="copyright" data-i18n="copyright">© 2026 miningusdt</div></div></footer>
+        <div class="game-header">
+          <a href="games.html" class="back-btn-floating">← <span data-i18n="backGames">العودة للألعاب</span></a>
+          <div class="balance-small">
+            <div class="label">💰 <span data-i18n="balance">رصيدك</span></div>
+            <div class="amount" id="gameBalance">$0.00</div>
+          </div>
+        </div>
 
-<script src="script.js"></script>
+        <span class="game-icon-big">🎲</span>
+        <div class="game-title-main">رمية النرد</div>
+        <div style="text-align:center;">
+          <span class="game-badge-top">🔥 صعبة — ×4</span>
+        </div>
+        <div class="game-desc-main">ارم النرد — إذا كان المجموع 10 أو 11 أو 12 تربح 4 أضعاف رهانك!</div>
 
-<script>
-  // =========================================================
-  //   GAME: DICE - FIXED (16.67% win, 4x)
-  //   الفوز: 10، 11، 12 فقط
-  //   نسبة الفوز: 6/36 = 16.67%
-  // =========================================================
+        <div class="dice-container">
+          <div class="dice" id="dice1">⚀</div>
+          <div class="dice" id="dice2">⚀</div>
+        </div>
 
-  let user = JSON.parse(localStorage.getItem('currentUser'));
+        <div class="game-result" id="diceResult">🎲 اضغط "ارم" لتجرب حظك!</div>
 
-  function updateBalance() {
-    user = JSON.parse(localStorage.getItem('currentUser'));
-    if (user) {
-      document.getElementById('gameBalance').textContent = '$' + Number(user.balance || 0).toFixed(2);
-    } else {
-      document.getElementById('gameBalance').textContent = '$0.00';
-    }
-  }
+        <div class="game-bet-input">
+          <label>💰 <span data-i18n="betAmount">الرهان:</span></label>
+          <input type="number" id="diceBet" value="10" min="1" step="1">
+          <div class="quick-bets">
+            <button onclick="setBet('dice', 5)">$5</button>
+            <button onclick="setBet('dice', 10)">$10</button>
+            <button onclick="setBet('dice', 25)">$25</button>
+            <button onclick="setBet('dice', 50)">$50</button>
+          </div>
+        </div>
 
-  function setBet(game, amount) {
-    document.getElementById('diceBet').value = amount;
-  }
+        <button class="game-btn-play" id="diceBtn">🎲 <span data-i18n="diceBtn">ارم النرد!</span></button>
 
-  function toast(message) {
-    const el = document.getElementById('toast');
-    if (!el) return;
-    el.textContent = message;
-    el.classList.add('show');
-    clearTimeout(window.toastTimer);
-    window.toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
-  }
+        <div class="game-history" id="diceHistory">
+          <div style="text-align:center;color:var(--muted);padding:8px;" data-i18n="noHistory">لا توجد سجلات بعد</div>
+        </div>
 
-  function saveUserAndUpdate(userData) {
-    const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-    db[userData.email] = userData;
-    localStorage.setItem('miningUsersDB', JSON.stringify(db));
-    localStorage.setItem('currentUser', JSON.stringify(userData));
-    updateBalance();
-  }
+      </div>
+    </div>
+  </main>
 
-  document.getElementById('diceBtn').addEventListener('click', function() {
-    const userData = JSON.parse(localStorage.getItem('currentUser'));
-    if (!userData) {
-      toast('يرجى تسجيل الدخول أولاً');
-      return;
-    }
-    const bet = parseInt(document.getElementById('diceBet').value) || 0;
-    if (bet <= 0) {
-      toast('أدخل رهان صحيح');
-      return;
-    }
-    if (Number(userData.balance || 0) < bet) {
-      toast('❌ رصيد غير كافٍ');
-      return;
-    }
+  <div id="toast" class="toast"></div>
 
-    const d1 = Math.floor(Math.random() * 6) + 1;
-    const d2 = Math.floor(Math.random() * 6) + 1;
-    const sum = d1 + d2;
-    const faces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
-    document.getElementById('dice1').textContent = faces[d1 - 1];
-    document.getElementById('dice2').textContent = faces[d2 - 1];
-    document.getElementById('dice1').classList.add('rolling');
-    document.getElementById('dice2').classList.add('rolling');
-    setTimeout(() => { document.getElementById('dice1').classList.remove('rolling'); document.getElementById('dice2').classList.remove('rolling'); }, 600);
+  <footer class="footer">
+    <div class="container">
+      <div class="copyright" data-i18n="copyright">© 2026 miningusdt</div>
+    </div>
+  </footer>
 
-    // ✅ نظام جديد: الفوز عند 10 أو 11 أو 12 فقط
-    // طرق الفوز: 10 (3 طرق) + 11 (2 طرق) + 12 (1 طريقة) = 6 طرق من 36 = 16.67%
-    const win = sum === 10 || sum === 11 || sum === 12;
-    const lose = sum >= 2 && sum <= 9;
-    const winAmount = win ? bet * 4 : 0;
+  <script>
+    // =========================================================
+    //   GAME: DICE - FULLY SERVER SYNCED
+    // =========================================================
 
-    userData.balance = Number(userData.balance || 0) - bet + (win ? winAmount : 0);
-    if (!userData.transactions) userData.transactions = [];
-    userData.transactions.unshift({
-      type: win ? '🎲 فوز نرد (×4)' : lose ? '💀 خسارة نرد' : '🔄 تعادل نرد',
-      amount: win ? winAmount : lose ? -bet : 0,
-      date: new Date().toISOString(),
-      status: 'مكتمل',
-      game: 'dice',
-      dice: [d1, d2],
-      sum: sum
-    });
-    saveUserAndUpdate(userData);
+    let currentUser = null;
+    const API_URL = window.location.origin + '/api';
 
+    // DOM Elements
+    const balanceEl = document.getElementById('gameBalance');
     const resultEl = document.getElementById('diceResult');
-    if (win) {
-      resultEl.className = 'game-result win';
-      resultEl.innerHTML = '🎉 فوز! ' + d1 + '+' + d2 + '=' + sum + ' — ربحت $' + winAmount.toFixed(2) + ' (×4) 🎉';
-    } else if (lose) {
-      resultEl.className = 'game-result lose';
-      resultEl.innerHTML = '💀 خسارة! ' + d1 + '+' + d2 + '=' + sum + ' — خسرت $' + bet.toFixed(2);
-    } else {
-      resultEl.className = 'game-result';
-      resultEl.innerHTML = '🔄 تعادل! ' + d1 + '+' + d2 + '=' + sum + ' — لم تربح ولم تخسر';
-    }
-
     const historyEl = document.getElementById('diceHistory');
-    const history = (userData.transactions || []).filter(t => t.game === 'dice').slice(0, 8);
-    if (history.length) {
-      historyEl.innerHTML = history.map(t => '<div class="history-item ' + (t.amount > 0 ? 'win' : t.amount === 0 ? '' : 'lose') + '"><span>' + t.type + '</span><span>' + (t.amount > 0 ? '+' : '') + '$' + Number(t.amount).toFixed(2) + '</span></div>').join('');
-    } else {
-      historyEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:8px;">لا توجد سجلات بعد</div>';
+    const dice1 = document.getElementById('dice1');
+    const dice2 = document.getElementById('dice2');
+    const diceBtn = document.getElementById('diceBtn');
+    const diceBet = document.getElementById('diceBet');
+
+    const FACES = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+    // =========================================================
+    //  FETCH USER FROM SERVER
+    // =========================================================
+    async function fetchCurrentUser() {
+      const localUser = JSON.parse(localStorage.getItem('currentUser'));
+      if (!localUser || !localUser.userId) {
+        currentUser = null;
+        updateBalanceDisplay();
+        return null;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/user/${encodeURIComponent(localUser.userId)}`);
+        const data = await res.json();
+        if (data.success && data.user) {
+          currentUser = data.user;
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          updateBalanceDisplay();
+          updateHistory();
+          return currentUser;
+        } else {
+          console.warn('⚠️ Server returned error, using local data');
+          currentUser = localUser;
+          updateBalanceDisplay();
+          updateHistory();
+          return currentUser;
+        }
+      } catch (e) {
+        console.warn('⚠️ Server unavailable, using local data:', e);
+        currentUser = localUser;
+        updateBalanceDisplay();
+        updateHistory();
+        return currentUser;
+      }
     }
 
-    this.disabled = true;
-    setTimeout(() => this.disabled = false, 800);
-  });
+    // =========================================================
+    //  UPDATE BALANCE ON SERVER
+    // =========================================================
+    async function updateUserBalance(amount, transactionType, transactionDetails = {}) {
+      if (!currentUser || !currentUser.userId) {
+        toast('❌ يرجى تسجيل الدخول أولاً');
+        return false;
+      }
 
-  document.getElementById('globeBtn')?.addEventListener('click', function(e) { e.stopPropagation(); document.getElementById('langMenu').classList.toggle('show'); });
-  document.querySelectorAll('#langMenu [data-lang]').forEach(btn => { btn.addEventListener('click', function() { const lang = this.dataset.lang; localStorage.setItem('siteLang', lang); document.documentElement.lang = lang; document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'; document.getElementById('langMenu').classList.remove('show'); location.reload(); }); });
-  document.addEventListener('click', function(e) { const menu = document.getElementById('langMenu'); const globe = document.getElementById('globeBtn'); if (menu && globe && !menu.contains(e.target) && !globe.contains(e.target)) { menu.classList.remove('show'); } });
-  document.getElementById('mobileToggle')?.addEventListener('click', function() { document.querySelector('.nav-links').classList.toggle('open'); });
-  updateBalance();
-</script>
+      try {
+        const res = await fetch(`${API_URL}/admin/balance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: currentUser.userId,
+            amount: Math.abs(amount),
+            type: amount >= 0 ? 'deposit' : 'withdraw',
+            adminName: 'نظام اللعبة'
+          })
+        });
+
+        const data = await res.json();
+        if (data.success && data.user) {
+          currentUser = data.user;
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          updateBalanceDisplay();
+          updateHistory();
+          return true;
+        } else {
+          console.error('❌ Failed to update balance:', data.message);
+          toast('❌ فشل تحديث الرصيد: ' + (data.message || 'خطأ غير معروف'));
+          return false;
+        }
+      } catch (e) {
+        console.error('❌ Update balance error:', e);
+        toast('❌ فشل الاتصال بالخادم');
+        return false;
+      }
+    }
+
+    // =========================================================
+    //  UI UPDATE FUNCTIONS
+    // =========================================================
+    function updateBalanceDisplay() {
+      if (currentUser) {
+        balanceEl.textContent = '$' + Number(currentUser.balance || 0).toFixed(2);
+      } else {
+        balanceEl.textContent = '$0.00';
+      }
+    }
+
+    function updateHistory() {
+      if (!currentUser) {
+        historyEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:8px;">لا توجد سجلات بعد</div>';
+        return;
+      }
+      const transactions = (currentUser.transactions || []).filter(t => t.game === 'dice').slice(0, 8);
+      if (transactions.length) {
+        historyEl.innerHTML = transactions.map(t => `
+            <div class="history-item ${t.amount > 0 ? 'win' : 'lose'}">
+              <span>${t.type}</span>
+              <span>${t.amount > 0 ? '+' : ''}$${Number(t.amount).toFixed(2)}</span>
+            </div>
+          `).join('');
+      } else {
+        historyEl.innerHTML = '<div style="text-align:center;color:var(--muted);padding:8px;">لا توجد سجلات بعد</div>';
+      }
+    }
+
+    function toast(message) {
+      const el = document.getElementById('toast');
+      if (!el) return;
+      el.textContent = message;
+      el.classList.add('show');
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+    }
+
+    function setBet(game, amount) {
+      document.getElementById('diceBet').value = amount;
+    }
+
+    // =========================================================
+    //  GAME LOGIC
+    // =========================================================
+    diceBtn.addEventListener('click', async function() {
+      // Check login
+      if (!currentUser) {
+        toast('يرجى تسجيل الدخول أولاً');
+        return;
+      }
+
+      // Get bet
+      const bet = parseInt(diceBet.value) || 0;
+      if (bet <= 0) {
+        toast('أدخل رهان صحيح');
+        return;
+      }
+
+      // Check balance from server (fresh)
+      await fetchCurrentUser();
+      if (Number(currentUser.balance || 0) < bet) {
+        toast('❌ رصيد غير كافٍ - رصيدك: $' + Number(currentUser.balance || 0).toFixed(2));
+        return;
+      }
+
+      // Disable button during game
+      this.disabled = true;
+
+      // Roll dice
+      const d1 = Math.floor(Math.random() * 6) + 1;
+      const d2 = Math.floor(Math.random() * 6) + 1;
+      const sum = d1 + d2;
+
+      // Animation
+      dice1.textContent = FACES[d1 - 1];
+      dice2.textContent = FACES[d2 - 1];
+      dice1.classList.add('rolling');
+      dice2.classList.add('rolling');
+      setTimeout(() => {
+        dice1.classList.remove('rolling');
+        dice2.classList.remove('rolling');
+      }, 600);
+
+      // Determine win (10, 11, 12 only)
+      const win = sum === 10 || sum === 11 || sum === 12;
+      const profit = win ? bet * 4 : -bet;
+
+      // Update balance via server
+      const success = await updateUserBalance(
+        profit,
+        win ? '🎲 فوز نرد (×4)' : '🎲 خسارة نرد',
+        { game: 'dice', dice: [d1, d2], sum: sum }
+      );
+
+      if (!success) {
+        this.disabled = false;
+        return;
+      }
+
+      // Show result
+      if (win) {
+        resultEl.className = 'game-result win';
+        resultEl.innerHTML = '🎉 فوز! ' + d1 + '+' + d2 + '=' + sum + ' — ربحت $' + (bet * 4).toFixed(2) + ' (×4) 🎉';
+      } else {
+        resultEl.className = 'game-result lose';
+        resultEl.innerHTML = '💀 خسارة! ' + d1 + '+' + d2 + '=' + sum + ' — خسرت $' + bet.toFixed(2);
+      }
+
+      updateHistory();
+
+      setTimeout(() => {
+        this.disabled = false;
+      }, 600);
+    });
+
+    // =========================================================
+    //  LANGUAGE MENU & MOBILE TOGGLE
+    // =========================================================
+    document.getElementById('globeBtn')?.addEventListener('click', function(e) {
+      e.stopPropagation();
+      document.getElementById('langMenu').classList.toggle('show');
+    });
+
+    document.querySelectorAll('#langMenu [data-lang]').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const lang = this.dataset.lang;
+        localStorage.setItem('siteLang', lang);
+        document.documentElement.lang = lang;
+        document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        document.getElementById('langMenu').classList.remove('show');
+        location.reload();
+      });
+    });
+
+    document.addEventListener('click', function(e) {
+      const menu = document.getElementById('langMenu');
+      const globe = document.getElementById('globeBtn');
+      if (menu && globe && !menu.contains(e.target) && !globe.contains(e.target)) {
+        menu.classList.remove('show');
+      }
+    });
+
+    document.getElementById('mobileToggle')?.addEventListener('click', function() {
+      document.querySelector('.nav-links').classList.toggle('open');
+    });
+
+    // =========================================================
+    //  INIT - Load user data
+    // =========================================================
+    fetchCurrentUser();
+
+    // Auto-refresh balance every 15 seconds
+    setInterval(fetchCurrentUser, 15000);
+  </script>
 
 </body>
 </html>
