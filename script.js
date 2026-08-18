@@ -1133,16 +1133,24 @@ function executePlanActivation(plan, user) {
     console.log("✅ User saved with plan:", savedUser.plan);
     // تحديث localStorage
     localStorage.setItem('currentUser', JSON.stringify(savedUser));
-    // تحديث الرصيد في الواجهة إذا كانت الصفحة الحالية هي dashboard
-    if (document.body.dataset.page === "dashboard") {
+    
+    // ✅ التحقق من الصفحة الحالية
+    const currentPage = window.location.pathname.split('/').pop();
+    
+    if (currentPage === 'dashboard.html' || document.body.dataset.page === "dashboard") {
+      // إذا كنت في لوحة التحكم، قم بتحديث الواجهة مباشرة
       renderDashboard();
+      updateTimerDisplay(); // تحديث التايمر فوراً
+      showCelebration(plan);
+      toast("🎉 " + t("planActivated"));
+    } else {
+      // إذا كنت في صفحة أخرى، اعرض الاحتفال ثم انتقل إلى لوحة التحكم
+      showCelebration(plan);
+      toast("🎉 " + t("planActivated"));
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 2500);
     }
-    showCelebration(plan);
-    toast("🎉 " + t("planActivated"));
-    // توجيه المستخدم إلى لوحة التحكم بعد 2.5 ثانية
-    setTimeout(() => {
-      window.location.href = "dashboard.html";
-    }, 2500);
   });
 }
 
