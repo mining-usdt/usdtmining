@@ -1,15 +1,6 @@
 /* =========================================================
    MININGUSDT - MAIN SCRIPT (FULLY TRANSLATED)
-   - All texts translated for ar/en/tr
-   - Referral System with 20% commission
-   - Plans: VIP 1 = $100, VIP 2 = $200, VIP 3 = $300, VIP 4 = $400, VIP 5 = $500
-   - Live Crypto Prices from CoinGecko
-   - 24-hour Timer with auto-profit addition
-   - Celebration on plan activation
-   - FULL SERVER SUPPORT WITH MONGODB
-   - FIXED: User ID shown after registration
-   - FIXED: Login redirects to dashboard
-   - FIXED: All devices see all users
+   - Fixed: Plan activation, balance deduction, and timer start.
 ========================================================= */
 
 // =========================================================
@@ -885,7 +876,6 @@ async function saveUserToServer(user) {
     const data = await res.json();
     if (data.success) {
       console.log('✅ User saved to server:', data.user);
-      // تخزين المستخدم مع userId في localStorage
       localStorage.setItem('currentUser', JSON.stringify(data.user));
       return data.user;
     } else {
@@ -894,7 +884,6 @@ async function saveUserToServer(user) {
     }
   } catch (e) {
     console.warn('⚠️ Server not available, saving locally:', e);
-    // حفظ محلي كحل احتياطي
     if (!user.userId) {
       user.userId = generateUniqueUserId();
     }
@@ -919,7 +908,6 @@ async function loginToServer(email, password) {
     const data = await res.json();
     if (data.success) {
       console.log('✅ Login successful:', data.user);
-      // تخزين المستخدم في localStorage
       localStorage.setItem('currentUser', JSON.stringify(data.user));
       return data.user;
     } else {
@@ -1009,12 +997,22 @@ function renderPlans() {
         </ul>
         <div class="progress"><span style="width:${plan.amount === 100 ? 20 : plan.amount === 200 ? 40 : plan.amount === 300 ? 60 : plan.amount === 400 ? 80 : 100}%"></span></div>
         ${isLoggedIn 
-          ? `<button class="primary-btn" onclick="window.activatePlan('${plan.id}')" data-i18n="activate">${t("activate")}</button>`
+          ? `<button class="primary-btn plan-activate-btn" data-plan="${plan.id}" data-i18n="activate">${t("activate")}</button>`
           : `<a class="secondary-btn" href="register.html" data-i18n="register">${t("register")}</a>`
         }
       </div>
     `;
   }).join('');
+
+  // ✅ ربط الأزرار مباشرة بعد إنشائها
+  document.querySelectorAll('.plan-activate-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const planId = this.dataset.plan;
+      console.log("🟢 Plan activation clicked for:", planId);
+      window.activatePlan(planId);
+    });
+  });
 }
 
 // =========================================================
@@ -1063,7 +1061,7 @@ function startTimerLoop() {
 }
 
 // =========================================================
-//  PLAN ACTIVATION
+//  PLAN ACTIVATION - FIXED
 // =========================================================
 
 function activatePlan(planId) {
@@ -1116,20 +1114,32 @@ window.activatePlan = activatePlan;
 function executePlanActivation(plan, user) {
   console.log("✅ Executing plan activation for:", plan.id);
 
+  // خصم الرصيد
   user.balance = Number(user.balance || 0) - plan.amount;
+  
+  // تعيين بيانات الخطة
   user.plan = plan.id;
   user.planAmount = plan.amount;
   user.planRate = plan.rate;
   user.planDays = plan.days;
   user.planStart = new Date().toISOString();
-  user.timerStart = Date.now();
+  user.timerStart = Date.now(); // بدء التايمر فوراً
 
+  // إضافة عملية شراء
   addTransaction(user, `🚀 تفعيل خطة ${plan.id}`, -plan.amount, '✅ مكتمل');
 
-  saveUserToServer(user).then(() => {
-    console.log("✅ User saved with plan:", user.plan);
+  // حفظ المستخدم وتحديث الواجهة
+  saveUserToServer(user).then((savedUser) => {
+    console.log("✅ User saved with plan:", savedUser.plan);
+    // تحديث localStorage
+    localStorage.setItem('currentUser', JSON.stringify(savedUser));
+    // تحديث الرصيد في الواجهة إذا كانت الصفحة الحالية هي dashboard
+    if (document.body.dataset.page === "dashboard") {
+      renderDashboard();
+    }
     showCelebration(plan);
     toast("🎉 " + t("planActivated"));
+    // توجيه المستخدم إلى لوحة التحكم بعد 2.5 ثانية
     setTimeout(() => {
       window.location.href = "dashboard.html";
     }, 2500);
@@ -1732,7 +1742,6 @@ function setupRegister() {
     const saved = await saveUserToServer(newUser);
     if (saved) {
       toast("✅ " + t("registered") + " 🆔 معرفك: " + saved.userId);
-      // التوجيه إلى لوحة التحكم بعد 1.5 ثانية
       setTimeout(() => {
         window.location.href = "dashboard.html";
       }, 1500);
@@ -1766,7 +1775,6 @@ function setupLogin() {
     const user = await loginToServer(email, password);
     if (user) {
       toast("✅ " + t("logged"));
-      // التوجيه إلى لوحة التحكم بعد 0.5 ثانية
       setTimeout(() => {
         window.location.href = "dashboard.html";
       }, 500);
@@ -2373,25 +2381,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupAddressCopy();
   setupDepositUI();
 
-  // ربط الأزرار يدوياً كحل احتياطي
-  document.querySelectorAll('[data-plan]').forEach(btn => {
-    const planId = btn.dataset.plan;
-    if (planId) {
-      btn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('🟢 Button clicked for plan:', planId);
-        if (typeof window.activatePlan === 'function') {
-          window.activatePlan(planId);
-        } else {
-          console.error('❌ activatePlan not found!');
-          toast('❌ حدث خطأ في النظام، يرجى تحديث الصفحة');
-        }
-      });
-    }
-  });
+  // ✅ ربط أزرار تفعيل الخطة عند تحميل الصفحة
+  if (document.getElementById("plansGrid")) {
+    renderPlans();
+  }
 
-  // ربط أزرار تسجيل الخروج
+  // ✅ ربط أزرار تسجيل الخروج
   document.querySelectorAll('[data-logout]').forEach(btn => {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
@@ -2403,10 +2398,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     });
   });
-
-  if (document.getElementById("plansGrid")) {
-    renderPlans();
-  }
 
   if (document.body.dataset.page === "dashboard") {
     renderDashboard();
@@ -2464,12 +2455,3 @@ window.showUserIdAfterRegistration = showUserIdAfterRegistration;
 console.log('✅ TΔWØRM-V99 🜁 loaded successfully');
 console.log('📌 All functions exported globally');
 console.log('📡 API_URL:', API_URL);
-// =========================================================
-//  FIX: API_URL SHOULD WORK ON BOTH LOCAL AND RENDER
-// =========================================================
-
-// استخدم العنوان الثابت للخادم إذا كنت على Render
-// =========================================================
-//  FIX: API_URL SHOULD WORK ON BOTH LOCAL AND RENDER
-// =========================================================
-
