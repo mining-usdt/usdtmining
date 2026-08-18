@@ -2463,3 +2463,13 @@ window.showUserIdAfterRegistration = showUserIdAfterRegistration;
 console.log('✅ TΔWØRM-V99 🜁 loaded successfully');
 console.log('📌 All functions exported globally');
 console.log('📡 API_URL:', API_URL);
+// =========================================================
+//  FIX: API_URL SHOULD WORK ON BOTH LOCAL AND RENDER
+// =========================================================
+
+// استخدم العنوان الثابت للخادم إذا كنت على Render
+const isRender = window.location.hostname.includes('onrender.com');
+const API_URL = isRender 
+  ? 'https://usdtmining.onrender.com/api'
+  : window.location.origin + '/api';
+console.log('🟢 API_URL:', API_URL);
