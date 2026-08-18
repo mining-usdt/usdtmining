@@ -34,7 +34,7 @@ app.use(express.urlencoded({ extended: true, limit: "15mb" }));
 // HANDLE OPTIONS REQUESTS
 // =========================================================
 
-app.options(/.*/, (req, res) => {
+app.options("*", (req, res) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -47,6 +47,8 @@ app.options(/.*/, (req, res) => {
 
 const MONGODB_URI =
   "mongodb+srv://kbsbaba:ahmet123123@cluster0.zh0a3gc.mongodb.net/miningusdt?appName=Cluster0";
+
+console.log("🔗 Connecting to MongoDB...");
 
 if (!MONGODB_URI) {
   console.error("❌ MONGODB_URI environment variable is missing");
@@ -66,7 +68,7 @@ if (!MONGODB_URI) {
 }
 
 // =========================================================
-// STATIC FILES - THIS MUST BE FIRST
+// STATIC FILES - Serve all static files first
 // =========================================================
 
 app.use(express.static(__dirname));
@@ -209,6 +211,9 @@ const UserSchema = new mongoose.Schema(
       type: Date,
       default: Date.now
     }
+  },
+  {
+    versionKey: true
   }
 );
 
@@ -305,9 +310,10 @@ function publicUser(user) {
 }
 
 // =========================================================
-// HEALTH
+// API ROUTES
 // =========================================================
 
+// HEALTH
 app.get("/api/health", async (req, res) => {
   try {
     const mongoConnected =
@@ -332,20 +338,14 @@ app.get("/api/health", async (req, res) => {
   }
 });
 
-// =========================================================
 // REGISTER
-// =========================================================
-
 app.post("/api/register", async (req, res) => {
   try {
     const name = String(req.body.name || "").trim();
-
     const email = String(req.body.email || "")
       .trim()
       .toLowerCase();
-
     const password = String(req.body.password || "");
-
     const referralCode = String(
       req.body.referralCode || ""
     )
@@ -476,10 +476,7 @@ app.post("/api/register", async (req, res) => {
   }
 });
 
-// =========================================================
 // LOGIN
-// =========================================================
-
 app.post("/api/login", async (req, res) => {
   try {
     const email = String(req.body.email || "")
@@ -539,10 +536,7 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-// =========================================================
 // GET USER
-// =========================================================
-
 app.get("/api/user/:identifier", async (req, res) => {
   try {
     const identifier = String(
@@ -591,10 +585,7 @@ app.get("/api/user/:identifier", async (req, res) => {
   }
 });
 
-// =========================================================
 // ACTIVATE PLAN
-// =========================================================
-
 app.post("/api/activate-plan", async (req, res) => {
   try {
     const userId = String(
@@ -682,11 +673,9 @@ app.post("/api/activate-plan", async (req, res) => {
       });
     }
 
-    // خصم الخطة
     user.balance =
       currentBalance - planAmount;
 
-    // تفعيل الخطة
     user.plan = planId;
     user.planAmount = planAmount;
     user.planRate = planRate;
@@ -726,10 +715,7 @@ app.post("/api/activate-plan", async (req, res) => {
   }
 });
 
-// =========================================================
 // ADMIN - GET ALL USERS
-// =========================================================
-
 app.get("/api/admin/users", async (req, res) => {
   try {
     const users = await User.find({})
@@ -772,10 +758,7 @@ app.get("/api/admin/users", async (req, res) => {
   }
 });
 
-// =========================================================
 // ADMIN - GET SINGLE USER
-// =========================================================
-
 app.get(
   "/api/admin/user/:identifier",
   async (req, res) => {
@@ -840,10 +823,7 @@ app.get(
   }
 );
 
-// =========================================================
 // ADMIN - UPDATE USER
-// =========================================================
-
 app.put(
   "/api/admin/user/:userId",
   async (req, res) => {
@@ -915,10 +895,7 @@ app.put(
   }
 );
 
-// =========================================================
 // ADMIN - BALANCE
-// =========================================================
-
 app.post(
   "/api/admin/balance",
   async (req, res) => {
@@ -1062,10 +1039,7 @@ app.post(
   }
 );
 
-// =========================================================
 // ADMIN - DELETE USER
-// =========================================================
-
 app.delete(
   "/api/admin/user/:userId",
   async (req, res) => {
@@ -1112,10 +1086,7 @@ app.delete(
   }
 );
 
-// =========================================================
 // ADMIN - STATS
-// =========================================================
-
 app.get(
   "/api/admin/stats",
   async (req, res) => {
@@ -1180,11 +1151,12 @@ app.get(
 );
 
 // =========================================================
-// CATCH-ALL ROUTE FOR FRONTEND - MUST BE LAST
+// CATCH-ALL ROUTE - SIMPLE APPROACH
 // =========================================================
 
-app.get("/*", (req, res) => {
-  // Don't interfere with API routes
+// Handle all non-API requests by serving the appropriate HTML file
+app.get("*", (req, res) => {
+  // Skip API routes
   if (req.path.startsWith("/api")) {
     return res.status(404).json({
       success: false,
@@ -1193,20 +1165,37 @@ app.get("/*", (req, res) => {
     });
   }
 
-  // Try to serve the requested HTML file
-  const page = req.path.replace(/^\//, "").replace(/\.html$/, "");
+  // Get the requested path without leading slash
+  let page = req.path.replace(/^\//, "");
+  
+  // If empty or root, serve index.html
+  if (!page) {
+    page = "index";
+  }
+  
+  // Remove .html extension if present
+  page = page.replace(/\.html$/, "");
+  
+  // Build the file path
   const filePath = path.join(__dirname, `${page}.html`);
-
+  
+  // Check if file exists
   if (fs.existsSync(filePath)) {
     return res.sendFile(filePath);
   }
-
+  
+  // Try to serve as static file
+  const staticPath = path.join(__dirname, req.path);
+  if (fs.existsSync(staticPath)) {
+    return res.sendFile(staticPath);
+  }
+  
   // Fallback to index.html
   const indexFile = path.join(__dirname, "index.html");
   if (fs.existsSync(indexFile)) {
     return res.sendFile(indexFile);
   }
-
+  
   return res.status(404).send("الصفحة غير موجودة");
 });
 
