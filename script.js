@@ -866,18 +866,16 @@ async function getUsersFromServer() {
   }
 }
 
-// تعديل الدالة لترسل البيانات إما لإنشاء حساب أو التحديث
 async function saveUserToServer(user) {
   try {
-    const endpoint = user.userId ? `${API_URL}/update` : `${API_URL}/register`;
-    const res = await fetch(endpoint, {
+    const res = await fetch(`${API_URL}/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(user)
     });
     const data = await res.json();
     if (data.success) {
-      console.log('✅ User saved/updated to server:', data.user);
+      console.log('✅ User saved to server:', data.user);
       localStorage.setItem('currentUser', JSON.stringify(data.user));
       return data.user;
     } else {
@@ -1018,66 +1016,21 @@ function renderPlans() {
 }
 
 // =========================================================
-//  TIMER SYSTEM (SERVER SYNCED)
+//  TIMER SYSTEM - REMOVED LOCAL TIMER LOGIC
 // =========================================================
 
-function updateTimerDisplay() {
-  const user = getCurrentUser();
-  const timerEl = document.getElementById('profitTimer');
-  
-  if (!timerEl) return;
-  
-  if (!user || !user.plan || !user.lastProfitDate) {
-    timerEl.textContent = '--:--:--';
-    return;
-  }
-
-  const now = Date.now();
-  const lastDate = new Date(user.lastProfitDate).getTime();
-  const elapsed = now - lastDate;
-  const cycle = 24 * 60 * 60 * 1000;
-  let remaining = cycle - elapsed;
-  
-  if (remaining <= 0) {
-    timerEl.textContent = '00:00:00';
-    // تفادي إرسال طلبات متعددة في نفس الوقت
-    if (!window.isSyncingProfit) {
-       window.isSyncingProfit = true;
-       fetch(`${API_URL}/sync-user`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: user.userId })
-       }).then(r => r.json()).then(data => {
-          if (data.success) {
-             localStorage.setItem('currentUser', JSON.stringify(data.user));
-             if (document.body.dataset.page === "dashboard") renderDashboard();
-             const dailyProfit = (data.user.planAmount * data.user.planRate) / 100;
-             toast(t('profitAdded').replace('${amount}', dailyProfit.toFixed(2)));
-          }
-       }).catch(console.error).finally(() => {
-          window.isSyncingProfit = false;
-       });
-    }
-    return;
-  }
-
-  const hours = Math.floor(remaining / (60 * 60 * 1000));
-  const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
-  const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
-
-  timerEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-}
-
-function startTimerLoop() {
-  updateTimerDisplay();
-  setTimeout(startTimerLoop, 1000);
-}
+// تمت إزالة دالتين updateTimerDisplay و startTimerLoop
+// لأن التايمر الآن يتم إدارته من السيرفر
 
 // =========================================================
-//  PLAN ACTIVATION (SERVER SIDE FIX)
+//  PLAN ACTIVATION - FIXED
 // =========================================================
 
-function activatePlan(planId) {
+// =========================================================
+//  PLAN ACTIVATION - FIXED
+// =========================================================
+
+async function activatePlan(planId) {
   console.log("🟢 activatePlan called with:", planId);
   
   const user = getCurrentUser();
@@ -1095,6 +1048,26 @@ function activatePlan(planId) {
     console.log("❌ Plan not found:", planId);
     return;
   }
+
+  // جلب أحدث بيانات المستخدم من السيرفر أولاً
+  try {
+    const res = await fetch(`${API_URL}/user/${user.userId}`);
+    const data = await res.json();
+    if (data.success) {
+      const freshUser = data.user;
+      localStorage.setItem('currentUser', JSON.stringify(freshUser));
+      // تحديث المتغير user بالبيانات الجديدة
+      user.balance = freshUser.balance;
+      user.plan = freshUser.plan;
+      user.planAmount = freshUser.planAmount;
+      user.timerStart = freshUser.timerStart;
+    }
+  } catch (e) {
+    console.warn('⚠️ Could not fetch fresh user data, using local copy');
+  }
+
+  console.log("👤 User balance from server:", user.balance);
+  console.log("💰 Plan amount:", plan.amount);
 
   if (Number(user.balance || 0) < plan.amount) {
     toast("⚠️ " + t("insufficientBalance") + " رصيدك: $" + Number(user.balance || 0).toFixed(2) + " — المطلوب: $" + plan.amount);
@@ -1121,51 +1094,44 @@ function activatePlan(planId) {
 window.activatePlan = activatePlan;
 
 async function executePlanActivation(plan, user) {
-  console.log("✅ Executing plan activation via API for:", plan.id);
-  
-  // تعطيل الأزرار مؤقتًا لمنع الدبل كليك
-  const btn = document.querySelector(`[data-plan="${plan.id}"]`);
-  if (btn) btn.disabled = true;
+  console.log("✅ Executing plan activation for:", plan.id);
 
   try {
+    // استدعاء API تفعيل الخطة من السيرفر
     const res = await fetch(`${API_URL}/activate-plan`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            userId: user.userId,
-            planId: plan.id,
-            planAmount: plan.amount,
-            planRate: plan.rate,
-            planDays: plan.days
-        })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: user.userId,
+        planId: plan.id,
+        planAmount: plan.amount,
+        planRate: plan.rate,
+        planDays: plan.days
+      })
     });
-    
+
     const data = await res.json();
-    if (btn) btn.disabled = false;
-    
+    console.log('📥 Server response:', data);
+
     if (data.success) {
-        localStorage.setItem('currentUser', JSON.stringify(data.user));
-        
-        const currentPage = window.location.pathname.split('/').pop();
-        if (currentPage === 'dashboard.html' || document.body.dataset.page === "dashboard") {
-          renderDashboard();
-          updateTimerDisplay();
-          showCelebration(plan);
-          toast("🎉 " + t("planActivated"));
-        } else {
-          showCelebration(plan);
-          toast("🎉 " + t("planActivated"));
-          setTimeout(() => {
-            window.location.href = "dashboard.html";
-          }, 2500);
-        }
+      // تحديث بيانات المستخدم من السيرفر
+      localStorage.setItem('currentUser', JSON.stringify(data.user));
+      
+      toast("🎉 " + t("planActivated"));
+      
+      // عرض الاحتفال
+      showCelebration(plan);
+      
+      // الانتقال إلى لوحة التحكم بعد 2.5 ثانية
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 2500);
     } else {
-        toast("❌ " + (data.message || "حدث خطأ أثناء التفعيل"));
+      toast("❌ " + (data.message || "حدث خطأ أثناء تفعيل الخطة"));
     }
-  } catch (err) {
-     if (btn) btn.disabled = false;
-     console.error(err);
-     toast("❌ حدث خطأ في الاتصال بالسيرفر");
+  } catch (error) {
+    console.error('❌ Error activating plan:', error);
+    toast("❌ حدث خطأ في الاتصال بالسيرفر");
   }
 }
 
@@ -1551,6 +1517,9 @@ function renderDashboard() {
   setText("dashDaily", money(daily));
   setText("dashTotal", money(user.profit));
 
+  // حساب الوقت المتبقي من السيرفر
+  updateTimerDisplay(user);
+
   // Referral
   const referralCodeEl = document.getElementById("dashReferralCode");
   if (referralCodeEl && user.referralCode) {
@@ -1603,6 +1572,77 @@ function renderDashboard() {
     `;
     table.appendChild(row);
   });
+}
+
+// =========================================================
+//  TIMER DISPLAY (Read from Server)
+// =========================================================
+
+function updateTimerDisplay(user) {
+  const timerEl = document.getElementById('profitTimer');
+  const statusEl = document.getElementById('timerStatus');
+  
+  if (!timerEl) return;
+
+  // إذا لم يكن هناك خطة نشطة
+  if (!user || !user.plan || !user.timerStart || !user.planStart) {
+    timerEl.textContent = '--:--:--';
+    if (statusEl) {
+      statusEl.textContent = '⏸ ' + t("timerInactive");
+      statusEl.className = 'timer-status inactive';
+    }
+    return;
+  }
+
+  // حساب الوقت المتبقي من بيانات السيرفر
+  const now = Date.now();
+  const elapsed = now - user.timerStart;
+  let remaining = (24 * 60 * 60 * 1000) - elapsed;
+  
+  // التحقق من انتهاء الخطة
+  const planEnd = new Date(user.planStart);
+  planEnd.setDate(planEnd.getDate() + user.planDays);
+  
+  if (now > planEnd.getTime()) {
+    timerEl.textContent = '00:00:00';
+    if (statusEl) {
+      statusEl.textContent = '✅ ' + t("planCompleted") || 'انتهت الخطة';
+      statusEl.className = 'timer-status inactive';
+    }
+    return;
+  }
+
+  if (remaining <= 0) {
+    timerEl.textContent = '00:00:00';
+    if (statusEl) {
+      statusEl.textContent = '🔄 ' + t("timerAdding");
+      statusEl.className = 'timer-status active';
+      statusEl.style.color = '#ffd700';
+    }
+    return;
+  }
+
+  const hours = Math.floor(remaining / (60 * 60 * 1000));
+  const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+  const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
+
+  timerEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+  
+  if (statusEl) {
+    statusEl.textContent = '🟢 ' + t("timerActive");
+    statusEl.className = 'timer-status active';
+    statusEl.style.color = '';
+  }
+}
+
+// دالة لتحديث التايمر بشكل دوري
+function startTimerLoop() {
+  const user = getCurrentUser();
+  if (user) {
+    updateTimerDisplay(user);
+  }
+  // تحديث كل ثانية
+  setTimeout(startTimerLoop, 1000);
 }
 
 // =========================================================
@@ -2423,24 +2463,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   });
 
   if (document.body.dataset.page === "dashboard") {
-    // مزامنة الأرباح فور دخول لوحة التحكم لضمان حساب أرباح الإغلاق
-    const user = getCurrentUser();
-    if (user && user.userId) {
-       try {
-           const res = await fetch(`${API_URL}/sync-user`, {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ userId: user.userId })
-           });
-           const data = await res.json();
-           if (data.success) {
-               localStorage.setItem('currentUser', JSON.stringify(data.user));
-           }
-       } catch(e) {
-           console.warn("⚠️ لم نتمكن من المزامنة التلقائية:", e);
-       }
-    }
-    
     renderDashboard();
     setupReferralCopy();
     setupReferralShare();
