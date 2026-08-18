@@ -14,7 +14,7 @@
    - ✅ تم إصلاح ربط أزرار الخطط
    - ✅ تم إصلاح جميع الأخطاء الحرجة
 ========================================================= */
-
+const API_BASE_URL = "https://usdtmining.onrender.com/api";
 const I18N = {
 
   ar: {
@@ -4391,7 +4391,7 @@ async function sendOnlineHeartbeat() {
 
     if (!userId) return;
 
-    await fetch("/api/online/heartbeat", {
+    await fetch("https://usdtmining.onrender.com/api/online/heartbeat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
