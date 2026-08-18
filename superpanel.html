@@ -1,12 +1,10 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>🛡️ SUPER PANEL</title>
+  <title>🛡️ SUPER PANEL V99</title>
   <link rel="stylesheet" href="style.css">
-
   <style>
     :root {
       --admin-glow: 0 0 60px rgba(0, 255, 157, 0.15);
@@ -16,6 +14,9 @@
       --admin-purple: #b388ff;
       --admin-cyan: #18ffff;
     }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #03080d; font-family: 'Cairo', sans-serif; color: #f3fffb; overflow-x: hidden; min-height: 100vh; }
 
     .cursor-glow {
       position: fixed;
@@ -29,27 +30,10 @@
       transition: width 0.3s, height 0.3s;
       mix-blend-mode: screen;
     }
+    .cursor-glow.active { width: 450px; height: 450px; background: radial-gradient(circle, rgba(0, 255, 157, 0.15), rgba(50, 184, 255, 0.05), transparent 70%); }
 
-    .cursor-glow.active {
-      width: 450px;
-      height: 450px;
-      background: radial-gradient(circle, rgba(0, 255, 157, 0.15), rgba(50, 184, 255, 0.05), transparent 70%);
-    }
-
-    .admin-login-premium,
-    .admin-panel-premium,
-    .admin-header-premium,
-    .admin-card-premium,
-    .admin-modal-overlay,
-    .admin-notification,
-    .sound-toggle {
-      position: relative;
-      z-index: 1;
-    }
-
-    .admin-modal-overlay {
-      z-index: 10000;
-    }
+    .admin-login-premium, .admin-panel-premium, .admin-header-premium, .admin-card-premium, .admin-modal-overlay, .admin-notification, .sound-toggle { position: relative; z-index: 1; }
+    .admin-modal-overlay { z-index: 10000; }
 
     .admin-login-premium {
       max-width: 450px;
@@ -64,14 +48,13 @@
       overflow: hidden;
       animation: adminPulseBorder 3s ease-in-out infinite;
     }
-
     .admin-login-premium::before {
       content: '';
       position: absolute;
       inset: -2px;
       border-radius: 30px;
       padding: 2px;
-      background: linear-gradient(135deg, var(--green), var(--admin-gold), var(--green));
+      background: linear-gradient(135deg, #00ff9d, #ffd700, #00ff9d);
       background-size: 300% 300%;
       -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
       -webkit-mask-composite: xor;
@@ -79,129 +62,26 @@
       animation: adminBorderRotate 4s linear infinite;
       pointer-events: none;
     }
+    @keyframes adminBorderRotate { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+    @keyframes adminPulseBorder { 0%, 100% { box-shadow: 0 30px 100px rgba(0,0,0,0.6), 0 0 60px rgba(0,255,157,0.1); } 50% { box-shadow: 0 30px 100px rgba(0,0,0,0.6), 0 0 100px rgba(0,255,157,0.2); } }
+    .admin-login-premium .admin-logo { font-size: 64px; margin-bottom: 10px; animation: adminFloat 3s ease-in-out infinite; }
+    @keyframes adminFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+    .admin-login-premium h1 { font-size: 38px; letter-spacing: 3px; background: linear-gradient(135deg, #00ff9d, #ffd700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 5px; }
+    .admin-login-premium .subtitle { font-size: 16px; color: #ffd700; letter-spacing: 4px; font-weight: 700; margin-bottom: 25px; }
+    .admin-login-premium .subtitle span { color: #00ff9d; }
+    .admin-login-premium .form-grid { gap: 16px; }
+    .admin-login-premium .input-group { position: relative; }
+    .admin-login-premium .input-group .input-icon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; opacity: 0.5; }
+    .admin-login-premium input { width: 100%; padding: 14px 45px 14px 16px; border-radius: 14px; border: 2px solid rgba(0,255,157,0.1); background: rgba(6,16,23,0.8); color: white; outline: none; transition: all 0.3s; font-size: 15px; }
+    .admin-login-premium input:focus { border-color: #00ff9d; box-shadow: 0 0 30px rgba(0,255,157,0.08), inset 0 0 30px rgba(0,255,157,0.03); }
+    .admin-login-premium .login-btn { width: 100%; padding: 16px; border-radius: 14px; border: none; background: linear-gradient(135deg, #00b879, #00ff9d); color: #00130d; font-size: 18px; font-weight: 800; cursor: pointer; transition: all 0.3s; box-shadow: 0 0 40px rgba(0,255,157,0.15); margin-top: 8px; }
+    .admin-login-premium .login-btn:hover { transform: translateY(-3px) scale(1.01); box-shadow: 0 0 60px rgba(0,255,157,0.3); }
+    .admin-login-premium .login-btn:active { transform: scale(0.97); }
+    .admin-login-premium .login-error { color: #ff5d6c; font-size: 13px; margin-top: 12px; min-height: 24px; }
 
-    @keyframes adminBorderRotate {
-      0%, 100% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-    }
-
-    @keyframes adminPulseBorder {
-      0%, 100% { box-shadow: 0 30px 100px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 255, 157, 0.1); }
-      50% { box-shadow: 0 30px 100px rgba(0, 0, 0, 0.6), 0 0 100px rgba(0, 255, 157, 0.2); }
-    }
-
-    .admin-login-premium .admin-logo {
-      font-size: 64px;
-      margin-bottom: 10px;
-      animation: adminFloat 3s ease-in-out infinite;
-    }
-
-    @keyframes adminFloat {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .admin-login-premium h1 {
-      font-size: 38px;
-      letter-spacing: 3px;
-      background: linear-gradient(135deg, var(--green), var(--admin-gold));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 5px;
-    }
-
-    .admin-login-premium .subtitle {
-      font-size: 16px;
-      color: var(--admin-gold);
-      letter-spacing: 4px;
-      font-weight: 700;
-      margin-bottom: 25px;
-    }
-
-    .admin-login-premium .subtitle span {
-      color: var(--green);
-    }
-
-    .admin-login-premium .form-grid {
-      gap: 16px;
-    }
-
-    .admin-login-premium .input-group {
-      position: relative;
-    }
-
-    .admin-login-premium .input-group .input-icon {
-      position: absolute;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 18px;
-      opacity: 0.5;
-    }
-
-    .admin-login-premium input {
-      width: 100%;
-      padding: 14px 45px 14px 16px;
-      border-radius: 14px;
-      border: 2px solid rgba(0, 255, 157, 0.1);
-      background: rgba(6, 16, 23, 0.8);
-      color: white;
-      outline: none;
-      transition: all 0.3s;
-      font-size: 15px;
-    }
-
-    .admin-login-premium input:focus {
-      border-color: var(--green);
-      box-shadow: 0 0 30px rgba(0, 255, 157, 0.08), inset 0 0 30px rgba(0, 255, 157, 0.03);
-    }
-
-    .admin-login-premium .login-btn {
-      width: 100%;
-      padding: 16px;
-      border-radius: 14px;
-      border: none;
-      background: linear-gradient(135deg, #00b879, #00ff9d);
-      color: #00130d;
-      font-size: 18px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: all 0.3s;
-      box-shadow: 0 0 40px rgba(0, 255, 157, 0.15);
-      margin-top: 8px;
-    }
-
-    .admin-login-premium .login-btn:hover {
-      transform: translateY(-3px) scale(1.01);
-      box-shadow: 0 0 60px rgba(0, 255, 157, 0.3);
-    }
-
-    .admin-login-premium .login-btn:active {
-      transform: scale(0.97);
-    }
-
-    .admin-login-premium .login-error {
-      color: var(--danger);
-      font-size: 13px;
-      margin-top: 12px;
-      min-height: 24px;
-    }
-
-    .admin-panel-premium {
-      display: none;
-      padding: 15px 0;
-    }
-
-    .admin-panel-premium.active {
-      display: block;
-      animation: adminFadeIn 0.6s ease;
-    }
-
-    @keyframes adminFadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
+    .admin-panel-premium { display: none; padding: 15px 0; }
+    .admin-panel-premium.active { display: block; animation: adminFadeIn 0.6s ease; }
+    @keyframes adminFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
     .admin-header-premium {
       display: flex;
@@ -218,511 +98,91 @@
       position: relative;
       overflow: hidden;
     }
-
-    .admin-header-premium::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(0, 255, 157, 0.02), transparent 50%);
-      pointer-events: none;
-    }
-
-    .admin-header-premium .admin-title {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .admin-header-premium .admin-title .shield {
-      font-size: 40px;
-      animation: adminFloat 3s ease-in-out infinite;
-    }
-
-    .admin-header-premium .admin-title h1 {
-      font-size: 32px;
-      letter-spacing: 2px;
-      background: linear-gradient(135deg, var(--green), var(--admin-gold));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin: 0;
-    }
-
-    .admin-header-premium .admin-title small {
-      display: block;
-      color: var(--admin-gold);
-      font-weight: 700;
-      letter-spacing: 3px;
-      font-size: 14px;
-      -webkit-text-fill-color: var(--admin-gold);
-    }
-
-    .admin-header-premium .admin-title small span {
-      color: var(--green);
-      -webkit-text-fill-color: var(--green);
-    }
-
-    .admin-header-premium .admin-actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      position: relative;
-      z-index: 1;
-    }
-
-    .admin-header-premium .admin-actions button {
-      padding: 10px 18px;
-      border-radius: 12px;
-      border: 1px solid rgba(0, 255, 157, 0.15);
-      background: rgba(0, 255, 157, 0.05);
-      color: var(--text);
-      cursor: pointer;
-      transition: all 0.3s;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .admin-header-premium .admin-actions button:hover {
-      transform: translateY(-2px);
-      border-color: var(--green);
-      box-shadow: 0 0 30px rgba(0, 255, 157, 0.1);
-    }
-
-    .admin-header-premium .admin-actions .logout-btn {
-      border-color: rgba(255, 93, 108, 0.2);
-      color: var(--danger);
-    }
-
-    .admin-header-premium .admin-actions .logout-btn:hover {
-      border-color: var(--danger);
-      box-shadow: 0 0 30px rgba(255, 93, 108, 0.15);
-      background: rgba(255, 93, 108, 0.05);
-    }
-
-    .admin-stats-premium {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 18px;
-      margin-bottom: 30px;
-    }
-
-    .admin-stat-premium {
-      padding: 22px;
-      border-radius: 20px;
-      background: linear-gradient(145deg, rgba(8, 24, 31, 0.95), rgba(3, 10, 15, 0.95));
-      border: 1px solid rgba(0, 255, 157, 0.06);
-      text-align: center;
-      transition: all 0.4s;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .admin-stat-premium::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(0, 255, 157, 0.03), transparent);
-      opacity: 0;
-      transition: 0.4s;
-    }
-
-    .admin-stat-premium:hover::before {
-      opacity: 1;
-    }
-
-    .admin-stat-premium:hover {
-      transform: translateY(-6px) scale(1.01);
-      border-color: rgba(0, 255, 157, 0.25);
-      box-shadow: var(--admin-glow-strong);
-    }
-
-    .admin-stat-premium .stat-icon {
-      font-size: 32px;
-      margin-bottom: 8px;
-    }
-
-    .admin-stat-premium .stat-number {
-      font-size: 34px;
-      font-weight: 800;
-      color: var(--green);
-      text-shadow: 0 0 40px rgba(0, 255, 157, 0.1);
-    }
-
-    .admin-stat-premium .stat-number.gold {
-      color: var(--admin-gold);
-      text-shadow: var(--admin-gold-glow);
-    }
-
-    .admin-stat-premium .stat-number.purple {
-      color: var(--admin-purple);
-      text-shadow: 0 0 40px rgba(179, 136, 255, 0.15);
-    }
-
-    .admin-stat-premium .stat-number.cyan {
-      color: var(--admin-cyan);
-      text-shadow: 0 0 40px rgba(24, 255, 255, 0.15);
-    }
-
-    .admin-stat-premium .stat-number.danger {
-      color: var(--danger);
-    }
-
-    .admin-stat-premium .stat-label {
-      color: var(--muted);
-      font-size: 12px;
-      margin-top: 5px;
-      letter-spacing: 1px;
-    }
-
-    .admin-grid-premium {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr;
-      gap: 22px;
-    }
-
-    .admin-card-premium {
-      padding: 28px;
-      border-radius: 22px;
-      background: linear-gradient(145deg, rgba(8, 24, 31, 0.95), rgba(3, 10, 15, 0.95));
-      border: 1px solid rgba(0, 255, 157, 0.06);
-      box-shadow: var(--admin-glow);
-      transition: all 0.3s;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .admin-card-premium:hover {
-      border-color: rgba(0, 255, 157, 0.12);
-    }
-
-    .admin-card-premium .card-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 18px;
-      margin-bottom: 20px;
-      color: var(--green);
-    }
-
-    .admin-card-premium .card-title .icon {
-      font-size: 24px;
-    }
-
-    .admin-card-premium .card-title .badge {
-      font-size: 11px;
-      background: rgba(0, 255, 157, 0.08);
-      color: var(--green);
-      padding: 2px 12px;
-      border-radius: 20px;
-      margin-right: auto;
-    }
-
-    .admin-card-premium label {
-      color: var(--muted);
-      font-size: 12px;
-      margin-bottom: 5px;
-      display: block;
-      letter-spacing: 0.5px;
-    }
-
-    .admin-card-premium input,
-    .admin-card-premium select {
-      width: 100%;
-      padding: 13px 16px;
-      border-radius: 14px;
-      border: 2px solid rgba(0, 255, 157, 0.08);
-      background: rgba(6, 16, 23, 0.8);
-      color: white;
-      outline: none;
-      transition: all 0.3s;
-      font-size: 14px;
-      margin-bottom: 12px;
-    }
-
-    .admin-card-premium input:focus,
-    .admin-card-premium select:focus {
-      border-color: var(--green);
-      box-shadow: 0 0 30px rgba(0, 255, 157, 0.06);
-    }
-
-    .admin-card-premium .search-btn {
-      width: 100%;
-      padding: 14px;
-      border-radius: 14px;
-      border: 2px solid rgba(50, 184, 255, 0.15);
-      background: linear-gradient(135deg, rgba(50, 184, 255, 0.05), rgba(50, 184, 255, 0.02));
-      color: var(--blue);
-      font-weight: 700;
-      font-size: 15px;
-      transition: all 0.3s;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .admin-card-premium .search-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 0 40px rgba(50, 184, 255, 0.12);
-      border-color: var(--blue);
-    }
-
-    .admin-card-premium .search-btn:active {
-      transform: scale(0.97);
-    }
-
-    .user-info-premium {
-      display: none;
-      margin-top: 20px;
-      padding: 20px;
-      border-radius: 18px;
-      background: rgba(0, 255, 157, 0.03);
-      border: 1px solid rgba(0, 255, 157, 0.08);
-      animation: adminFadeIn 0.4s ease;
-    }
-
-    .user-info-premium.active {
-      display: block;
-    }
-
-    .user-info-premium .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px 20px;
-    }
-
-    .user-info-premium .info-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 7px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-    }
-
-    .user-info-premium .info-row.full {
-      grid-column: 1 / -1;
-    }
-
-    .user-info-premium .info-label {
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .user-info-premium .info-value {
-      color: var(--text);
-      font-weight: 600;
-      font-size: 13px;
-      font-family: monospace;
-    }
-
-    .user-info-premium .info-value.green {
-      color: var(--green);
-    }
-    .user-info-premium .info-value.gold {
-      color: var(--admin-gold);
-    }
-    .user-info-premium .info-value.purple {
-      color: var(--admin-purple);
-    }
-    .user-info-premium .info-value.cyan {
-      color: var(--admin-cyan);
-    }
-    .user-info-premium .info-value.danger {
-      color: var(--danger);
-    }
-
-    .action-grid-premium {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 18px;
-      display: none;
-    }
-
-    .action-grid-premium.active {
-      display: grid;
-    }
-
-    .action-btn-premium {
-      padding: 14px;
-      border-radius: 14px;
-      border: none;
-      font-weight: 700;
-      font-size: 13px;
-      transition: all 0.3s;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .action-btn-premium:hover {
-      transform: translateY(-3px) scale(1.02);
-    }
-
-    .action-btn-premium:active {
-      transform: scale(0.95);
-    }
-
-    .action-btn-premium.deposit {
-      background: linear-gradient(135deg, #00b879, #00ff9d);
-      color: #00130d;
-      box-shadow: 0 0 30px rgba(0, 255, 157, 0.15);
-    }
-
-    .action-btn-premium.deposit:hover {
-      box-shadow: 0 0 50px rgba(0, 255, 157, 0.3);
-    }
-
-    .action-btn-premium.withdraw {
-      background: linear-gradient(135deg, #ff5d6c, #ff3366);
-      color: white;
-      box-shadow: 0 0 30px rgba(255, 93, 108, 0.15);
-    }
-
-    .action-btn-premium.withdraw:hover {
-      box-shadow: 0 0 50px rgba(255, 93, 108, 0.3);
-    }
-
-    .action-btn-premium.info {
-      background: linear-gradient(135deg, #32b8ff, #0088cc);
-      color: white;
-      box-shadow: 0 0 30px rgba(50, 184, 255, 0.15);
-    }
-
-    .action-btn-premium.info:hover {
-      box-shadow: 0 0 50px rgba(50, 184, 255, 0.3);
-    }
-
-    .action-btn-premium.delete {
-      background: linear-gradient(135deg, #ff1744, #cc0044);
-      color: white;
-      box-shadow: 0 0 30px rgba(255, 23, 68, 0.15);
-    }
-
-    .action-btn-premium.delete:hover {
-      box-shadow: 0 0 50px rgba(255, 23, 68, 0.3);
-    }
-
-    .action-btn-premium.reset {
-      background: linear-gradient(135deg, #ffd700, #ffab00);
-      color: #332200;
-      box-shadow: 0 0 30px rgba(255, 215, 0, 0.15);
-    }
-
-    .action-btn-premium.reset:hover {
-      box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
-    }
-
-    .action-btn-premium.timer-reset {
-      background: linear-gradient(135deg, #ff6b35, #ff4500);
-      color: white;
-      box-shadow: 0 0 30px rgba(255, 69, 0, 0.15);
-    }
-
-    .action-btn-premium.timer-reset:hover {
-      box-shadow: 0 0 50px rgba(255, 69, 0, 0.3);
-    }
-
-    .action-btn-premium.full {
-      grid-column: 1 / -1;
-    }
-
-    .user-list-premium {
-      max-height: 450px;
-      overflow-y: auto;
-      margin-top: 5px;
-    }
-
-    .user-list-premium::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    .user-list-premium::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.02);
-      border-radius: 10px;
-    }
-
-    .user-list-premium::-webkit-scrollbar-thumb {
-      background: var(--green);
-      border-radius: 10px;
-    }
-
-    .user-item-premium {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      border-radius: 14px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-      transition: all 0.3s;
-      cursor: pointer;
-    }
-
-    .user-item-premium:hover {
-      background: rgba(0, 255, 157, 0.04);
-      transform: translateX(-4px);
-    }
-
-    .user-item-premium .user-id {
-      color: var(--green);
-      font-family: monospace;
-      font-size: 13px;
-    }
-
-    .user-item-premium .user-name {
-      color: var(--text);
-      font-weight: 500;
-    }
-
-    .user-item-premium .user-balance {
-      color: var(--admin-gold);
-      font-weight: 700;
-      font-size: 14px;
-    }
-
-    .amount-input-premium {
-      margin-top: 15px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .amount-input-premium input {
-      flex: 1;
-      min-width: 120px;
-      margin-bottom: 0;
-    }
-
-    .amount-input-premium .quick-btns {
-      display: flex;
-      gap: 6px;
-    }
-
-    .amount-input-premium .quick-btns button {
-      padding: 8px 14px;
-      border-radius: 10px;
-      border: 1px solid rgba(0, 255, 157, 0.1);
-      background: rgba(0, 255, 157, 0.04);
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .amount-input-premium .quick-btns button:hover {
-      border-color: var(--green);
-      color: var(--green);
-      background: rgba(0, 255, 157, 0.08);
-    }
+    .admin-header-premium::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,255,157,0.02), transparent 50%); pointer-events: none; }
+    .admin-header-premium .admin-title { display: flex; align-items: center; gap: 15px; position: relative; z-index: 1; }
+    .admin-header-premium .admin-title .shield { font-size: 40px; animation: adminFloat 3s ease-in-out infinite; }
+    .admin-header-premium .admin-title h1 { font-size: 32px; letter-spacing: 2px; background: linear-gradient(135deg, #00ff9d, #ffd700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0; }
+    .admin-header-premium .admin-title small { display: block; color: #ffd700; font-weight: 700; letter-spacing: 3px; font-size: 14px; -webkit-text-fill-color: #ffd700; }
+    .admin-header-premium .admin-title small span { color: #00ff9d; -webkit-text-fill-color: #00ff9d; }
+    .admin-header-premium .admin-actions { display: flex; gap: 10px; flex-wrap: wrap; position: relative; z-index: 1; }
+    .admin-header-premium .admin-actions button { padding: 10px 18px; border-radius: 12px; border: 1px solid rgba(0,255,157,0.15); background: rgba(0,255,157,0.05); color: #f3fffb; cursor: pointer; transition: all 0.3s; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .admin-header-premium .admin-actions button:hover { transform: translateY(-2px); border-color: #00ff9d; box-shadow: 0 0 30px rgba(0,255,157,0.1); }
+    .admin-header-premium .admin-actions .logout-btn { border-color: rgba(255,93,108,0.2); color: #ff5d6c; }
+    .admin-header-premium .admin-actions .logout-btn:hover { border-color: #ff5d6c; box-shadow: 0 0 30px rgba(255,93,108,0.15); background: rgba(255,93,108,0.05); }
+
+    .admin-stats-premium { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin-bottom: 30px; }
+    .admin-stat-premium { padding: 22px; border-radius: 20px; background: linear-gradient(145deg, rgba(8,24,31,0.95), rgba(3,10,15,0.95)); border: 1px solid rgba(0,255,157,0.06); text-align: center; transition: all 0.4s; cursor: pointer; position: relative; overflow: hidden; }
+    .admin-stat-premium::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(0,255,157,0.03), transparent); opacity: 0; transition: 0.4s; }
+    .admin-stat-premium:hover::before { opacity: 1; }
+    .admin-stat-premium:hover { transform: translateY(-6px) scale(1.01); border-color: rgba(0,255,157,0.25); box-shadow: var(--admin-glow-strong); }
+    .admin-stat-premium .stat-icon { font-size: 32px; margin-bottom: 8px; }
+    .admin-stat-premium .stat-number { font-size: 34px; font-weight: 800; color: #00ff9d; text-shadow: 0 0 40px rgba(0,255,157,0.1); }
+    .admin-stat-premium .stat-number.gold { color: #ffd700; text-shadow: var(--admin-gold-glow); }
+    .admin-stat-premium .stat-number.purple { color: #b388ff; text-shadow: 0 0 40px rgba(179,136,255,0.15); }
+    .admin-stat-premium .stat-number.cyan { color: #18ffff; text-shadow: 0 0 40px rgba(24,255,255,0.15); }
+    .admin-stat-premium .stat-number.danger { color: #ff5d6c; }
+    .admin-stat-premium .stat-label { color: #77949a; font-size: 12px; margin-top: 5px; letter-spacing: 1px; }
+
+    .admin-grid-premium { display: grid; grid-template-columns: 1.5fr 1fr; gap: 22px; }
+    .admin-card-premium { padding: 28px; border-radius: 22px; background: linear-gradient(145deg, rgba(8,24,31,0.95), rgba(3,10,15,0.95)); border: 1px solid rgba(0,255,157,0.06); box-shadow: var(--admin-glow); transition: all 0.3s; position: relative; overflow: hidden; }
+    .admin-card-premium:hover { border-color: rgba(0,255,157,0.12); }
+    .admin-card-premium .card-title { display: flex; align-items: center; gap: 12px; font-size: 18px; margin-bottom: 20px; color: #00ff9d; }
+    .admin-card-premium .card-title .icon { font-size: 24px; }
+    .admin-card-premium .card-title .badge { font-size: 11px; background: rgba(0,255,157,0.08); color: #00ff9d; padding: 2px 12px; border-radius: 20px; margin-right: auto; }
+    .admin-card-premium label { color: #77949a; font-size: 12px; margin-bottom: 5px; display: block; letter-spacing: 0.5px; }
+    .admin-card-premium input, .admin-card-premium select { width: 100%; padding: 13px 16px; border-radius: 14px; border: 2px solid rgba(0,255,157,0.08); background: rgba(6,16,23,0.8); color: white; outline: none; transition: all 0.3s; font-size: 14px; margin-bottom: 12px; }
+    .admin-card-premium input:focus, .admin-card-premium select:focus { border-color: #00ff9d; box-shadow: 0 0 30px rgba(0,255,157,0.06); }
+    .admin-card-premium .search-btn { width: 100%; padding: 14px; border-radius: 14px; border: 2px solid rgba(50,184,255,0.15); background: linear-gradient(135deg, rgba(50,184,255,0.05), rgba(50,184,255,0.02)); color: #32b8ff; font-weight: 700; font-size: 15px; transition: all 0.3s; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .admin-card-premium .search-btn:hover { transform: translateY(-3px); box-shadow: 0 0 40px rgba(50,184,255,0.12); border-color: #32b8ff; }
+    .admin-card-premium .search-btn:active { transform: scale(0.97); }
+
+    .user-info-premium { display: none; margin-top: 20px; padding: 20px; border-radius: 18px; background: rgba(0,255,157,0.03); border: 1px solid rgba(0,255,157,0.08); animation: adminFadeIn 0.4s ease; }
+    .user-info-premium.active { display: block; }
+    .user-info-premium .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 20px; }
+    .user-info-premium .info-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+    .user-info-premium .info-row.full { grid-column: 1 / -1; }
+    .user-info-premium .info-label { color: #77949a; font-size: 12px; }
+    .user-info-premium .info-value { color: #f3fffb; font-weight: 600; font-size: 13px; font-family: monospace; }
+    .user-info-premium .info-value.green { color: #00ff9d; }
+    .user-info-premium .info-value.gold { color: #ffd700; }
+    .user-info-premium .info-value.purple { color: #b388ff; }
+    .user-info-premium .info-value.cyan { color: #18ffff; }
+    .user-info-premium .info-value.danger { color: #ff5d6c; }
+
+    .action-grid-premium { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; display: none; }
+    .action-grid-premium.active { display: grid; }
+    .action-btn-premium { padding: 14px; border-radius: 14px; border: none; font-weight: 700; font-size: 13px; transition: all 0.3s; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .action-btn-premium:hover { transform: translateY(-3px) scale(1.02); }
+    .action-btn-premium:active { transform: scale(0.95); }
+    .action-btn-premium.deposit { background: linear-gradient(135deg, #00b879, #00ff9d); color: #00130d; box-shadow: 0 0 30px rgba(0,255,157,0.15); }
+    .action-btn-premium.deposit:hover { box-shadow: 0 0 50px rgba(0,255,157,0.3); }
+    .action-btn-premium.withdraw { background: linear-gradient(135deg, #ff5d6c, #ff3366); color: white; box-shadow: 0 0 30px rgba(255,93,108,0.15); }
+    .action-btn-premium.withdraw:hover { box-shadow: 0 0 50px rgba(255,93,108,0.3); }
+    .action-btn-premium.info { background: linear-gradient(135deg, #32b8ff, #0088cc); color: white; box-shadow: 0 0 30px rgba(50,184,255,0.15); }
+    .action-btn-premium.info:hover { box-shadow: 0 0 50px rgba(50,184,255,0.3); }
+    .action-btn-premium.delete { background: linear-gradient(135deg, #ff1744, #cc0044); color: white; box-shadow: 0 0 30px rgba(255,23,68,0.15); }
+    .action-btn-premium.delete:hover { box-shadow: 0 0 50px rgba(255,23,68,0.3); }
+    .action-btn-premium.reset { background: linear-gradient(135deg, #ffd700, #ffab00); color: #332200; box-shadow: 0 0 30px rgba(255,215,0,0.15); }
+    .action-btn-premium.reset:hover { box-shadow: 0 0 50px rgba(255,215,0,0.3); }
+    .action-btn-premium.timer-reset { background: linear-gradient(135deg, #ff6b35, #ff4500); color: white; box-shadow: 0 0 30px rgba(255,69,0,0.15); }
+    .action-btn-premium.timer-reset:hover { box-shadow: 0 0 50px rgba(255,69,0,0.3); }
+    .action-btn-premium.full { grid-column: 1 / -1; }
+
+    .user-list-premium { max-height: 450px; overflow-y: auto; margin-top: 5px; }
+    .user-list-premium::-webkit-scrollbar { width: 4px; }
+    .user-list-premium::-webkit-scrollbar-track { background: rgba(255,255,255,0.02); border-radius: 10px; }
+    .user-list-premium::-webkit-scrollbar-thumb { background: #00ff9d; border-radius: 10px; }
+    .user-item-premium { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-radius: 14px; border-bottom: 1px solid rgba(255,255,255,0.03); transition: all 0.3s; cursor: pointer; }
+    .user-item-premium:hover { background: rgba(0,255,157,0.04); transform: translateX(-4px); }
+    .user-item-premium .user-id { color: #00ff9d; font-family: monospace; font-size: 13px; }
+    .user-item-premium .user-name { color: #f3fffb; font-weight: 500; }
+    .user-item-premium .user-balance { color: #ffd700; font-weight: 700; font-size: 14px; }
+
+    .amount-input-premium { margin-top: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .amount-input-premium input { flex: 1; min-width: 120px; margin-bottom: 0; }
+    .amount-input-premium .quick-btns { display: flex; gap: 6px; }
+    .amount-input-premium .quick-btns button { padding: 8px 14px; border-radius: 10px; border: 1px solid rgba(0,255,157,0.1); background: rgba(0,255,157,0.04); color: #77949a; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .amount-input-premium .quick-btns button:hover { border-color: #00ff9d; color: #00ff9d; background: rgba(0,255,157,0.08); }
 
     .admin-notification {
       position: fixed;
@@ -732,9 +192,9 @@
       z-index: 9999;
       padding: 16px 30px;
       border-radius: 16px;
-      background: linear-gradient(145deg, rgba(8, 24, 31, 0.98), rgba(3, 10, 15, 0.98));
-      border: 1px solid rgba(0, 255, 157, 0.15);
-      box-shadow: 0 20px 80px rgba(0, 0, 0, 0.5), var(--admin-glow);
+      background: linear-gradient(145deg, rgba(8,24,31,0.98), rgba(3,10,15,0.98));
+      border: 1px solid rgba(0,255,157,0.15);
+      box-shadow: 0 20px 80px rgba(0,0,0,0.5), var(--admin-glow);
       color: white;
       font-weight: 600;
       font-size: 14px;
@@ -743,224 +203,67 @@
       gap: 12px;
       animation: adminNotifIn 0.5s ease;
     }
-
-    .admin-notification.show {
-      display: flex;
-    }
-
-    @keyframes adminNotifIn {
-      from { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(0.95); }
-      to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-    }
+    .admin-notification.show { display: flex; }
+    @keyframes adminNotifIn { from { opacity: 0; transform: translateX(-50%) translateY(-30px) scale(0.95); } to { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); } }
 
     .admin-modal-overlay {
       position: fixed;
       inset: 0;
       z-index: 10000;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0,0,0,0.7);
       backdrop-filter: blur(8px);
       display: none;
       align-items: center;
       justify-content: center;
       animation: modalOverlayIn 0.3s ease;
     }
-
-    .admin-modal-overlay.active {
-      display: flex;
-    }
-
-    @keyframes modalOverlayIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
+    .admin-modal-overlay.active { display: flex; }
+    @keyframes modalOverlayIn { from { opacity: 0; } to { opacity: 1; } }
 
     .admin-modal {
       max-width: 500px;
       width: 92%;
       padding: 35px 30px;
       border-radius: 28px;
-      background: linear-gradient(145deg, rgba(8, 24, 31, 0.98), rgba(3, 10, 15, 0.98));
-      border: 1px solid rgba(0, 255, 157, 0.12);
-      box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6), var(--admin-glow-strong);
+      background: linear-gradient(145deg, rgba(8,24,31,0.98), rgba(3,10,15,0.98));
+      border: 1px solid rgba(0,255,157,0.12);
+      box-shadow: 0 40px 120px rgba(0,0,0,0.6), var(--admin-glow-strong);
       animation: modalIn 0.4s ease;
       text-align: center;
     }
-
-    @keyframes modalIn {
-      from { opacity: 0; transform: scale(0.9) translateY(20px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
-
-    .admin-modal .modal-icon {
-      font-size: 56px;
-      margin-bottom: 12px;
-    }
-
-    .admin-modal .modal-title {
-      font-size: 22px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      color: var(--text);
-    }
-
-    .admin-modal .modal-title.danger {
-      color: var(--danger);
-    }
-    .admin-modal .modal-title.success {
-      color: var(--green);
-    }
-    .admin-modal .modal-title.warning {
-      color: var(--admin-gold);
-    }
-    .admin-modal .modal-title.info {
-      color: var(--blue);
-    }
-
-    .admin-modal .modal-message {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.8;
-      margin-bottom: 22px;
-    }
-
-    .admin-modal .modal-message strong {
-      color: var(--text);
-    }
-
-    .admin-modal .modal-details {
-      padding: 14px;
-      border-radius: 14px;
-      background: rgba(0, 255, 157, 0.04);
-      border: 1px solid rgba(0, 255, 157, 0.06);
-      margin-bottom: 22px;
-      text-align: right;
-      font-size: 13px;
-      color: var(--muted);
-    }
-
-    .admin-modal .modal-details .detail-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 4px 0;
-    }
-
-    .admin-modal .modal-details .detail-row .label {
-      color: var(--muted);
-    }
-    .admin-modal .modal-details .detail-row .value {
-      color: var(--text);
-      font-weight: 600;
-    }
-
-    .admin-modal .modal-actions {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .admin-modal .modal-actions button {
-      padding: 12px 28px;
-      border-radius: 14px;
-      border: none;
-      font-weight: 700;
-      font-size: 14px;
-      cursor: pointer;
-      transition: all 0.3s;
-      min-width: 100px;
-    }
-
-    .admin-modal .modal-actions button:hover {
-      transform: translateY(-2px);
-    }
-
-    .admin-modal .modal-actions .btn-confirm {
-      background: linear-gradient(135deg, #00b879, #00ff9d);
-      color: #00130d;
-      box-shadow: 0 0 30px rgba(0, 255, 157, 0.15);
-    }
-
-    .admin-modal .modal-actions .btn-confirm:hover {
-      box-shadow: 0 0 50px rgba(0, 255, 157, 0.3);
-    }
-
-    .admin-modal .modal-actions .btn-confirm.danger {
-      background: linear-gradient(135deg, #ff1744, #cc0044);
-      color: white;
-      box-shadow: 0 0 30px rgba(255, 23, 68, 0.15);
-    }
-
-    .admin-modal .modal-actions .btn-confirm.danger:hover {
-      box-shadow: 0 0 50px rgba(255, 23, 68, 0.3);
-    }
-
-    .admin-modal .modal-actions .btn-cancel {
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--muted);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .admin-modal .modal-actions .btn-cancel:hover {
-      background: rgba(255, 255, 255, 0.08);
-      color: var(--text);
-    }
-
-    .admin-modal .transactions-list {
-      max-height: 300px;
-      overflow-y: auto;
-      text-align: right;
-      margin: 10px 0 18px;
-      padding: 5px;
-    }
-
-    .admin-modal .transactions-list::-webkit-scrollbar {
-      width: 4px;
-    }
-
-    .admin-modal .transactions-list::-webkit-scrollbar-thumb {
-      background: var(--green);
-      border-radius: 10px;
-    }
-
-    .admin-modal .transactions-list .tx-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 12px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-      border-radius: 8px;
-      font-size: 12px;
-      transition: 0.2s;
-    }
-
-    .admin-modal .transactions-list .tx-item:hover {
-      background: rgba(0, 255, 157, 0.03);
-    }
-
-    .admin-modal .transactions-list .tx-type {
-      color: var(--text);
-    }
-
-    .admin-modal .transactions-list .tx-amount {
-      font-weight: 700;
-    }
-
-    .admin-modal .transactions-list .tx-amount.positive {
-      color: var(--green);
-    }
-    .admin-modal .transactions-list .tx-amount.negative {
-      color: var(--danger);
-    }
-
-    .admin-modal .transactions-list .tx-date {
-      color: var(--muted);
-      font-size: 10px;
-    }
-
-    .admin-modal .transactions-list .empty-tx {
-      text-align: center;
-      color: var(--muted);
-      padding: 30px 0;
-    }
+    @keyframes modalIn { from { opacity: 0; transform: scale(0.9) translateY(20px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+    .admin-modal .modal-icon { font-size: 56px; margin-bottom: 12px; }
+    .admin-modal .modal-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; color: #f3fffb; }
+    .admin-modal .modal-title.danger { color: #ff5d6c; }
+    .admin-modal .modal-title.success { color: #00ff9d; }
+    .admin-modal .modal-title.warning { color: #ffd700; }
+    .admin-modal .modal-title.info { color: #32b8ff; }
+    .admin-modal .modal-message { color: #77949a; font-size: 14px; line-height: 1.8; margin-bottom: 22px; }
+    .admin-modal .modal-message strong { color: #f3fffb; }
+    .admin-modal .modal-details { padding: 14px; border-radius: 14px; background: rgba(0,255,157,0.04); border: 1px solid rgba(0,255,157,0.06); margin-bottom: 22px; text-align: right; font-size: 13px; color: #77949a; }
+    .admin-modal .modal-details .detail-row { display: flex; justify-content: space-between; padding: 4px 0; }
+    .admin-modal .modal-details .detail-row .label { color: #77949a; }
+    .admin-modal .modal-details .detail-row .value { color: #f3fffb; font-weight: 600; }
+    .admin-modal .modal-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .admin-modal .modal-actions button { padding: 12px 28px; border-radius: 14px; border: none; font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.3s; min-width: 100px; }
+    .admin-modal .modal-actions button:hover { transform: translateY(-2px); }
+    .admin-modal .modal-actions .btn-confirm { background: linear-gradient(135deg, #00b879, #00ff9d); color: #00130d; box-shadow: 0 0 30px rgba(0,255,157,0.15); }
+    .admin-modal .modal-actions .btn-confirm:hover { box-shadow: 0 0 50px rgba(0,255,157,0.3); }
+    .admin-modal .modal-actions .btn-confirm.danger { background: linear-gradient(135deg, #ff1744, #cc0044); color: white; box-shadow: 0 0 30px rgba(255,23,68,0.15); }
+    .admin-modal .modal-actions .btn-confirm.danger:hover { box-shadow: 0 0 50px rgba(255,23,68,0.3); }
+    .admin-modal .modal-actions .btn-cancel { background: rgba(255,255,255,0.05); color: #77949a; border: 1px solid rgba(255,255,255,0.08); }
+    .admin-modal .modal-actions .btn-cancel:hover { background: rgba(255,255,255,0.08); color: #f3fffb; }
+    .admin-modal .transactions-list { max-height: 300px; overflow-y: auto; text-align: right; margin: 10px 0 18px; padding: 5px; }
+    .admin-modal .transactions-list::-webkit-scrollbar { width: 4px; }
+    .admin-modal .transactions-list::-webkit-scrollbar-thumb { background: #00ff9d; border-radius: 10px; }
+    .admin-modal .transactions-list .tx-item { display: flex; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,0.03); border-radius: 8px; font-size: 12px; transition: 0.2s; }
+    .admin-modal .transactions-list .tx-item:hover { background: rgba(0,255,157,0.03); }
+    .admin-modal .transactions-list .tx-type { color: #f3fffb; }
+    .admin-modal .transactions-list .tx-amount { font-weight: 700; }
+    .admin-modal .transactions-list .tx-amount.positive { color: #00ff9d; }
+    .admin-modal .transactions-list .tx-amount.negative { color: #ff5d6c; }
+    .admin-modal .transactions-list .tx-date { color: #77949a; font-size: 10px; }
+    .admin-modal .transactions-list .empty-tx { text-align: center; color: #77949a; padding: 30px 0; }
 
     .sound-toggle {
       position: fixed;
@@ -970,10 +273,10 @@
       width: 50px;
       height: 50px;
       border-radius: 50%;
-      border: 1px solid rgba(0, 255, 157, 0.15);
-      background: rgba(3, 8, 13, 0.85);
+      border: 1px solid rgba(0,255,157,0.15);
+      background: rgba(3,8,13,0.85);
       backdrop-filter: blur(12px);
-      color: var(--green);
+      color: #00ff9d;
       font-size: 22px;
       cursor: pointer;
       transition: all 0.3s;
@@ -981,25 +284,16 @@
       place-items: center;
       box-shadow: var(--admin-glow);
     }
+    .sound-toggle:hover { transform: scale(1.1); border-color: #00ff9d; box-shadow: var(--admin-glow-strong); }
 
-    .sound-toggle:hover {
-      transform: scale(1.1);
-      border-color: var(--green);
-      box-shadow: var(--admin-glow-strong);
-    }
+    .timer-display-admin { font-family: 'Courier New', monospace; color: #ffd700; font-weight: 700; letter-spacing: 1px; }
 
-    .timer-display-admin {
-      font-family: 'Courier New', monospace;
-      color: var(--admin-gold);
-      font-weight: 700;
-      letter-spacing: 1px;
-    }
+    .glow-pulse { animation: glowPulse 2s ease-in-out infinite; }
+    @keyframes glowPulse { 0%, 100% { box-shadow: 0 0 20px rgba(0,255,157,0.05); } 50% { box-shadow: 0 0 40px rgba(0,255,157,0.15); } }
+    .glow-pulse-gold { animation: glowPulseGold 2s ease-in-out infinite; }
+    @keyframes glowPulseGold { 0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.05); } 50% { box-shadow: 0 0 40px rgba(255,215,0,0.15); } }
 
-    @media (max-width: 1050px) {
-      .admin-stats-premium { grid-template-columns: repeat(2, 1fr); }
-      .admin-grid-premium { grid-template-columns: 1fr; }
-    }
-
+    @media (max-width: 1050px) { .admin-stats-premium { grid-template-columns: repeat(2, 1fr); } .admin-grid-premium { grid-template-columns: 1fr; } }
     @media (max-width: 650px) {
       .admin-stats-premium { grid-template-columns: 1fr; }
       .action-grid-premium { grid-template-columns: 1fr 1fr; }
@@ -1016,1036 +310,655 @@
       .admin-header-premium .admin-title h1 { font-size: 24px; }
       .admin-header-premium .admin-title small { font-size: 12px; }
     }
-
     @media (max-width: 450px) {
       .action-grid-premium { grid-template-columns: 1fr; }
       .admin-login-premium .login-hint { font-size: 10px; }
       .admin-modal { padding: 25px 18px; }
       .admin-modal .modal-actions button { min-width: 80px; padding: 10px 18px; font-size: 12px; }
     }
-
-    .glow-pulse {
-      animation: glowPulse 2s ease-in-out infinite;
-    }
-
-    @keyframes glowPulse {
-      0%, 100% { box-shadow: 0 0 20px rgba(0, 255, 157, 0.05); }
-      50% { box-shadow: 0 0 40px rgba(0, 255, 157, 0.15); }
-    }
-
-    .glow-pulse-gold {
-      animation: glowPulseGold 2s ease-in-out infinite;
-    }
-
-    @keyframes glowPulseGold {
-      0%, 100% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.05); }
-      50% { box-shadow: 0 0 40px rgba(255, 215, 0, 0.15); }
-    }
   </style>
-
 </head>
-
 <body>
 
-  <div class="cursor-glow" id="cursorGlow"></div>
+<div class="cursor-glow" id="cursorGlow"></div>
 
-  <div class="admin-notification" id="adminNotif">
-    <span id="notifIcon">✅</span>
-    <span id="notifMessage">تم</span>
+<div class="admin-notification" id="adminNotif">
+  <span id="notifIcon">✅</span>
+  <span id="notifMessage">تم</span>
+</div>
+
+<button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="تشغيل/إيقاف الصوت">🔊</button>
+
+<div class="container" id="adminLogin">
+  <div class="admin-login-premium">
+    <div class="admin-logo">🛡️</div>
+    <h1>SUPER PANEL V99</h1>
+    <p class="subtitle">KBS <span>✕</span> RT7</p>
+    <form id="adminLoginForm" class="form-grid">
+      <div class="input-group"><span class="input-icon">👤</span><input type="text" id="adminUsername" placeholder="اسم المستخدم" required></div>
+      <div class="input-group"><span class="input-icon">🔑</span><input type="password" id="adminPassword" placeholder="كلمة المرور" required></div>
+      <button class="login-btn" type="submit">🚀 دخول إلى النظام</button>
+      <div class="login-error" id="adminLoginError"></div>
+    </form>
   </div>
+</div>
 
-  <button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="تشغيل/إيقاف الصوت">
-    🔊
-  </button>
-
-  <div class="container" id="adminLogin">
-    <div class="admin-login-premium">
-      <div class="admin-logo">🛡️</div>
-      <h1>SUPER PANEL</h1>
-      <p class="subtitle">KBS <span>✕</span> RT7</p>
-
-      <form id="adminLoginForm" class="form-grid">
-        <div class="input-group">
-          <span class="input-icon">👤</span>
-          <input type="text" id="adminUsername" placeholder="اسم المستخدم" required>
-        </div>
-        <div class="input-group">
-          <span class="input-icon">🔑</span>
-          <input type="password" id="adminPassword" placeholder="كلمة المرور" required>
-        </div>
-        <button class="login-btn" type="submit">🚀 دخول إلى النظام</button>
-        <div class="login-error" id="adminLoginError"></div>
-      </form>
+<div class="container admin-panel-premium" id="adminPanel">
+  <div class="admin-header-premium glow-pulse">
+    <div class="admin-title">
+      <span class="shield">🛡️</span>
+      <div><h1>SUPER PANEL V99</h1><small>KBS <span>✕</span> RT7</small></div>
     </div>
-  </div>
-
-  <div class="container admin-panel-premium" id="adminPanel">
-
-    <div class="admin-header-premium glow-pulse">
-      <div class="admin-title">
-        <span class="shield">🛡️</span>
-        <div>
-          <h1>SUPER PANEL</h1>
-          <small>KBS <span>✕</span> RT7</small>
-        </div>
-      </div>
-      <div class="admin-actions">
-        <button onclick="refreshData()"><span>🔄</span> تحديث</button>
-        <button onclick="exportData()"><span>📥</span> تصدير</button>
-        <button class="logout-btn" onclick="adminLogout()"><span>🚪</span> خروج</button>
-      </div>
-    </div>
-
-    <div class="admin-stats-premium">
-      <div class="admin-stat-premium" onclick="playSound('click')">
-        <div class="stat-icon">👥</div>
-        <div class="stat-number cyan" id="adminTotalUsers">0</div>
-        <div class="stat-label">إجمالي المستخدمين</div>
-      </div>
-      <div class="admin-stat-premium" onclick="playSound('click')">
-        <div class="stat-icon">💰</div>
-        <div class="stat-number gold" id="adminTotalBalance">$0</div>
-        <div class="stat-label">إجمالي الأرصدة</div>
-      </div>
-      <div class="admin-stat-premium" onclick="playSound('click')">
-        <div class="stat-icon">📈</div>
-        <div class="stat-number purple" id="adminTotalProfit">$0</div>
-        <div class="stat-label">إجمالي الأرباح</div>
-      </div>
-      <div class="admin-stat-premium" onclick="playSound('click')">
-        <div class="stat-icon">📊</div>
-        <div class="stat-number" id="adminActivePlans">0</div>
-        <div class="stat-label">الخطط النشطة</div>
-      </div>
-    </div>
-
-    <div class="admin-grid-premium">
-
-      <div class="admin-card-premium glow-pulse">
-        <div class="card-title">
-          <span class="icon">🔍</span>
-          التحكم بالحساب
-          <span class="badge">VIP</span>
-        </div>
-
-        <label>🆔 معرف المستخدم (ID) أو البريد</label>
-        <input type="text" id="adminUserId" placeholder="مثال: 497198458 أو email@example.com" dir="ltr">
-
-        <button class="search-btn" onclick="searchUser()">
-          <span>🔎</span> بحث عن المستخدم
-        </button>
-
-        <div class="user-info-premium" id="userInfoDisplay">
-          <div class="info-grid">
-            <div class="info-row">
-              <span class="info-label">🆔 المعرف</span>
-              <span class="info-value green" id="infoUserId">—</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">👤 الاسم</span>
-              <span class="info-value" id="infoName">—</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">📧 البريد</span>
-              <span class="info-value" id="infoEmail">—</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">💰 الرصيد</span>
-              <span class="info-value gold" id="infoBalance">$0.00</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">📈 الأرباح</span>
-              <span class="info-value gold" id="infoProfit">$0.00</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">📋 الخطة</span>
-              <span class="info-value cyan" id="infoPlan">—</span>
-            </div>
-            <div class="info-row full">
-              <span class="info-label">📅 تاريخ الإنشاء</span>
-              <span class="info-value" id="infoCreated">—</span>
-            </div>
-            <div class="info-row full">
-              <span class="info-label">⏱️ التايمر المتبقي</span>
-              <span class="info-value timer-display-admin" id="infoTimer">—</span>
-            </div>
-            <div class="info-row full">
-              <span class="info-label">📊 العمليات</span>
-              <span class="info-value purple" id="infoTransactions">0</span>
-            </div>
-            <div class="info-row full">
-              <span class="info-label">🔗 كود الدعوة</span>
-              <span class="info-value green" id="infoReferral">—</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="action-grid-premium" id="adminActions">
-          <button class="action-btn-premium deposit" onclick="adminDeposit()">💰 إيداع</button>
-          <button class="action-btn-premium withdraw" onclick="adminWithdraw()">💸 سحب</button>
-          <button class="action-btn-premium info" onclick="viewTransactions()">📜 العمليات</button>
-          <button class="action-btn-premium reset" onclick="resetUserPlan()">🔄 إلغاء الخطة</button>
-          <button class="action-btn-premium timer-reset full" onclick="resetTimerTo25Seconds()">⏱️ تصفير التايمر (25 ثانية)</button>
-          <button class="action-btn-premium delete full" onclick="adminDeleteUser()">🗑️ حذف الحساب</button>
-        </div>
-
-        <div class="amount-input-premium">
-          <input type="number" id="adminAmount" placeholder="المبلغ" step="0.01" min="0" dir="ltr">
-          <div class="quick-btns">
-            <button onclick="setAmount(10)">$10</button>
-            <button onclick="setAmount(50)">$50</button>
-            <button onclick="setAmount(100)">$100</button>
-            <button onclick="setAmount(500)">$500</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="admin-card-premium glow-pulse-gold">
-        <div class="card-title">
-          <span class="icon">📋</span>
-          المستخدمين
-          <span class="badge" id="userCountLabel">0</span>
-        </div>
-
-        <div class="user-list-premium" id="userList">
-          <div style="text-align:center;color:var(--muted);padding:40px 0;">
-            ⏳ جاري التحميل...
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-  </div>
-
-  <div class="admin-modal-overlay" id="modalOverlay">
-    <div class="admin-modal" id="modalContent">
-      <div class="modal-icon" id="modalIcon">⚠️</div>
-      <div class="modal-title" id="modalTitle">تأكيد</div>
-      <div class="modal-message" id="modalMessage">هل أنت متأكد؟</div>
-      <div class="modal-details" id="modalDetails" style="display:none;"></div>
-      <div class="modal-actions" id="modalActions">
-        <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
-        <button class="btn-confirm" id="modalConfirmBtn" onclick="confirmModal()">تأكيد</button>
-      </div>
+    <div class="admin-actions">
+      <button onclick="refreshData()"><span>🔄</span> تحديث</button>
+      <button onclick="exportData()"><span>📥</span> تصدير</button>
+      <button class="logout-btn" onclick="adminLogout()"><span>🚪</span> خروج</button>
     </div>
   </div>
 
-  <script>
-    // =========================================================
-    //   SUPER PANEL - FULL SCRIPT WITH SERVER SUPPORT
-    // =========================================================
+  <div class="admin-stats-premium">
+    <div class="admin-stat-premium"><div class="stat-icon">👥</div><div class="stat-number cyan" id="adminTotalUsers">0</div><div class="stat-label">إجمالي المستخدمين</div></div>
+    <div class="admin-stat-premium"><div class="stat-icon">💰</div><div class="stat-number gold" id="adminTotalBalance">$0</div><div class="stat-label">إجمالي الأرصدة</div></div>
+    <div class="admin-stat-premium"><div class="stat-icon">📈</div><div class="stat-number purple" id="adminTotalProfit">$0</div><div class="stat-label">إجمالي الأرباح</div></div>
+    <div class="admin-stat-premium"><div class="stat-icon">📊</div><div class="stat-number" id="adminActivePlans">0</div><div class="stat-label">الخطط النشطة</div></div>
+  </div>
 
-    const API_URL = window.location.origin + '/api';
-    let soundEnabled = true;
-    let currentAdmin = null;
-    let selectedUser = null;
-    let allUsers = {};
+  <div class="admin-grid-premium">
+    <div class="admin-card-premium glow-pulse">
+      <div class="card-title"><span class="icon">🔍</span>التحكم بالحساب<span class="badge">VIP</span></div>
+      <label>🆔 معرف المستخدم (ID) أو البريد</label>
+      <input type="text" id="adminUserId" placeholder="مثال: 497198458 أو email@example.com" dir="ltr">
+      <button class="search-btn" onclick="searchUser()"><span>🔎</span> بحث عن المستخدم</button>
 
-    // =========================================================
-    //   SOUND SYSTEM
-    // =========================================================
-
-    function toggleSound() {
-      soundEnabled = !soundEnabled;
-      document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
-      showNotification(soundEnabled ? '🔊 تم تشغيل الصوت' : '🔇 تم إيقاف الصوت');
-    }
-
-    function playSound(type) {
-      if (!soundEnabled) return;
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        const frequencies = { click: 800, success: 1200, error: 300, coin: 600, notification: 900 };
-        const freq = frequencies[type] || 600;
-        osc.frequency.value = freq;
-        gain.gain.value = 0.08;
-        if (type === 'success') {
-          osc.frequency.setValueAtTime(800, ctx.currentTime);
-          osc.frequency.setValueAtTime(1200, ctx.currentTime + 0.08);
-          osc.frequency.setValueAtTime(1600, ctx.currentTime + 0.16);
-        } else if (type === 'error') {
-          osc.frequency.setValueAtTime(400, ctx.currentTime);
-          osc.frequency.setValueAtTime(300, ctx.currentTime + 0.1);
-        } else if (type === 'coin') {
-          osc.frequency.setValueAtTime(600, ctx.currentTime);
-          osc.frequency.setValueAtTime(900, ctx.currentTime + 0.05);
-          osc.frequency.setValueAtTime(1200, ctx.currentTime + 0.1);
-        } else if (type === 'notification') {
-          osc.frequency.setValueAtTime(500, ctx.currentTime);
-          osc.frequency.setValueAtTime(700, ctx.currentTime + 0.06);
-          osc.frequency.setValueAtTime(900, ctx.currentTime + 0.12);
-        }
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.2);
-      } catch (e) {}
-    }
-
-    // =========================================================
-    //   NOTIFICATION SYSTEM
-    // =========================================================
-
-    function showNotification(message, icon = '✅') {
-      const notif = document.getElementById('adminNotif');
-      document.getElementById('notifIcon').textContent = icon;
-      document.getElementById('notifMessage').textContent = message;
-      notif.classList.add('show');
-      playSound('notification');
-      clearTimeout(window.notifTimer);
-      window.notifTimer = setTimeout(() => {
-        notif.classList.remove('show');
-      }, 3000);
-    }
-
-    // =========================================================
-    //   CURSOR GLOW
-    // =========================================================
-
-    const cursorGlow = document.getElementById('cursorGlow');
-    document.addEventListener('mousemove', function(e) {
-      cursorGlow.style.left = e.clientX + 'px';
-      cursorGlow.style.top = e.clientY + 'px';
-    });
-    document.addEventListener('mousedown', function() {
-      cursorGlow.classList.add('active');
-    });
-    document.addEventListener('mouseup', function() {
-      cursorGlow.classList.remove('active');
-    });
-    document.addEventListener('mouseleave', function() {
-      cursorGlow.style.opacity = '0';
-    });
-    document.addEventListener('mouseenter', function() {
-      cursorGlow.style.opacity = '1';
-    });
-
-    // =========================================================
-    //   MODAL SYSTEM
-    // =========================================================
-
-    let modalResolve = null;
-    let modalReject = null;
-
-    function showModal(options) {
-      return new Promise((resolve, reject) => {
-        const overlay = document.getElementById('modalOverlay');
-        const icon = document.getElementById('modalIcon');
-        const title = document.getElementById('modalTitle');
-        const message = document.getElementById('modalMessage');
-        const details = document.getElementById('modalDetails');
-        const actions = document.getElementById('modalActions');
-        const confirmBtn = document.getElementById('modalConfirmBtn');
-        details.style.display = 'none';
-        details.innerHTML = '';
-        confirmBtn.className = 'btn-confirm';
-        icon.textContent = options.icon || '⚠️';
-        title.textContent = options.title || 'تأكيد';
-        title.className = 'modal-title ' + (options.type || 'warning');
-        message.innerHTML = options.message || 'هل أنت متأكد؟';
-        if (options.details) {
-          details.style.display = 'block';
-          let html = '';
-          for (const [key, value] of Object.entries(options.details)) {
-            html += `<div class="detail-row">
-              <span class="label">${key}</span>
-              <span class="value">${value}</span>
-            </div>`;
-          }
-          details.innerHTML = html;
-        }
-        confirmBtn.textContent = options.confirmText || 'تأكيد';
-        if (options.type === 'danger') {
-          confirmBtn.classList.add('danger');
-        } else if (options.type === 'success') {
-          confirmBtn.style.background = 'linear-gradient(135deg, #00b879, #00ff9d)';
-          confirmBtn.style.color = '#00130d';
-        }
-        const cancelBtn = actions.querySelector('.btn-cancel');
-        cancelBtn.textContent = options.cancelText || 'إلغاء';
-        overlay.classList.add('active');
-        playSound('click');
-        modalResolve = resolve;
-        modalReject = reject;
-        confirmBtn.onclick = function() {
-          closeModal();
-          if (resolve) resolve(true);
-        };
-        cancelBtn.onclick = function() {
-          closeModal();
-          if (reject) reject(false);
-        };
-        overlay.onclick = function(e) {
-          if (e.target === overlay) {
-            closeModal();
-            if (reject) reject(false);
-          }
-        };
-      });
-    }
-
-    function closeModal() {
-      document.getElementById('modalOverlay').classList.remove('active');
-    }
-
-    function confirmModal() {}
-
-    // =========================================================
-    //   ADMIN LOGIN
-    // =========================================================
-
-    const ADMIN_CREDENTIALS = [
-      { username: 'kbs', password: 'kbs' },
-      { username: 'rt7', password: 'rt7' }
-    ];
-
-    document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const username = document.getElementById('adminUsername').value.trim();
-      const password = document.getElementById('adminPassword').value.trim();
-      const errorEl = document.getElementById('adminLoginError');
-      const valid = ADMIN_CREDENTIALS.some(cred =>
-        cred.username === username && cred.password === password
-      );
-      if (valid) {
-        currentAdmin = username;
-        errorEl.textContent = '';
-        errorEl.style.color = '';
-        document.getElementById('adminLogin').style.display = 'none';
-        document.getElementById('adminPanel').classList.add('active');
-        loadUsers();
-        playSound('success');
-        showNotification(`✅ مرحباً ${username}، تم تسجيل الدخول بنجاح`);
-      } else {
-        errorEl.textContent = '❌ اسم المستخدم أو كلمة المرور غير صحيحة';
-        errorEl.style.color = 'var(--danger)';
-        playSound('error');
-        showNotification('❌ فشل تسجيل الدخول', '❌');
-      }
-    });
-
-    function adminLogout() {
-      currentAdmin = null;
-      selectedUser = null;
-      document.getElementById('adminLogin').style.display = 'block';
-      document.getElementById('adminPanel').classList.remove('active');
-      document.getElementById('adminLoginForm').reset();
-      document.getElementById('adminLoginError').textContent = '';
-      playSound('click');
-      showNotification('👋 تم تسجيل الخروج', '👋');
-    }
-
-    // =========================================================
-    //   LOAD USERS FROM SERVER
-    // =========================================================
-
-    async function loadUsers() {
-      try {
-        const res = await fetch(`${API_URL}/admin/users`);
-        const data = await res.json();
-        if (data.success) {
-          allUsers = {};
-          data.users.forEach(user => {
-            allUsers[user.email] = user;
-          });
-          updateStats();
-          renderUserList();
-          showNotification('✅ تم تحديث البيانات', '🔄');
-        } else {
-          showNotification('❌ فشل تحميل المستخدمين', '❌');
-        }
-      } catch (e) {
-        console.warn('⚠️ Server error, using localStorage:', e);
-        // Fallback to localStorage
-        try {
-          allUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
-          updateStats();
-          renderUserList();
-        } catch (e2) {
-          allUsers = {};
-          updateStats();
-          renderUserList();
-        }
-        showNotification('⚠️ تم التحميل من التخزين المحلي', '⚠️');
-      }
-    }
-
-    function refreshData() {
-      loadUsers();
-      playSound('click');
-    }
-
-    function exportData() {
-      const data = JSON.stringify(allUsers, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `users_backup_${new Date().toISOString().slice(0,10)}.json`;
-      a.click();
-      URL.revokeObjectURL(url);
-      playSound('success');
-      showNotification('📥 تم تصدير البيانات بنجاح', '📥');
-    }
-
-    // =========================================================
-    //   UPDATE STATS
-    // =========================================================
-
-    function updateStats() {
-      const users = Object.values(allUsers);
-      const totalUsers = users.length;
-      let totalBalance = 0;
-      let totalProfit = 0;
-      let activePlans = 0;
-      users.forEach(user => {
-        totalBalance += Number(user.balance || 0);
-        totalProfit += Number(user.profit || 0);
-        if (user.plan && user.plan !== '—' && user.plan !== null) activePlans++;
-      });
-      document.getElementById('adminTotalUsers').textContent = totalUsers;
-      document.getElementById('adminTotalBalance').textContent = '$' + totalBalance.toFixed(2);
-      document.getElementById('adminTotalProfit').textContent = '$' + totalProfit.toFixed(2);
-      document.getElementById('adminActivePlans').textContent = activePlans;
-      document.getElementById('userCountLabel').textContent = totalUsers + ' مستخدم';
-    }
-
-    // =========================================================
-    //   RENDER USER LIST
-    // =========================================================
-
-    function renderUserList() {
-      const container = document.getElementById('userList');
-      const users = Object.values(allUsers);
-      if (!users.length) {
-        container.innerHTML = `
-          <div style="text-align:center;color:var(--muted);padding:40px 0;">
-            📭 لا يوجد مستخدمين بعد
-          </div>
-        `;
-        return;
-      }
-      const sorted = users.sort((a, b) => {
-        const aDate = a.createdAt || a.planStart || '';
-        const bDate = b.createdAt || b.planStart || '';
-        return bDate.localeCompare(aDate);
-      });
-      container.innerHTML = sorted.map(user => `
-        <div class="user-item-premium" onclick="selectUserById('${user.userId || user.email}')">
-          <span class="user-id">🆔 ${user.userId || '—'}</span>
-          <span class="user-name">${user.name || 'غير معروف'}</span>
-          <span class="user-balance">$${Number(user.balance || 0).toFixed(2)}</span>
+      <div class="user-info-premium" id="userInfoDisplay">
+        <div class="info-grid">
+          <div class="info-row"><span class="info-label">🆔 المعرف</span><span class="info-value green" id="infoUserId">—</span></div>
+          <div class="info-row"><span class="info-label">👤 الاسم</span><span class="info-value" id="infoName">—</span></div>
+          <div class="info-row"><span class="info-label">📧 البريد</span><span class="info-value" id="infoEmail">—</span></div>
+          <div class="info-row"><span class="info-label">💰 الرصيد</span><span class="info-value gold" id="infoBalance">$0.00</span></div>
+          <div class="info-row"><span class="info-label">📈 الأرباح</span><span class="info-value gold" id="infoProfit">$0.00</span></div>
+          <div class="info-row"><span class="info-label">📋 الخطة</span><span class="info-value cyan" id="infoPlan">—</span></div>
+          <div class="info-row full"><span class="info-label">📅 تاريخ الإنشاء</span><span class="info-value" id="infoCreated">—</span></div>
+          <div class="info-row full"><span class="info-label">⏱️ التايمر المتبقي</span><span class="info-value timer-display-admin" id="infoTimer">—</span></div>
+          <div class="info-row full"><span class="info-label">📊 العمليات</span><span class="info-value purple" id="infoTransactions">0</span></div>
+          <div class="info-row full"><span class="info-label">🔗 كود الدعوة</span><span class="info-value green" id="infoReferral">—</span></div>
         </div>
-      `).join('');
-    }
+      </div>
 
-    // =========================================================
-    //   SEARCH USER
-    // =========================================================
+      <div class="action-grid-premium" id="adminActions">
+        <button class="action-btn-premium deposit" onclick="adminDeposit()">💰 إيداع</button>
+        <button class="action-btn-premium withdraw" onclick="adminWithdraw()">💸 سحب</button>
+        <button class="action-btn-premium info" onclick="viewTransactions()">📜 العمليات</button>
+        <button class="action-btn-premium reset" onclick="resetUserPlan()">🔄 إلغاء الخطة</button>
+        <button class="action-btn-premium timer-reset full" onclick="resetTimerTo25Seconds()">⏱️ تصفير التايمر (25 ثانية)</button>
+        <button class="action-btn-premium delete full" onclick="adminDeleteUser()">🗑️ حذف الحساب</button>
+      </div>
 
-    function searchUser() {
-      const userId = document.getElementById('adminUserId').value.trim();
-      if (!userId) {
-        showNotification('⚠️ أدخل معرف المستخدم أولاً', '⚠️');
-        return;
-      }
-      selectUserById(userId);
-      playSound('click');
-    }
+      <div class="amount-input-premium">
+        <input type="number" id="adminAmount" placeholder="المبلغ" step="0.01" min="0" dir="ltr">
+        <div class="quick-btns">
+          <button onclick="setAmount(10)">$10</button>
+          <button onclick="setAmount(50)">$50</button>
+          <button onclick="setAmount(100)">$100</button>
+          <button onclick="setAmount(500)">$500</button>
+        </div>
+      </div>
+    </div>
 
-    function setAmount(val) {
-      document.getElementById('adminAmount').value = val;
-      playSound('click');
-    }
+    <div class="admin-card-premium glow-pulse-gold">
+      <div class="card-title"><span class="icon">📋</span>المستخدمين<span class="badge" id="userCountLabel">0</span></div>
+      <div class="user-list-premium" id="userList"><div style="text-align:center;color:var(--muted);padding:40px 0;">⏳ جاري التحميل...</div></div>
+    </div>
+  </div>
+</div>
 
-    // =========================================================
-    //   SELECT USER BY ID (SERVER + FALLBACK)
-    // =========================================================
+<div class="admin-modal-overlay" id="modalOverlay">
+  <div class="admin-modal" id="modalContent">
+    <div class="modal-icon" id="modalIcon">⚠️</div>
+    <div class="modal-title" id="modalTitle">تأكيد</div>
+    <div class="modal-message" id="modalMessage">هل أنت متأكد؟</div>
+    <div class="modal-details" id="modalDetails" style="display:none;"></div>
+    <div class="modal-actions" id="modalActions">
+      <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
+      <button class="btn-confirm" id="modalConfirmBtn" onclick="confirmModal()">تأكيد</button>
+    </div>
+  </div>
+</div>
 
-    async function selectUserById(id) {
-      try {
-        // Try server first
-        const res = await fetch(`${API_URL}/admin/user/${encodeURIComponent(id)}`);
-        const data = await res.json();
-        if (data.success) {
-          const user = data.user;
-          selectedUser = user;
-          displayUserInfo(user);
-          document.getElementById('adminActions').classList.add('active');
-          document.getElementById('adminUserId').value = user.userId || '';
-          playSound('success');
-          showNotification(`✅ تم العثور على ${user.name}`, '✅');
-          return;
-        }
-      } catch (e) {
-        console.warn('⚠️ Server search failed, trying localStorage:', e);
-      }
+<script>
+// =========================================================
+//   SUPER PANEL V99 - FULLY UPGRADED
+// =========================================================
 
-      // Fallback to localStorage
-      const users = Object.values(allUsers);
-      const user = users.find(u => u.userId === id || u.email === id || u.referralCode === id);
-      if (user) {
-        selectedUser = user;
-        displayUserInfo(user);
-        document.getElementById('adminActions').classList.add('active');
-        document.getElementById('adminUserId').value = user.userId || '';
-        playSound('success');
-        showNotification(`✅ تم العثور على ${user.name} (محلياً)`, '✅');
-      } else {
-        showNotification('❌ لم يتم العثور على المستخدم', '❌');
-        document.getElementById('userInfoDisplay').classList.remove('active');
-        document.getElementById('adminActions').classList.remove('active');
-        selectedUser = null;
-        playSound('error');
-      }
-    }
+const API_URL = window.location.origin + '/api';
+console.log('🛡️ SUPER PANEL V99 | API_URL:', API_URL);
 
-    // =========================================================
-    //   DISPLAY USER INFO
-    // =========================================================
+let soundEnabled = true;
+let currentAdmin = null;
+let selectedUser = null;
+let allUsers = {};
 
-    function displayUserInfo(user) {
-      document.getElementById('infoUserId').textContent = user.userId || '—';
-      document.getElementById('infoName').textContent = user.name || '—';
-      document.getElementById('infoEmail').textContent = user.email || '—';
-      document.getElementById('infoBalance').textContent = '$' + Number(user.balance || 0).toFixed(2);
-      document.getElementById('infoProfit').textContent = '$' + Number(user.profit || 0).toFixed(2);
-      document.getElementById('infoPlan').textContent = user.plan || '—';
-      document.getElementById('infoCreated').textContent = user.createdAt ?
-        new Date(user.createdAt).toLocaleString() :
-        user.planStart ? new Date(user.planStart).toLocaleString() : '—';
-      document.getElementById('infoTransactions').textContent = (user.transactions || []).length;
-      document.getElementById('infoReferral').textContent = user.referralCode || '—';
+// =========================================================
+//   SOUND SYSTEM
+// =========================================================
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  document.getElementById('soundToggle').textContent = soundEnabled ? '🔊' : '🔇';
+  showNotification(soundEnabled ? '🔊 تم تشغيل الصوت' : '🔇 تم إيقاف الصوت');
+}
+function playSound(type) {
+  if (!soundEnabled) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    const frequencies = { click: 800, success: 1200, error: 300, coin: 600, notification: 900 };
+    const freq = frequencies[type] || 600;
+    osc.frequency.value = freq;
+    gain.gain.value = 0.08;
+    if (type === 'success') { osc.frequency.setValueAtTime(800, ctx.currentTime); osc.frequency.setValueAtTime(1200, ctx.currentTime + 0.08); osc.frequency.setValueAtTime(1600, ctx.currentTime + 0.16); }
+    else if (type === 'error') { osc.frequency.setValueAtTime(400, ctx.currentTime); osc.frequency.setValueAtTime(300, ctx.currentTime + 0.1); }
+    else if (type === 'coin') { osc.frequency.setValueAtTime(600, ctx.currentTime); osc.frequency.setValueAtTime(900, ctx.currentTime + 0.05); osc.frequency.setValueAtTime(1200, ctx.currentTime + 0.1); }
+    else if (type === 'notification') { osc.frequency.setValueAtTime(500, ctx.currentTime); osc.frequency.setValueAtTime(700, ctx.currentTime + 0.06); osc.frequency.setValueAtTime(900, ctx.currentTime + 0.12); }
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.2);
+  } catch (e) {}
+}
 
-      // Timer
-      let timerDisplay = '—';
-      if (user.plan && user.plan !== '—' && user.timerStart) {
-        const now = Date.now();
-        const elapsed = now - user.timerStart;
-        let remaining = (24 * 60 * 60 * 1000) - elapsed;
-        if (remaining <= 0) {
-          timerDisplay = '⏳ جاهز للإضافة';
-        } else {
-          const hours = Math.floor(remaining / (60 * 60 * 1000));
-          const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
-          const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
-          timerDisplay = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-        }
-      } else if (user.plan && user.plan !== '—') {
-        timerDisplay = '⏳ لم يبدأ';
-      }
-      document.getElementById('infoTimer').textContent = timerDisplay;
+// =========================================================
+//   NOTIFICATION
+// =========================================================
+function showNotification(message, icon = '✅') {
+  const notif = document.getElementById('adminNotif');
+  document.getElementById('notifIcon').textContent = icon;
+  document.getElementById('notifMessage').textContent = message;
+  notif.classList.add('show');
+  playSound('notification');
+  clearTimeout(window.notifTimer);
+  window.notifTimer = setTimeout(() => notif.classList.remove('show'), 3000);
+}
 
-      document.getElementById('userInfoDisplay').classList.add('active');
-    }
+// =========================================================
+//   CURSOR
+// =========================================================
+const cursorGlow = document.getElementById('cursorGlow');
+document.addEventListener('mousemove', function(e) { cursorGlow.style.left = e.clientX + 'px'; cursorGlow.style.top = e.clientY + 'px'; });
+document.addEventListener('mousedown', function() { cursorGlow.classList.add('active'); });
+document.addEventListener('mouseup', function() { cursorGlow.classList.remove('active'); });
+document.addEventListener('mouseleave', function() { cursorGlow.style.opacity = '0'; });
+document.addEventListener('mouseenter', function() { cursorGlow.style.opacity = '1'; });
 
-    // =========================================================
-    //   GET AMOUNT
-    // =========================================================
-
-    function getAmount() {
-      const val = parseFloat(document.getElementById('adminAmount').value);
-      if (isNaN(val) || val <= 0) {
-        showNotification('⚠️ أدخل مبلغ صحيح أكبر من 0', '⚠️');
-        playSound('error');
-        return null;
-      }
-      return val;
-    }
-
-    // =========================================================
-    //   ADMIN DEPOSIT - FIXED (SERVER)
-    // =========================================================
-
-    async function adminDeposit() {
-      if (!selectedUser) {
-        showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
-        return;
-      }
-      const amount = getAmount();
-      if (!amount) return;
-
-      try {
-        await showModal({
-          icon: '💰',
-          title: 'تأكيد الإيداع',
-          type: 'success',
-          message: `هل أنت متأكد من إيداع <strong>$${amount.toFixed(2)}</strong> في حساب <strong>${selectedUser.name}</strong>؟`,
-          details: {
-            '👤 المستخدم': selectedUser.name,
-            '🆔 المعرف': selectedUser.userId || '—',
-            '💰 المبلغ': '$' + amount.toFixed(2),
-            '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
-          },
-          confirmText: '💰 تأكيد الإيداع',
-          cancelText: 'إلغاء'
-        });
-
-        // Send to server
-        const res = await fetch(`${API_URL}/admin/balance`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: selectedUser.userId,
-            amount: amount,
-            type: 'deposit',
-            adminName: currentAdmin || 'أدمن'
-          })
-        });
-        const data = await res.json();
-        if (data.success) {
-          selectedUser = data.user;
-          displayUserInfo(selectedUser);
-          await loadUsers();
-          playSound('coin');
-          showNotification(`✅ تم إيداع $${amount.toFixed(2)} بنجاح`, '💰');
-          document.getElementById('adminAmount').value = '';
-        } else {
-          showNotification('❌ ' + data.message, '❌');
-          playSound('error');
-        }
-      } catch (e) {
-        showNotification('❌ فشل الإيداع: ' + e.message, '❌');
-        playSound('error');
-      }
-    }
-
-    // =========================================================
-    //   ADMIN WITHDRAW - FIXED (SERVER)
-    // =========================================================
-
-    async function adminWithdraw() {
-      if (!selectedUser) {
-        showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
-        return;
-      }
-      const amount = getAmount();
-      if (!amount) return;
-
-      if (Number(selectedUser.balance || 0) < amount) {
-        showNotification('❌ الرصيد غير كافٍ', '❌');
-        playSound('error');
-        return;
-      }
-
-      try {
-        await showModal({
-          icon: '💸',
-          title: 'تأكيد السحب',
-          type: 'danger',
-          message: `هل أنت متأكد من سحب <strong>$${amount.toFixed(2)}</strong> من حساب <strong>${selectedUser.name}</strong>؟`,
-          details: {
-            '👤 المستخدم': selectedUser.name,
-            '🆔 المعرف': selectedUser.userId || '—',
-            '💸 المبلغ': '$' + amount.toFixed(2),
-            '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
-          },
-          confirmText: '💸 تأكيد السحب',
-          cancelText: 'إلغاء'
-        });
-
-        // Send to server
-        const res = await fetch(`${API_URL}/admin/balance`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: selectedUser.userId,
-            amount: amount,
-            type: 'withdraw',
-            adminName: currentAdmin || 'أدمن'
-          })
-        });
-        const data = await res.json();
-        if (data.success) {
-          selectedUser = data.user;
-          displayUserInfo(selectedUser);
-          await loadUsers();
-          playSound('coin');
-          showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح`, '💸');
-          document.getElementById('adminAmount').value = '';
-        } else {
-          showNotification('❌ ' + data.message, '❌');
-          playSound('error');
-        }
-      } catch (e) {
-        showNotification('❌ فشل السحب: ' + e.message, '❌');
-        playSound('error');
-      }
-    }
-
-    // =========================================================
-    //   ADMIN DELETE USER - FIXED (SERVER)
-    // =========================================================
-
-    async function adminDeleteUser() {
-      if (!selectedUser) {
-        showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
-        return;
-      }
-
-      try {
-        await showModal({
-          icon: '🗑️',
-          title: 'حذف الحساب',
-          type: 'danger',
-          message: `هل أنت متأكد من حذف حساب <strong>${selectedUser.name}</strong> نهائياً؟<br><span style="color:var(--danger);font-size:13px;">⚠️ هذا الإجراء لا يمكن التراجع عنه!</span>`,
-          details: {
-            '👤 المستخدم': selectedUser.name,
-            '🆔 المعرف': selectedUser.userId || '—',
-            '💰 الرصيد': '$' + Number(selectedUser.balance || 0).toFixed(2),
-            '📋 الخطة': selectedUser.plan || '—'
-          },
-          confirmText: '🗑️ حذف نهائي',
-          cancelText: 'إلغاء'
-        });
-
-        // Send to server
-        const res = await fetch(`${API_URL}/admin/user/${selectedUser.userId}`, {
-          method: 'DELETE'
-        });
-        const data = await res.json();
-        if (data.success) {
-          // Remove from local cache
-          delete allUsers[selectedUser.email];
-          selectedUser = null;
-          document.getElementById('userInfoDisplay').classList.remove('active');
-          document.getElementById('adminActions').classList.remove('active');
-          await loadUsers();
-          playSound('error');
-          showNotification('🗑️ تم حذف الحساب بنجاح', '🗑️');
-        } else {
-          showNotification('❌ ' + data.message, '❌');
-          playSound('error');
-        }
-      } catch (e) {
-        showNotification('❌ فشل الحذف: ' + e.message, '❌');
-        playSound('error');
-      }
-    }
-
-    // =========================================================
-    //   RESET USER PLAN - FIXED (SERVER)
-    // =========================================================
-
-    async function resetUserPlan() {
-      if (!selectedUser) {
-        showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
-        return;
-      }
-      if (!selectedUser.plan || selectedUser.plan === '—') {
-        showNotification('ℹ️ هذا المستخدم ليس لديه خطة نشطة', 'ℹ️');
-        return;
-      }
-
-      try {
-        await showModal({
-          icon: '🔄',
-          title: 'إلغاء الخطة',
-          type: 'warning',
-          message: `هل أنت متأكد من إلغاء خطة <strong>${selectedUser.plan}</strong> لحساب <strong>${selectedUser.name}</strong>؟`,
-          details: {
-            '👤 المستخدم': selectedUser.name,
-            '📋 الخطة': selectedUser.plan,
-            '💰 مبلغ الخطة': '$' + Number(selectedUser.planAmount || 0).toFixed(2),
-            '📊 العائد': selectedUser.planRate + '%'
-          },
-          confirmText: '🔄 تأكيد الإلغاء',
-          cancelText: 'إلغاء'
-        });
-
-        // Update user via server
-        selectedUser.plan = null;
-        selectedUser.planAmount = 0;
-        selectedUser.planRate = 0;
-        selectedUser.planStart = null;
-        selectedUser.timerStart = null;
-
-        const res = await fetch(`${API_URL}/admin/user/${selectedUser.userId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            plan: null,
-            planAmount: 0,
-            planRate: 0,
-            planStart: null,
-            timerStart: null
-          })
-        });
-        const data = await res.json();
-        if (data.success) {
-          selectedUser = data.user;
-          displayUserInfo(selectedUser);
-          await loadUsers();
-          playSound('success');
-          showNotification('✅ تم إلغاء الخطة بنجاح', '🔄');
-        } else {
-          showNotification('❌ ' + data.message, '❌');
-          playSound('error');
-        }
-      } catch (e) {
-        showNotification('❌ فشل الإلغاء: ' + e.message, '❌');
-        playSound('error');
-      }
-    }
-
-    // =========================================================
-    //   RESET TIMER TO 25 SECONDS - FIXED (SERVER)
-    // =========================================================
-
-    async function resetTimerTo25Seconds() {
-      if (!selectedUser) {
-        showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
-        return;
-      }
-
-      const hasPlan = selectedUser.plan && selectedUser.plan !== '—' && selectedUser.plan !== null;
-      if (!hasPlan) {
-        showNotification('ℹ️ هذا المستخدم ليس لديه خطة نشطة', 'ℹ️');
-        return;
-      }
-
-      const dailyProfit = (selectedUser.planAmount * selectedUser.planRate) / 100;
-
-      try {
-        await showModal({
-          icon: '⏱️',
-          title: 'تصفير التايمر إلى 25 ثانية',
-          type: 'warning',
-          message: `هل أنت متأكد من تصفير تايمر خطة <strong>${selectedUser.plan}</strong> لحساب <strong>${selectedUser.name}</strong> إلى <strong>25 ثانية</strong>؟<br><br><span style="color:var(--gold);">⚡ بعد 25 ثانية سيحصل على مكافأة الربح اليومي!</span>`,
-          details: {
-            '👤 المستخدم': selectedUser.name,
-            '📋 الخطة': selectedUser.plan,
-            '⏱️ التايمر الجديد': '25 ثانية',
-            '💰 الربح اليومي': '$' + dailyProfit.toFixed(2)
-          },
-          confirmText: '⏱️ تصفير إلى 25 ثانية',
-          cancelText: 'إلغاء'
-        });
-
-        // Set timer to 25 seconds from now
-        const newTimerStart = Date.now() - (24 * 60 * 60 * 1000) + (25 * 1000);
-
-        const res = await fetch(`${API_URL}/admin/user/${selectedUser.userId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            timerStart: newTimerStart
-          })
-        });
-        const data = await res.json();
-        if (data.success) {
-          selectedUser = data.user;
-          displayUserInfo(selectedUser);
-          await loadUsers();
-          playSound('success');
-          showNotification(`✅ تم تصفير تايمر ${selectedUser.name} إلى 25 ثانية`, '⏱️');
-        } else {
-          showNotification('❌ ' + data.message, '❌');
-          playSound('error');
-        }
-      } catch (e) {
-        showNotification('❌ فشل التصفير: ' + e.message, '❌');
-        playSound('error');
-      }
-    }
-
-    // =========================================================
-    //   VIEW TRANSACTIONS
-    // =========================================================
-
-    async function viewTransactions() {
-      if (!selectedUser) {
-        showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️');
-        return;
-      }
-      const transactions = selectedUser.transactions || [];
-      if (!transactions.length) {
-        showNotification('📭 لا توجد عمليات لهذا المستخدم', '📭');
-        return;
-      }
-
-      let listHtml = '';
-      transactions.slice(0, 15).forEach(t => {
-        const sign = t.amount > 0 ? '+' : '';
-        const cls = t.amount > 0 ? 'positive' : 'negative';
-        listHtml += `
-          <div class="tx-item">
-            <span class="tx-type">${t.type}</span>
-            <span class="tx-amount ${cls}">${sign}$${Number(t.amount).toFixed(2)}</span>
-            <span class="tx-date">${new Date(t.date).toLocaleDateString()}</span>
-          </div>
-        `;
-      });
-      if (transactions.length > 15) {
-        listHtml += `<div style="text-align:center;color:var(--muted);padding:8px;">... و ${transactions.length - 15} عملية أخرى</div>`;
-      }
-
-      const overlay = document.getElementById('modalOverlay');
-      const icon = document.getElementById('modalIcon');
-      const title = document.getElementById('modalTitle');
-      const message = document.getElementById('modalMessage');
-      const details = document.getElementById('modalDetails');
-      const actions = document.getElementById('modalActions');
-      icon.textContent = '📜';
-      title.textContent = `عمليات ${selectedUser.name}`;
-      title.className = 'modal-title info';
-      message.innerHTML = `آخر ${Math.min(transactions.length, 15)} عملية`;
+// =========================================================
+//   MODAL
+// =========================================================
+let modalResolve = null, modalReject = null;
+function showModal(options) {
+  return new Promise((resolve, reject) => {
+    const overlay = document.getElementById('modalOverlay');
+    const icon = document.getElementById('modalIcon');
+    const title = document.getElementById('modalTitle');
+    const message = document.getElementById('modalMessage');
+    const details = document.getElementById('modalDetails');
+    const actions = document.getElementById('modalActions');
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+    details.style.display = 'none'; details.innerHTML = '';
+    confirmBtn.className = 'btn-confirm';
+    icon.textContent = options.icon || '⚠️';
+    title.textContent = options.title || 'تأكيد';
+    title.className = 'modal-title ' + (options.type || 'warning');
+    message.innerHTML = options.message || 'هل أنت متأكد؟';
+    if (options.details) {
       details.style.display = 'block';
-      details.innerHTML = `<div class="transactions-list">${listHtml}</div>`;
-      actions.innerHTML = `
-        <button class="btn-cancel" onclick="closeModal()">إغلاق</button>
-      `;
-      overlay.classList.add('active');
-      playSound('click');
-      const closeHandler = function() {
-        closeModal();
-        setTimeout(() => {
-          actions.innerHTML = `
-            <button class="btn-cancel" onclick="closeModal()">إلغاء</button>
-            <button class="btn-confirm" id="modalConfirmBtn" onclick="confirmModal()">تأكيد</button>
-          `;
-        }, 300);
-      };
-      actions.querySelector('.btn-cancel').onclick = closeHandler;
-      overlay.onclick = function(e) {
-        if (e.target === overlay) {
-          closeHandler();
-        }
-      };
+      let html = '';
+      for (const [key, value] of Object.entries(options.details)) {
+        html += `<div class="detail-row"><span class="label">${key}</span><span class="value">${value}</span></div>`;
+      }
+      details.innerHTML = html;
     }
+    confirmBtn.textContent = options.confirmText || 'تأكيد';
+    if (options.type === 'danger') confirmBtn.classList.add('danger');
+    else if (options.type === 'success') { confirmBtn.style.background = 'linear-gradient(135deg, #00b879, #00ff9d)'; confirmBtn.style.color = '#00130d'; }
+    const cancelBtn = actions.querySelector('.btn-cancel');
+    cancelBtn.textContent = options.cancelText || 'إلغاء';
+    overlay.classList.add('active');
+    playSound('click');
+    modalResolve = resolve; modalReject = reject;
+    confirmBtn.onclick = function() { closeModal(); if (resolve) resolve(true); };
+    cancelBtn.onclick = function() { closeModal(); if (reject) reject(false); };
+    overlay.onclick = function(e) { if (e.target === overlay) { closeModal(); if (reject) reject(false); } };
+  });
+}
+function closeModal() { document.getElementById('modalOverlay').classList.remove('active'); }
+function confirmModal() {}
 
-    // =========================================================
-    //   KEYBOARD SHORTCUTS
-    // =========================================================
+// =========================================================
+//   ADMIN LOGIN
+// =========================================================
+const ADMIN_CREDENTIALS = [{ username: 'kbs', password: 'kbs' }, { username: 'rt7', password: 'rt7' }];
+document.getElementById('adminLoginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const username = document.getElementById('adminUsername').value.trim();
+  const password = document.getElementById('adminPassword').value.trim();
+  const errorEl = document.getElementById('adminLoginError');
+  const valid = ADMIN_CREDENTIALS.some(cred => cred.username === username && cred.password === password);
+  if (valid) {
+    currentAdmin = username;
+    errorEl.textContent = ''; errorEl.style.color = '';
+    document.getElementById('adminLogin').style.display = 'none';
+    document.getElementById('adminPanel').classList.add('active');
+    loadUsers();
+    playSound('success');
+    showNotification(`✅ مرحباً ${username}، تم تسجيل الدخول بنجاح`);
+  } else {
+    errorEl.textContent = '❌ اسم المستخدم أو كلمة المرور غير صحيحة';
+    errorEl.style.color = '#ff5d6c';
+    playSound('error');
+    showNotification('❌ فشل تسجيل الدخول', '❌');
+  }
+});
+function adminLogout() {
+  currentAdmin = null; selectedUser = null;
+  document.getElementById('adminLogin').style.display = 'block';
+  document.getElementById('adminPanel').classList.remove('active');
+  document.getElementById('adminLoginForm').reset();
+  document.getElementById('adminLoginError').textContent = '';
+  playSound('click');
+  showNotification('👋 تم تسجيل الخروج', '👋');
+}
 
-    document.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' && document.getElementById('adminUserId') === document.activeElement) {
-        searchUser();
-      }
-      if (e.key === 'Escape') {
-        closeModal();
-        const notif = document.getElementById('adminNotif');
-        notif.classList.remove('show');
-      }
+// =========================================================
+//   LOAD USERS FROM SERVER
+// =========================================================
+async function loadUsers() {
+  try {
+    const res = await fetch(`${API_URL}/admin/users`);
+    const data = await res.json();
+    if (data.success) {
+      allUsers = {};
+      data.users.forEach(user => { allUsers[user.email] = user; });
+      updateStats();
+      renderUserList();
+    } else { showNotification('❌ فشل تحميل المستخدمين', '❌'); }
+  } catch (e) {
+    console.warn('⚠️ Server error, using localStorage:', e);
+    try {
+      allUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+      updateStats(); renderUserList();
+    } catch (e2) { allUsers = {}; updateStats(); renderUserList(); }
+    showNotification('⚠️ تم التحميل من التخزين المحلي', '⚠️');
+  }
+}
+function refreshData() { loadUsers(); playSound('click'); }
+function exportData() {
+  const data = JSON.stringify(allUsers, null, 2);
+  const blob = new Blob([data], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `users_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click(); URL.revokeObjectURL(url);
+  playSound('success');
+  showNotification('📥 تم تصدير البيانات بنجاح', '📥');
+}
+
+// =========================================================
+//   UPDATE STATS
+// =========================================================
+function updateStats() {
+  const users = Object.values(allUsers);
+  const totalUsers = users.length;
+  let totalBalance = 0, totalProfit = 0, activePlans = 0;
+  users.forEach(user => {
+    totalBalance += Number(user.balance || 0);
+    totalProfit += Number(user.profit || 0);
+    if (user.plan && user.plan !== '—' && user.plan !== null) activePlans++;
+  });
+  document.getElementById('adminTotalUsers').textContent = totalUsers;
+  document.getElementById('adminTotalBalance').textContent = '$' + totalBalance.toFixed(2);
+  document.getElementById('adminTotalProfit').textContent = '$' + totalProfit.toFixed(2);
+  document.getElementById('adminActivePlans').textContent = activePlans;
+  document.getElementById('userCountLabel').textContent = totalUsers + ' مستخدم';
+}
+
+// =========================================================
+//   RENDER USER LIST
+// =========================================================
+function renderUserList() {
+  const container = document.getElementById('userList');
+  const users = Object.values(allUsers);
+  if (!users.length) { container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:40px 0;">📭 لا يوجد مستخدمين بعد</div>'; return; }
+  const sorted = users.sort((a, b) => (b.createdAt || b.planStart || '').localeCompare(a.createdAt || a.planStart || ''));
+  container.innerHTML = sorted.map(user => `
+    <div class="user-item-premium" onclick="selectUserById('${user.userId || user.email}')">
+      <span class="user-id">🆔 ${user.userId || '—'}</span>
+      <span class="user-name">${user.name || 'غير معروف'}</span>
+      <span class="user-balance">$${Number(user.balance || 0).toFixed(2)}</span>
+    </div>
+  `).join('');
+}
+
+// =========================================================
+//   SEARCH / SELECT USER
+// =========================================================
+function searchUser() {
+  const userId = document.getElementById('adminUserId').value.trim();
+  if (!userId) { showNotification('⚠️ أدخل معرف المستخدم أولاً', '⚠️'); return; }
+  selectUserById(userId);
+  playSound('click');
+}
+function setAmount(val) { document.getElementById('adminAmount').value = val; playSound('click'); }
+
+async function selectUserById(id) {
+  console.log('🔍 Searching for user:', id);
+  try {
+    const res = await fetch(`${API_URL}/admin/user/${encodeURIComponent(id)}`);
+    const data = await res.json();
+    if (data.success) {
+      const user = data.user;
+      console.log('✅ User found on server:', user);
+      selectedUser = user;
+      displayUserInfo(user);
+      document.getElementById('adminActions').classList.add('active');
+      document.getElementById('adminUserId').value = user.userId || '';
+      playSound('success');
+      showNotification(`✅ تم العثور على ${user.name}`, '✅');
+      return;
+    }
+  } catch (e) { console.warn('⚠️ Server search failed:', e); }
+  const users = Object.values(allUsers);
+  const user = users.find(u => u.userId === id || u.email === id || u.referralCode === id);
+  if (user) {
+    console.log('✅ User found in localStorage:', user);
+    selectedUser = user;
+    displayUserInfo(user);
+    document.getElementById('adminActions').classList.add('active');
+    document.getElementById('adminUserId').value = user.userId || '';
+    playSound('success');
+    showNotification(`✅ تم العثور على ${user.name} (محلياً)`, '✅');
+  } else {
+    showNotification('❌ لم يتم العثور على المستخدم', '❌');
+    document.getElementById('userInfoDisplay').classList.remove('active');
+    document.getElementById('adminActions').classList.remove('active');
+    selectedUser = null;
+    playSound('error');
+  }
+}
+
+// =========================================================
+//   DISPLAY USER INFO
+// =========================================================
+function displayUserInfo(user) {
+  document.getElementById('infoUserId').textContent = user.userId || '—';
+  document.getElementById('infoName').textContent = user.name || '—';
+  document.getElementById('infoEmail').textContent = user.email || '—';
+  document.getElementById('infoBalance').textContent = '$' + Number(user.balance || 0).toFixed(2);
+  document.getElementById('infoProfit').textContent = '$' + Number(user.profit || 0).toFixed(2);
+  document.getElementById('infoPlan').textContent = user.plan || '—';
+  document.getElementById('infoCreated').textContent = user.createdAt ? new Date(user.createdAt).toLocaleString() : user.planStart ? new Date(user.planStart).toLocaleString() : '—';
+  document.getElementById('infoTransactions').textContent = (user.transactions || []).length;
+  document.getElementById('infoReferral').textContent = user.referralCode || '—';
+  let timerDisplay = '—';
+  if (user.plan && user.plan !== '—' && user.timerStart) {
+    const now = Date.now();
+    const elapsed = now - user.timerStart;
+    let remaining = (24 * 60 * 60 * 1000) - elapsed;
+    if (remaining <= 0) timerDisplay = '⏳ جاهز للإضافة';
+    else {
+      const hours = Math.floor(remaining / (60 * 60 * 1000));
+      const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+      const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
+      timerDisplay = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+  } else if (user.plan && user.plan !== '—') timerDisplay = '⏳ لم يبدأ';
+  document.getElementById('infoTimer').textContent = timerDisplay;
+  document.getElementById('userInfoDisplay').classList.add('active');
+}
+function getAmount() {
+  const val = parseFloat(document.getElementById('adminAmount').value);
+  if (isNaN(val) || val <= 0) { showNotification('⚠️ أدخل مبلغ صحيح أكبر من 0', '⚠️'); playSound('error'); return null; }
+  return val;
+}
+
+// =========================================================
+//   ADMIN DEPOSIT - FULLY UPGRADED
+// =========================================================
+async function adminDeposit() {
+  console.log('💰 adminDeposit called');
+  if (!selectedUser) { showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️'); playSound('error'); return; }
+  if (!selectedUser.userId) { showNotification('⚠️ هذا المستخدم ليس لديه معرف صحيح', '⚠️'); playSound('error'); return; }
+  const amount = getAmount();
+  if (!amount) return;
+  try {
+    await showModal({
+      icon: '💰', title: 'تأكيد الإيداع', type: 'success',
+      message: `هل أنت متأكد من إيداع <strong>$${amount.toFixed(2)}</strong> في حساب <strong>${selectedUser.name}</strong>؟`,
+      details: {
+        '👤 المستخدم': selectedUser.name,
+        '🆔 المعرف': selectedUser.userId || '—',
+        '💰 المبلغ': '$' + amount.toFixed(2),
+        '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
+      },
+      confirmText: '💰 تأكيد الإيداع', cancelText: 'إلغاء'
     });
+    console.log('📤 Sending deposit request... userId:', selectedUser.userId, 'amount:', amount);
+    const res = await fetch(`${API_URL}/admin/balance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: selectedUser.userId, amount: amount, type: 'deposit', adminName: currentAdmin || 'أدمن' })
+    });
+    const data = await res.json();
+    console.log('📥 Server response:', data);
+    if (data.success) {
+      selectedUser = data.user;
+      displayUserInfo(data.user);
+      await loadUsers();
+      playSound('coin');
+      showNotification(`✅ تم إيداع $${amount.toFixed(2)} بنجاح`, '💰');
+      document.getElementById('adminAmount').value = '';
+    } else { showNotification('❌ ' + data.message, '❌'); playSound('error'); }
+  } catch (e) { console.error('❌ Deposit error:', e); showNotification('❌ فشل الإيداع: ' + e.message, '❌'); playSound('error'); }
+}
 
-    // =========================================================
-    //   INIT
-    // =========================================================
+// =========================================================
+//   ADMIN WITHDRAW - FULLY UPGRADED
+// =========================================================
+async function adminWithdraw() {
+  console.log('💸 adminWithdraw called');
+  if (!selectedUser) { showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️'); playSound('error'); return; }
+  if (!selectedUser.userId) { showNotification('⚠️ هذا المستخدم ليس لديه معرف صحيح', '⚠️'); playSound('error'); return; }
+  const amount = getAmount();
+  if (!amount) return;
+  if (Number(selectedUser.balance || 0) < amount) { showNotification('❌ الرصيد غير كافٍ', '❌'); playSound('error'); return; }
+  try {
+    await showModal({
+      icon: '💸', title: 'تأكيد السحب', type: 'danger',
+      message: `هل أنت متأكد من سحب <strong>$${amount.toFixed(2)}</strong> من حساب <strong>${selectedUser.name}</strong>؟`,
+      details: {
+        '👤 المستخدم': selectedUser.name,
+        '🆔 المعرف': selectedUser.userId || '—',
+        '💸 المبلغ': '$' + amount.toFixed(2),
+        '📊 الرصيد الحالي': '$' + Number(selectedUser.balance || 0).toFixed(2)
+      },
+      confirmText: '💸 تأكيد السحب', cancelText: 'إلغاء'
+    });
+    console.log('📤 Sending withdraw request... userId:', selectedUser.userId, 'amount:', amount);
+    const res = await fetch(`${API_URL}/admin/balance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: selectedUser.userId, amount: amount, type: 'withdraw', adminName: currentAdmin || 'أدمن' })
+    });
+    const data = await res.json();
+    console.log('📥 Server response:', data);
+    if (data.success) {
+      selectedUser = data.user;
+      displayUserInfo(data.user);
+      await loadUsers();
+      playSound('coin');
+      showNotification(`✅ تم سحب $${amount.toFixed(2)} بنجاح`, '💸');
+      document.getElementById('adminAmount').value = '';
+    } else { showNotification('❌ ' + data.message, '❌'); playSound('error'); }
+  } catch (e) { console.error('❌ Withdraw error:', e); showNotification('❌ فشل السحب: ' + e.message, '❌'); playSound('error'); }
+}
 
-    if (currentAdmin) {
-      document.getElementById('adminLogin').style.display = 'none';
-      document.getElementById('adminPanel').classList.add('active');
-      loadUsers();
-    }
+// =========================================================
+//   ADMIN DELETE USER - FULLY UPGRADED
+// =========================================================
+async function adminDeleteUser() {
+  if (!selectedUser) { showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️'); return; }
+  try {
+    await showModal({
+      icon: '🗑️', title: 'حذف الحساب', type: 'danger',
+      message: `هل أنت متأكد من حذف حساب <strong>${selectedUser.name}</strong> نهائياً؟<br><span style="color:#ff5d6c;font-size:13px;">⚠️ هذا الإجراء لا يمكن التراجع عنه!</span>`,
+      details: {
+        '👤 المستخدم': selectedUser.name,
+        '🆔 المعرف': selectedUser.userId || '—',
+        '💰 الرصيد': '$' + Number(selectedUser.balance || 0).toFixed(2),
+        '📋 الخطة': selectedUser.plan || '—'
+      },
+      confirmText: '🗑️ حذف نهائي', cancelText: 'إلغاء'
+    });
+    const res = await fetch(`${API_URL}/admin/user/${selectedUser.userId}`, { method: 'DELETE' });
+    const data = await res.json();
+    if (data.success) {
+      delete allUsers[selectedUser.email];
+      selectedUser = null;
+      document.getElementById('userInfoDisplay').classList.remove('active');
+      document.getElementById('adminActions').classList.remove('active');
+      await loadUsers();
+      playSound('error');
+      showNotification('🗑️ تم حذف الحساب بنجاح', '🗑️');
+    } else { showNotification('❌ ' + data.message, '❌'); playSound('error'); }
+  } catch (e) { showNotification('❌ فشل الحذف: ' + e.message, '❌'); playSound('error'); }
+}
 
-    console.log('🛡️ SUPER PANEL | KBS ✕ RT7');
-    console.log('📡 API_URL:', API_URL);
-  </script>
+// =========================================================
+//   RESET USER PLAN - FULLY UPGRADED
+// =========================================================
+async function resetUserPlan() {
+  if (!selectedUser) { showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️'); return; }
+  if (!selectedUser.plan || selectedUser.plan === '—') { showNotification('ℹ️ هذا المستخدم ليس لديه خطة نشطة', 'ℹ️'); return; }
+  try {
+    await showModal({
+      icon: '🔄', title: 'إلغاء الخطة', type: 'warning',
+      message: `هل أنت متأكد من إلغاء خطة <strong>${selectedUser.plan}</strong> لحساب <strong>${selectedUser.name}</strong>؟`,
+      details: {
+        '👤 المستخدم': selectedUser.name,
+        '📋 الخطة': selectedUser.plan,
+        '💰 مبلغ الخطة': '$' + Number(selectedUser.planAmount || 0).toFixed(2),
+        '📊 العائد': selectedUser.planRate + '%'
+      },
+      confirmText: '🔄 تأكيد الإلغاء', cancelText: 'إلغاء'
+    });
+    const res = await fetch(`${API_URL}/admin/user/${selectedUser.userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: null, planAmount: 0, planRate: 0, planStart: null, timerStart: null })
+    });
+    const data = await res.json();
+    if (data.success) {
+      selectedUser = data.user;
+      displayUserInfo(data.user);
+      await loadUsers();
+      playSound('success');
+      showNotification('✅ تم إلغاء الخطة بنجاح', '🔄');
+    } else { showNotification('❌ ' + data.message, '❌'); playSound('error'); }
+  } catch (e) { showNotification('❌ فشل الإلغاء: ' + e.message, '❌'); playSound('error'); }
+}
 
+// =========================================================
+//   RESET TIMER - FULLY UPGRADED
+// =========================================================
+async function resetTimerTo25Seconds() {
+  if (!selectedUser) { showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️'); return; }
+  const hasPlan = selectedUser.plan && selectedUser.plan !== '—' && selectedUser.plan !== null;
+  if (!hasPlan) { showNotification('ℹ️ هذا المستخدم ليس لديه خطة نشطة', 'ℹ️'); return; }
+  const dailyProfit = (selectedUser.planAmount * selectedUser.planRate) / 100;
+  try {
+    await showModal({
+      icon: '⏱️', title: 'تصفير التايمر إلى 25 ثانية', type: 'warning',
+      message: `هل أنت متأكد من تصفير تايمر خطة <strong>${selectedUser.plan}</strong> لحساب <strong>${selectedUser.name}</strong> إلى <strong>25 ثانية</strong>؟<br><br><span style="color:#ffd700;">⚡ بعد 25 ثانية سيحصل على مكافأة الربح اليومي!</span>`,
+      details: {
+        '👤 المستخدم': selectedUser.name,
+        '📋 الخطة': selectedUser.plan,
+        '⏱️ التايمر الجديد': '25 ثانية',
+        '💰 الربح اليومي': '$' + dailyProfit.toFixed(2)
+      },
+      confirmText: '⏱️ تصفير إلى 25 ثانية', cancelText: 'إلغاء'
+    });
+    const newTimerStart = Date.now() - (24 * 60 * 60 * 1000) + (25 * 1000);
+    const res = await fetch(`${API_URL}/admin/user/${selectedUser.userId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ timerStart: newTimerStart })
+    });
+    const data = await res.json();
+    if (data.success) {
+      selectedUser = data.user;
+      displayUserInfo(data.user);
+      await loadUsers();
+      playSound('success');
+      showNotification(`✅ تم تصفير تايمر ${selectedUser.name} إلى 25 ثانية`, '⏱️');
+    } else { showNotification('❌ ' + data.message, '❌'); playSound('error'); }
+  } catch (e) { showNotification('❌ فشل التصفير: ' + e.message, '❌'); playSound('error'); }
+}
+
+// =========================================================
+//   VIEW TRANSACTIONS - FULLY UPGRADED
+// =========================================================
+async function viewTransactions() {
+  if (!selectedUser) { showNotification('⚠️ ابحث عن مستخدم أولاً', '⚠️'); return; }
+  const transactions = selectedUser.transactions || [];
+  if (!transactions.length) { showNotification('📭 لا توجد عمليات لهذا المستخدم', '📭'); return; }
+  let listHtml = '';
+  transactions.slice(0, 15).forEach(t => {
+    const sign = t.amount > 0 ? '+' : '';
+    const cls = t.amount > 0 ? 'positive' : 'negative';
+    listHtml += `<div class="tx-item"><span class="tx-type">${t.type}</span><span class="tx-amount ${cls}">${sign}$${Number(t.amount).toFixed(2)}</span><span class="tx-date">${new Date(t.date).toLocaleDateString()}</span></div>`;
+  });
+  if (transactions.length > 15) listHtml += `<div style="text-align:center;color:#77949a;padding:8px;">... و ${transactions.length - 15} عملية أخرى</div>`;
+  const overlay = document.getElementById('modalOverlay');
+  const icon = document.getElementById('modalIcon');
+  const title = document.getElementById('modalTitle');
+  const message = document.getElementById('modalMessage');
+  const details = document.getElementById('modalDetails');
+  const actions = document.getElementById('modalActions');
+  icon.textContent = '📜';
+  title.textContent = `عمليات ${selectedUser.name}`;
+  title.className = 'modal-title info';
+  message.innerHTML = `آخر ${Math.min(transactions.length, 15)} عملية`;
+  details.style.display = 'block';
+  details.innerHTML = `<div class="transactions-list">${listHtml}</div>`;
+  actions.innerHTML = `<button class="btn-cancel" onclick="closeModal()">إغلاق</button>`;
+  overlay.classList.add('active');
+  playSound('click');
+  const closeHandler = function() {
+    closeModal();
+    setTimeout(() => {
+      actions.innerHTML = `<button class="btn-cancel" onclick="closeModal()">إلغاء</button><button class="btn-confirm" id="modalConfirmBtn" onclick="confirmModal()">تأكيد</button>`;
+    }, 300);
+  };
+  actions.querySelector('.btn-cancel').onclick = closeHandler;
+  overlay.onclick = function(e) { if (e.target === overlay) closeHandler(); };
+}
+
+// =========================================================
+//   KEYBOARD SHORTCUTS
+// =========================================================
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && document.getElementById('adminUserId') === document.activeElement) searchUser();
+  if (e.key === 'Escape') { closeModal(); document.getElementById('adminNotif').classList.remove('show'); }
+});
+
+// =========================================================
+//   INIT
+// =========================================================
+if (currentAdmin) {
+  document.getElementById('adminLogin').style.display = 'none';
+  document.getElementById('adminPanel').classList.add('active');
+  loadUsers();
+}
+console.log('🛡️ SUPER PANEL V99 | KBS ✕ RT7');
+console.log('📡 API_URL:', API_URL);
+</script>
 </body>
-
 </html>
