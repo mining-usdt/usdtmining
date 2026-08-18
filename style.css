@@ -430,7 +430,7 @@ img{
 
 .ticker-change.positive {
   color: var(--green);
-  background: rgba(0, 255, 157, 0.08);
+  background: rgba(0, 256, 157, 0.08);
 }
 
 .ticker-change.negative {
