@@ -8,6 +8,7 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
+    /* نفس الـ CSS الموجود لكن مع بعض التحسينات */
     :root {
       --admin-glow: 0 0 60px rgba(0, 255, 157, 0.15);
       --admin-glow-strong: 0 0 80px rgba(0, 255, 157, 0.25);
@@ -1120,6 +1121,22 @@
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.5; transform: scale(0.8); }
     }
+
+    /* تنسيق رسالة الخطأ في حالة عدم وجود خادم */
+    .server-error-box {
+      background: rgba(255, 93, 108, 0.08);
+      border: 1px solid rgba(255, 93, 108, 0.15);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 15px;
+      color: var(--danger);
+      font-size: 13px;
+      display: none;
+    }
+
+    .server-error-box.show {
+      display: block;
+    }
   </style>
 
 </head>
@@ -1151,6 +1168,10 @@
       <div style="margin-bottom:15px;padding:10px;border-radius:12px;background:rgba(0,255,157,0.05);border:1px solid rgba(0,255,157,0.08);">
         <span class="status-dot" id="serverStatusDot"></span>
         <span id="serverStatusText" style="color:var(--muted);font-size:13px;">جاري التحقق من الاتصال...</span>
+      </div>
+
+      <div class="server-error-box" id="serverErrorBox">
+        ⚠️ لا يمكن الاتصال بالخادم. تأكد من تشغيل <strong>node server.js</strong>
       </div>
 
       <form id="adminLoginForm" class="form-grid">
@@ -1348,6 +1369,7 @@
     let modalResolve = null;
     let modalReject = null;
     let serverOnline = false;
+    let serverCheckAttempts = 0;
 
     // =========================================================
     //   TOGGLE SOUND
@@ -1495,28 +1517,45 @@
     async function checkServerStatus() {
       const dot = document.getElementById('serverStatusDot');
       const text = document.getElementById('serverStatusText');
+      const errorBox = document.getElementById('serverErrorBox');
+      
       try {
         const apiUrl = getApiUrl('/health');
-        const response = await fetch(apiUrl, { cache: 'no-store' });
+        const response = await fetch(apiUrl, { 
+          cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (!response.ok) {
+          throw new Error('HTTP ' + response.status);
+        }
+        
         const data = await response.json();
         if (data.success && data.mongodb === 'connected') {
           serverOnline = true;
           dot.className = 'status-dot online';
           text.textContent = '🟢 الخادم متصل وقاعدة البيانات متصلة';
           text.style.color = 'var(--green)';
+          errorBox.classList.remove('show');
+          console.log('✅ الخادم متصل');
         } else {
           serverOnline = false;
           dot.className = 'status-dot offline';
           text.textContent = '🔴 الخادم غير متصل أو قاعدة البيانات منفصلة';
           text.style.color = 'var(--danger)';
+          errorBox.classList.add('show');
+          console.warn('⚠️ الخادم غير متصل');
         }
       } catch (e) {
         serverOnline = false;
         dot.className = 'status-dot offline';
         text.textContent = '🔴 لا يمكن الاتصال بالخادم';
         text.style.color = 'var(--danger)';
-        console.warn('⚠️ Server connection failed:', e);
+        errorBox.classList.add('show');
+        console.warn('⚠️ فشل الاتصال بالخادم:', e);
       }
+      
+      serverCheckAttempts++;
     }
 
     // =========================================================
@@ -1532,9 +1571,11 @@
     // =========================================================
     function getApiUrl(endpoint) {
       const hostname = window.location.hostname;
+      // إذا كنا على Render أو أي hostname آخر
       if (hostname === 'localhost' || hostname === '127.0.0.1') {
         return 'http://localhost:3000/api' + endpoint;
       }
+      // استخدام المسار النسبي للمنصة المستضافة
       return '/api' + endpoint;
     }
 
@@ -1546,9 +1587,12 @@
       const username = document.getElementById('adminUsername').value.trim();
       const password = document.getElementById('adminPassword').value.trim();
       const errorEl = document.getElementById('adminLoginError');
+      
+      // التحقق من صحة بيانات الدخول
       const valid = ADMIN_CREDENTIALS.some(cred =>
         cred.username === username && cred.password === password
       );
+      
       if (valid) {
         currentAdmin = username;
         errorEl.textContent = '';
@@ -1578,11 +1622,11 @@
     }
 
     // =========================================================
-    //   ✅ LOAD USERS - FIXED (دمج الخادم + localStorage)
+    //   ✅ LOAD USERS - مع دعم localStorage فقط إذا لم يصل الخادم
     // =========================================================
     async function loadUsers() {
       try {
-        // 1️⃣ جلب من localStorage أولاً
+        // 1️⃣ جلب من localStorage أولاً (كمخزن مؤقت)
         let localUsers = {};
         try {
           localUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
@@ -1591,49 +1635,79 @@
           console.warn('⚠️ فشل قراءة localStorage');
         }
 
-        // 2️⃣ جلب من الخادم
-        const apiUrl = getApiUrl('/admin/users');
-        console.log('🔄 جلب المستخدمين من:', apiUrl);
-        
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-
-        let serverUsers = {};
-        if (data.success && data.users && data.users.length > 0) {
-          data.users.forEach(user => {
-            if (user.email) {
-              serverUsers[user.email] = user;
-            } else if (user.userId) {
-              // إذا لم يكن هناك بريد، نستخدم userId كمفتاح
-              serverUsers[user.userId] = user;
-            }
+        // 2️⃣ محاولة جلب من الخادم
+        try {
+          const apiUrl = getApiUrl('/admin/users');
+          console.log('🔄 جلب المستخدمين من:', apiUrl);
+          
+          const response = await fetch(apiUrl, {
+            cache: 'no-store',
+            headers: { 'Content-Type': 'application/json' }
           });
-          console.log('✅ تم جلب ' + data.users.length + ' مستخدم من الخادم');
-        } else {
-          console.warn('⚠️ فشل جلب المستخدمين من الخادم أو لا يوجد مستخدمين');
+          
+          if (response.ok) {
+            const data = await response.json();
+            let serverUsers = {};
+            if (data.success && data.users && data.users.length > 0) {
+              data.users.forEach(user => {
+                // استخدام userId كمفتاح أساسي
+                const key = user.userId || user.email || user._id;
+                if (key) {
+                  serverUsers[key] = user;
+                }
+              });
+              console.log('✅ تم جلب ' + data.users.length + ' مستخدم من الخادم');
+              
+              // دمج البيانات (الخادم له الأولوية)
+              // نحتاج إلى دمج بطريقة ذكية: نستخدم userId كمرجع
+              const merged = { ...localUsers };
+              data.users.forEach(user => {
+                if (user.email) {
+                  merged[user.email] = user;
+                }
+                if (user.userId) {
+                  merged[user.userId] = user;
+                }
+              });
+              allUsers = merged;
+            } else {
+              allUsers = localUsers;
+            }
+          } else {
+            console.warn('⚠️ فشل جلب المستخدمين من الخادم، استخدام localStorage');
+            allUsers = localUsers;
+          }
+        } catch (e) {
+          console.warn('⚠️ خطأ في الاتصال بالخادم، استخدام localStorage:', e);
+          allUsers = localUsers;
         }
 
-        // 3️⃣ دمج البيانات (الخادم له الأولوية)
-        allUsers = { ...localUsers, ...serverUsers };
-
-        // 4️⃣ حفظ البيانات المدمجة في localStorage للتخزين المؤقت
+        // 4️⃣ حفظ البيانات في localStorage للتخزين المؤقت
         try {
           localStorage.setItem('miningUsersDB', JSON.stringify(allUsers));
         } catch (e) {}
 
-        console.log('📊 إجمالي المستخدمين بعد الدمج:', Object.keys(allUsers).length);
+        console.log('📊 إجمالي المستخدمين:', Object.keys(allUsers).length);
 
         updateStats();
         renderUserList();
 
         // إذا كان هناك مستخدم محدد مسبقاً، تحديث عرضه
-        if (selectedUser && allUsers[selectedUser.email]) {
-          selectedUser = allUsers[selectedUser.email];
-          displayUserInfo(selectedUser);
+        if (selectedUser) {
+          // البحث عن المستخدم في البيانات الجديدة
+          const found = Object.values(allUsers).find(u => 
+            u.userId === selectedUser.userId || 
+            u.email === selectedUser.email ||
+            u._id === selectedUser._id
+          );
+          if (found) {
+            selectedUser = found;
+            displayUserInfo(selectedUser);
+          }
         }
 
       } catch (error) {
-        console.warn('⚠️ خطأ في الاتصال بالخادم، استخدام localStorage فقط:', error);
+        console.warn('⚠️ خطأ في تحميل المستخدمين:', error);
         try {
           allUsers = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
         } catch {
@@ -1743,18 +1817,23 @@
 
     function selectUser(identifier) {
       const users = Object.values(allUsers);
-      const user = users.find(u =>
-        u.userId === identifier ||
-        u.userId === String(identifier) ||
-        u._id === identifier ||
-        u.email === identifier ||
-        u.email === identifier.toLowerCase() ||
-        u.referralCode === identifier ||
-        u.referralCode === identifier.toUpperCase()
-      );
+      
+      // محاولة البحث بطرق مختلفة
+      const user = users.find(u => {
+        const userId = String(u.userId || u._id || u.id || '');
+        const email = String(u.email || '').toLowerCase();
+        const referral = String(u.referralCode || '').toUpperCase();
+        const id = String(identifier).trim();
+        
+        return userId === id || 
+               userId === String(id) ||
+               email === id.toLowerCase() ||
+               referral === id.toUpperCase() ||
+               u._id === id;
+      });
 
       if (!user) {
-        showNotification('❌ لم يتم العثور على مستخدم', '❌');
+        showNotification('❌ لم يتم العثور على مستخدم: ' + identifier, '❌');
         document.getElementById('userInfoDisplay').classList.remove('active');
         document.getElementById('adminActions').classList.remove('active');
         selectedUser = null;
@@ -1765,7 +1844,7 @@
       selectedUser = user;
       displayUserInfo(user);
       document.getElementById('adminActions').classList.add('active');
-      document.getElementById('adminUserId').value = user.userId || user._id || '';
+      document.getElementById('adminUserId').value = user.userId || user._id || user.email || '';
       playSound('success');
       showNotification(`✅ تم العثور على ${user.name}`, '✅');
     }
@@ -1778,7 +1857,7 @@
         showNotification('⚠️ لا يوجد مستخدم', '⚠️');
         return;
       }
-      const id = selectedUser.userId || selectedUser._id || '';
+      const id = selectedUser.userId || selectedUser._id || selectedUser.email || '';
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(id).then(() => {
           showNotification(`✅ تم نسخ المعرف: ${id}`, '📋');
@@ -1869,6 +1948,7 @@
       // 1️⃣ حفظ في localStorage
       try {
         const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+        // حفظ باستخدام البريد الإلكتروني كمفتاح
         db[user.email] = user;
         localStorage.setItem('miningUsersDB', JSON.stringify(db));
 
@@ -1878,12 +1958,13 @@
         }
 
         allUsers[user.email] = user;
+        allUsers[user.userId] = user;
         console.log('✅ تم حفظ المستخدم في localStorage');
       } catch (e) {
         console.warn('⚠️ فشل حفظ في localStorage:', e);
       }
 
-      // 2️⃣ مزامنة مع الخادم
+      // 2️⃣ محاولة مزامنة مع الخادم
       try {
         const identifier = user.userId || user._id || user.email;
         const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(identifier));
@@ -1892,14 +1973,14 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(user)
         });
-        const data = await response.json();
-        if (data.success) {
-          console.log('✅ تم مزامنة المستخدم مع الخادم');
-        } else {
-          console.warn('⚠️ فشل مزامنة المستخدم مع الخادم:', data.message);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            console.log('✅ تم مزامنة المستخدم مع الخادم');
+          }
         }
       } catch (e) {
-        console.warn('⚠️ فشل الاتصال بالخادم للمزامنة:', e);
+        console.warn('⚠️ فشل الاتصال بالخادم للمزامنة (سيتم المزامنة لاحقاً):', e);
       }
     }
 
@@ -2033,8 +2114,9 @@
 
         // 3️⃣ حذف من allUsers
         delete allUsers[selectedUser.email];
+        delete allUsers[selectedUser.userId];
 
-        // 4️⃣ حذف من الخادم
+        // 4️⃣ حذف من الخادم (محاولة)
         try {
           const identifier = selectedUser.userId || selectedUser._id || selectedUser.email;
           const apiUrl = getApiUrl('/admin/user/' + encodeURIComponent(identifier));
@@ -2209,15 +2291,15 @@
       // تحميل المستخدمين
       loadUsers();
       
-      // تحديث حالة الخادم كل 30 ثانية
-      setInterval(checkServerStatus, 30000);
+      // تحديث حالة الخادم كل 10 ثوانٍ
+      setInterval(checkServerStatus, 10000);
       
-      // تحديث البيانات كل 60 ثانية
+      // تحديث البيانات كل 30 ثانية
       setInterval(() => {
         if (document.getElementById('adminPanel').classList.contains('active')) {
           loadUsers();
         }
-      }, 60000);
+      }, 30000);
     });
   </script>
 
