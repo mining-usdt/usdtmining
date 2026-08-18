@@ -888,7 +888,7 @@ app.put("/api/admin/user/:userId", async (req, res) => {
 });
 
 // =========================================================
-// ADMIN - BALANCE (FIXED USING findOneAndUpdate)
+// ADMIN - BALANCE (FIXED - STRONG)
 // =========================================================
 
 app.post("/api/admin/balance", async (req, res) => {
@@ -898,6 +898,8 @@ app.post("/api/admin/balance", async (req, res) => {
     const amount = Number(req.body.amount);
     const type = String(req.body.type || "").trim();
     const adminName = String(req.body.adminName || "غير معروف").trim();
+
+    console.log(`📥 Admin balance request: userId=${userId}, email=${email}, amount=${amount}, type=${type}`);
 
     if (!userId && !email) {
       return res.status(400).json({
@@ -920,6 +922,7 @@ app.post("/api/admin/balance", async (req, res) => {
 
     // بناء الفلتر
     const filter = userId ? { userId } : { email };
+    console.log(`🔍 Searching with filter:`, filter);
 
     // جلب المستخدم للتحقق من الرصيد في حالة السحب
     let user = await User.findOne(filter);
