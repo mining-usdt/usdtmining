@@ -461,6 +461,87 @@ function publicUser(user) {
 }
 
 // =========================================================
+//  CORE PROFIT CALCULATION LOGIC
+// =========================================================
+
+async function calculateAndAddProfit(user) {
+  if (!user || !user.plan || !user.planStart || !user.timerStart) {
+    return user;
+  }
+
+  const now = Date.now();
+  const lastProfitDate = user.lastProfitDate ? new Date(user.lastProfitDate).getTime() : null;
+
+  // If the plan has already expired
+  const planEnd = new Date(user.planStart);
+  planEnd.setDate(planEnd.getDate() + user.planDays);
+  
+  if (now > planEnd.getTime()) {
+    user.plan = null;
+    user.planAmount = 0;
+    user.planRate = 0;
+    user.planDays = 0;
+    user.planStart = null;
+    user.timerStart = null;
+    user.lastProfitDate = null;
+    await user.save();
+    return user;
+  }
+
+  // If no profit has been added yet, start from planStart
+  const startTime = lastProfitDate || new Date(user.planStart).getTime();
+  const elapsed = now - startTime;
+  
+  if (elapsed < 24 * 60 * 60 * 1000) {
+    // Not enough time has passed
+    return user;
+  }
+
+  // Calculate how many full 24-hour cycles have passed
+  const cycles = Math.floor(elapsed / (24 * 60 * 60 * 1000));
+  if (cycles === 0) {
+    return user;
+  }
+
+  const dailyProfit = (user.planAmount * user.planRate) / 100;
+  const totalProfitToAdd = dailyProfit * cycles;
+
+  user.balance = Number(user.balance || 0) + totalProfitToAdd;
+  user.profit = Number(user.profit || 0) + totalProfitToAdd;
+
+  // Update lastProfitDate to the last completed cycle
+  const lastCycleDate = new Date(startTime + cycles * 24 * 60 * 60 * 1000);
+  user.lastProfitDate = lastCycleDate.toISOString();
+
+  // Add transactions for each cycle
+  for (let i = 0; i < cycles; i++) {
+    user.transactions.unshift({
+      type: `📈 ربح يومي (${user.plan})`,
+      amount: dailyProfit,
+      date: new Date(startTime + (i + 1) * 24 * 60 * 60 * 1000).toISOString(),
+      status: "✅ مكتمل"
+    });
+  }
+
+  // If the plan has expired after this cycle
+  if (now > planEnd.getTime()) {
+    user.plan = null;
+    user.planAmount = 0;
+    user.planRate = 0;
+    user.planDays = 0;
+    user.planStart = null;
+    user.timerStart = null;
+    user.lastProfitDate = null;
+  } else {
+    // Reset timerStart to continue the countdown from the last cycle
+    user.timerStart = lastCycleDate.getTime();
+  }
+
+  await user.save();
+  return user;
+}
+
+// =========================================================
 // HEALTH
 // =========================================================
 
@@ -675,6 +756,9 @@ app.post("/api/login", async (req, res) => {
       });
     }
 
+    // Calculate and add any pending profits
+    await calculateAndAddProfit(user);
+
     return res.json({
       success: true,
       message: "✅ تم تسجيل الدخول بنجاح",
@@ -732,6 +816,9 @@ app.get("/api/user/:identifier", async (req, res) => {
         message: "❌ المستخدم غير موجود"
       });
     }
+
+    // Calculate and add any pending profits
+    await calculateAndAddProfit(user);
 
     return res.json({
       success: true,
@@ -863,7 +950,7 @@ app.post("/api/activate-plan", async (req, res) => {
 
     // بداية الخطة والمؤقت
     user.planStart = activationTime;
-    user.timerStart = activationTime;
+    user.timerStart = activationTime.getTime();
 
     // تصفير مرجع الأرباح السابقة
     user.lastProfitDate = null;
