@@ -1016,21 +1016,55 @@ function renderPlans() {
 }
 
 // =========================================================
-//  TIMER SYSTEM - REMOVED LOCAL TIMER LOGIC
+//  TIMER SYSTEM
 // =========================================================
 
-// تمت إزالة دالتين updateTimerDisplay و startTimerLoop
-// لأن التايمر الآن يتم إدارته من السيرفر
+function updateTimerDisplay() {
+  const user = getCurrentUser();
+  const timerEl = document.getElementById('profitTimer');
+  
+  if (!timerEl) return;
+  
+  if (!user || !user.plan || !user.timerStart) {
+    timerEl.textContent = '--:--:--';
+    return;
+  }
+
+  const now = Date.now();
+  const elapsed = now - user.timerStart;
+  let remaining = (24 * 60 * 60 * 1000) - elapsed;
+  
+  if (remaining <= 0) {
+    const dailyProfit = (user.planAmount * user.planRate) / 100;
+    user.balance = Number(user.balance || 0) + dailyProfit;
+    user.profit = Number(user.profit || 0) + dailyProfit;
+    addTransaction(user, `📈 ربح يومي (${user.plan})`, dailyProfit, '✅ مكتمل');
+    user.timerStart = Date.now();
+    saveUserToServer(user).then(() => {
+      if (document.body.dataset.page === "dashboard") renderDashboard();
+    });
+    toast(t('profitAdded').replace('${amount}', dailyProfit.toFixed(2)));
+    timerEl.textContent = '00:00:00';
+    return;
+  }
+
+  const hours = Math.floor(remaining / (60 * 60 * 1000));
+  const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
+  const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
+
+  timerEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function startTimerLoop() {
+  updateTimerDisplay();
+  setTimeout(startTimerLoop, 1000);
+}
 
 // =========================================================
 //  PLAN ACTIVATION - FIXED
 // =========================================================
 
-// =========================================================
-//  PLAN ACTIVATION - FIXED
-// =========================================================
-
-async function activatePlan(planId) {
+function activatePlan(planId) {
   console.log("🟢 activatePlan called with:", planId);
   
   const user = getCurrentUser();
@@ -1049,24 +1083,8 @@ async function activatePlan(planId) {
     return;
   }
 
-  // جلب أحدث بيانات المستخدم من السيرفر أولاً
-  try {
-    const res = await fetch(`${API_URL}/user/${user.userId}`);
-    const data = await res.json();
-    if (data.success) {
-      const freshUser = data.user;
-      localStorage.setItem('currentUser', JSON.stringify(freshUser));
-      // تحديث المتغير user بالبيانات الجديدة
-      user.balance = freshUser.balance;
-      user.plan = freshUser.plan;
-      user.planAmount = freshUser.planAmount;
-      user.timerStart = freshUser.timerStart;
-    }
-  } catch (e) {
-    console.warn('⚠️ Could not fetch fresh user data, using local copy');
-  }
-
-  console.log("👤 User balance from server:", user.balance);
+  console.log("👤 User:", user);
+  console.log("💰 User balance:", user.balance);
   console.log("💰 Plan amount:", plan.amount);
 
   if (Number(user.balance || 0) < plan.amount) {
@@ -1093,46 +1111,39 @@ async function activatePlan(planId) {
 }
 window.activatePlan = activatePlan;
 
-async function executePlanActivation(plan, user) {
+function executePlanActivation(plan, user) {
   console.log("✅ Executing plan activation for:", plan.id);
 
-  try {
-    // استدعاء API تفعيل الخطة من السيرفر
-    const res = await fetch(`${API_URL}/activate-plan`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: user.userId,
-        planId: plan.id,
-        planAmount: plan.amount,
-        planRate: plan.rate,
-        planDays: plan.days
-      })
-    });
+  // خصم الرصيد
+  user.balance = Number(user.balance || 0) - plan.amount;
+  
+  // تعيين بيانات الخطة
+  user.plan = plan.id;
+  user.planAmount = plan.amount;
+  user.planRate = plan.rate;
+  user.planDays = plan.days;
+  user.planStart = new Date().toISOString();
+  user.timerStart = Date.now(); // بدء التايمر فوراً
 
-    const data = await res.json();
-    console.log('📥 Server response:', data);
+  // إضافة عملية شراء
+  addTransaction(user, `🚀 تفعيل خطة ${plan.id}`, -plan.amount, '✅ مكتمل');
 
-    if (data.success) {
-      // تحديث بيانات المستخدم من السيرفر
-      localStorage.setItem('currentUser', JSON.stringify(data.user));
-      
-      toast("🎉 " + t("planActivated"));
-      
-      // عرض الاحتفال
-      showCelebration(plan);
-      
-      // الانتقال إلى لوحة التحكم بعد 2.5 ثانية
-      setTimeout(() => {
-        window.location.href = "dashboard.html";
-      }, 2500);
-    } else {
-      toast("❌ " + (data.message || "حدث خطأ أثناء تفعيل الخطة"));
+  // حفظ المستخدم وتحديث الواجهة
+  saveUserToServer(user).then((savedUser) => {
+    console.log("✅ User saved with plan:", savedUser.plan);
+    // تحديث localStorage
+    localStorage.setItem('currentUser', JSON.stringify(savedUser));
+    // تحديث الرصيد في الواجهة إذا كانت الصفحة الحالية هي dashboard
+    if (document.body.dataset.page === "dashboard") {
+      renderDashboard();
     }
-  } catch (error) {
-    console.error('❌ Error activating plan:', error);
-    toast("❌ حدث خطأ في الاتصال بالسيرفر");
-  }
+    showCelebration(plan);
+    toast("🎉 " + t("planActivated"));
+    // توجيه المستخدم إلى لوحة التحكم بعد 2.5 ثانية
+    setTimeout(() => {
+      window.location.href = "dashboard.html";
+    }, 2500);
+  });
 }
 
 // =========================================================
@@ -1517,9 +1528,6 @@ function renderDashboard() {
   setText("dashDaily", money(daily));
   setText("dashTotal", money(user.profit));
 
-  // حساب الوقت المتبقي من السيرفر
-  updateTimerDisplay(user);
-
   // Referral
   const referralCodeEl = document.getElementById("dashReferralCode");
   if (referralCodeEl && user.referralCode) {
@@ -1572,77 +1580,6 @@ function renderDashboard() {
     `;
     table.appendChild(row);
   });
-}
-
-// =========================================================
-//  TIMER DISPLAY (Read from Server)
-// =========================================================
-
-function updateTimerDisplay(user) {
-  const timerEl = document.getElementById('profitTimer');
-  const statusEl = document.getElementById('timerStatus');
-  
-  if (!timerEl) return;
-
-  // إذا لم يكن هناك خطة نشطة
-  if (!user || !user.plan || !user.timerStart || !user.planStart) {
-    timerEl.textContent = '--:--:--';
-    if (statusEl) {
-      statusEl.textContent = '⏸ ' + t("timerInactive");
-      statusEl.className = 'timer-status inactive';
-    }
-    return;
-  }
-
-  // حساب الوقت المتبقي من بيانات السيرفر
-  const now = Date.now();
-  const elapsed = now - user.timerStart;
-  let remaining = (24 * 60 * 60 * 1000) - elapsed;
-  
-  // التحقق من انتهاء الخطة
-  const planEnd = new Date(user.planStart);
-  planEnd.setDate(planEnd.getDate() + user.planDays);
-  
-  if (now > planEnd.getTime()) {
-    timerEl.textContent = '00:00:00';
-    if (statusEl) {
-      statusEl.textContent = '✅ ' + t("planCompleted") || 'انتهت الخطة';
-      statusEl.className = 'timer-status inactive';
-    }
-    return;
-  }
-
-  if (remaining <= 0) {
-    timerEl.textContent = '00:00:00';
-    if (statusEl) {
-      statusEl.textContent = '🔄 ' + t("timerAdding");
-      statusEl.className = 'timer-status active';
-      statusEl.style.color = '#ffd700';
-    }
-    return;
-  }
-
-  const hours = Math.floor(remaining / (60 * 60 * 1000));
-  const minutes = Math.floor((remaining % (60 * 60 * 1000)) / (60 * 1000));
-  const seconds = Math.floor((remaining % (60 * 1000)) / 1000);
-
-  timerEl.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-  
-  if (statusEl) {
-    statusEl.textContent = '🟢 ' + t("timerActive");
-    statusEl.className = 'timer-status active';
-    statusEl.style.color = '';
-  }
-}
-
-// دالة لتحديث التايمر بشكل دوري
-function startTimerLoop() {
-  const user = getCurrentUser();
-  if (user) {
-    updateTimerDisplay(user);
-  }
-  // تحديث كل ثانية
-  setTimeout(startTimerLoop, 1000);
 }
 
 // =========================================================
