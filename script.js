@@ -848,7 +848,58 @@ function generateReferralCode(userId) {
 // =========================================================
 //  SERVER-BASED USER FUNCTIONS
 // =========================================================
+// =========================================================
+// SYNC CURRENT USER FROM SERVER
+// =========================================================
 
+async function syncCurrentUserFromServer() {
+  try {
+    const currentUser = getCurrentUser();
+
+    if (!currentUser || !currentUser.userId) {
+      return currentUser;
+    }
+
+    const res = await fetch(
+      `${API_URL}/admin/user/${encodeURIComponent(currentUser.userId)}`
+    );
+
+    const data = await res.json();
+
+    if (data.success && data.user) {
+      localStorage.setItem(
+        "currentUser",
+        JSON.stringify(data.user)
+      );
+
+      console.log(
+        "✅ Current user synced from server:",
+        data.user.userId,
+        "balance:",
+        data.user.balance
+      );
+
+      return data.user;
+    }
+
+    console.warn(
+      "⚠️ Failed to sync current user:",
+      data.message || "Unknown error"
+    );
+
+    return currentUser;
+
+  } catch (error) {
+    console.warn(
+      "⚠️ User sync error:",
+      error
+    );
+
+    return getCurrentUser();
+  }
+}
+
+window.syncCurrentUserFromServer = syncCurrentUserFromServer;
 async function getUsersFromServer() {
   try {
     const res = await fetch(`${API_URL}/admin/users`);
@@ -2350,6 +2401,9 @@ function showUserIdAfterRegistration(user) {
 
 document.addEventListener("DOMContentLoaded", async () => {
   console.log('🟢 DOM fully loaded - Initializing TΔWØRM-V99 🜁');
+
+  // مزامنة بيانات الحساب من MongoDB قبل عرض الرصيد
+  await syncCurrentUserFromServer();
 
   setupGuestRedirect();
   setLang(lang());
