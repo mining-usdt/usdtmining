@@ -3,10 +3,10 @@
    - All texts translated for ar/en/tr
    - Referral System with 20% commission
    - Plans: VIP 1 = $100, VIP 2 = $200, VIP 3 = $300, VIP 4 = $400, VIP 5 = $500
-   - Sound disabled
    - Live Crypto Prices from CoinGecko
    - 24-hour Timer with auto-profit addition
    - Celebration on plan activation
+   - FULL SERVER SUPPORT WITH MONGODB
 ========================================================= */
 
 // =========================================================
@@ -25,7 +25,17 @@ const PLANS = [
 ];
 window.PLANS = PLANS;
 
-// تعريف toast مبكراً
+// =========================================================
+//  SERVER API CONFIG
+// =========================================================
+
+const API_URL = window.location.origin + '/api';
+console.log('🟢 API_URL:', API_URL);
+
+// =========================================================
+//  TOAST FUNCTION
+// =========================================================
+
 function toast(message) {
   let element = document.getElementById("toast");
   if (!element) {
@@ -41,7 +51,10 @@ function toast(message) {
 }
 window.toast = toast;
 
-// تعريف t() مبكراً
+// =========================================================
+//  INTERNATIONALIZATION (I18N)
+// =========================================================
+
 const I18N = {
   ar: {
     home: "الرئيسية",
@@ -798,82 +811,6 @@ function t(key) {
 }
 window.t = t;
 
-// تعريف logout مبكراً
-function logout() {
-  localStorage.removeItem("currentUser");
-  window.location.href = "index.html";
-}
-window.logout = logout;
-
-// =========================================================
-//  UNIQUE USER ID GENERATOR - FIXED
-// =========================================================
-
-function generateUniqueUserId() {
-  const users = getUsers();
-  const existingIds = new Set();
-
-  Object.values(users).forEach(user => {
-    if (user.userId) {
-      existingIds.add(user.userId);
-    }
-  });
-
-  let newId;
-  let attempts = 0;
-  const maxAttempts = 10000;
-
-  do {
-    newId = Math.floor(100000000 + Math.random() * 900000000).toString();
-    attempts++;
-  } while (existingIds.has(newId) && attempts < maxAttempts);
-
-  if (attempts >= maxAttempts) {
-    newId = Date.now().toString();
-  }
-
-  return newId;
-}
-
-// =========================================================
-//  GET USERS - FIXED
-// =========================================================
-
-function getUsers() {
-  try {
-    return JSON.parse(
-      localStorage.getItem("miningUsersDB")
-    ) || {};
-  } catch {
-    return {};
-  }
-}
-
-// =========================================================
-//  REFERRAL CODE GENERATOR
-// =========================================================
-
-function generateReferralCode(userId) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = '';
-  for (let i = 0; i < 8; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code + userId.slice(-4);
-}
-
-// =========================================================
-//  LANGUAGE
-// =========================================================
-
-function lang() {
-  const saved = localStorage.getItem("siteLang");
-  if (saved === "ar" || saved === "en" || saved === "tr") {
-    return saved;
-  }
-  return "ar";
-}
-
 function setLang(language) {
   if (language !== "ar" && language !== "en" && language !== "tr") {
     language = "ar";
@@ -892,52 +829,106 @@ function setLang(language) {
 }
 
 // =========================================================
-//  USER STORAGE
+//  HELPER FUNCTIONS
 // =========================================================
 
-function getCurrentUser() {
+function money(value) {
+  return "$" + Number(value || 0).toFixed(2);
+}
+window.money = money;
+
+function generateUniqueUserId() {
+  return Math.floor(100000000 + Math.random() * 900000000).toString();
+}
+
+function generateReferralCode(userId) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code + userId.slice(-4);
+}
+
+// =========================================================
+//  SERVER-BASED USER FUNCTIONS
+// =========================================================
+
+async function getUsersFromServer() {
   try {
-    return JSON.parse(localStorage.getItem("currentUser"));
-  } catch {
+    const res = await fetch(`${API_URL}/admin/users`);
+    const data = await res.json();
+    if (data.success) {
+      const users = {};
+      data.users.forEach(user => {
+        users[user.email] = user;
+      });
+      return users;
+    }
+    return {};
+  } catch (e) {
+    console.warn('⚠️ Failed to fetch users from server:', e);
+    return JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+  }
+}
+
+async function saveUserToServer(user) {
+  try {
+    const res = await fetch(`${API_URL}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(user)
+    });
+    const data = await res.json();
+    if (data.success) {
+      console.log('✅ User saved to server:', data.user);
+      return data.user;
+    } else {
+      console.warn('⚠️ Server error:', data.message);
+      return null;
+    }
+  } catch (e) {
+    console.warn('⚠️ Server not available, saving locally:', e);
+    const db = JSON.parse(localStorage.getItem('miningUsersDB')) || {};
+    db[user.email] = user;
+    localStorage.setItem('miningUsersDB', JSON.stringify(db));
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    return user;
+  }
+}
+
+async function loginToServer(email, password) {
+  try {
+    const res = await fetch(`${API_URL}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (data.success) {
+      console.log('✅ Login successful:', data.user);
+      return data.user;
+    } else {
+      console.warn('⚠️ Login failed:', data.message);
+      return null;
+    }
+  } catch (e) {
+    console.warn('⚠️ Server not available for login:', e);
     return null;
   }
 }
 
-function saveUser(user) {
-  if (!user.userId) {
-    user.userId = generateUniqueUserId();
-  }
-  if (!user.referralCode) {
-    user.referralCode = generateReferralCode(user.userId);
-  }
-
-  localStorage.setItem("currentUser", JSON.stringify(user));
-
-  const database = getUsers();
-  database[user.email] = user;
-  localStorage.setItem("miningUsersDB", JSON.stringify(database));
-
-  try {
-    fetch("http://localhost:3000/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(user)
-    })
-    .then(res => res.json())
-    .then(data => {
-      console.log("✅ تم حفظ المستخدم في الخادم:", data);
-    })
-    .catch(err => {
-      console.warn("⚠️ الخادم غير متصل، تم الحفظ محلياً فقط:", err);
-    });
-  } catch (e) {
-    console.warn("⚠️ الخادم غير متصل، تم الحفظ محلياً فقط");
-  }
+async function getCurrentUser() {
+  const local = JSON.parse(localStorage.getItem('currentUser'));
+  if (local) return local;
+  return null;
 }
 
-// =========================================================
-//  AUTH
-// =========================================================
+function logout() {
+  localStorage.removeItem('currentUser');
+  window.location.href = "index.html";
+}
+window.logout = logout;
 
 function ensureAuth() {
   if (!getCurrentUser()) {
@@ -949,15 +940,6 @@ function ensureAuth() {
   }
   return true;
 }
-
-// =========================================================
-//  HELPERS
-// =========================================================
-
-function money(value) {
-  return "$" + Number(value || 0).toFixed(2);
-}
-window.money = money;
 
 function addTransaction(user, type, amount, status = "Account", extra = {}) {
   if (!user.transactions) {
@@ -1014,7 +996,7 @@ function renderPlans() {
 }
 
 // =========================================================
-//  TIMER SYSTEM - FIXED
+//  TIMER SYSTEM
 // =========================================================
 
 function updateTimerDisplay() {
@@ -1038,9 +1020,10 @@ function updateTimerDisplay() {
     user.profit = Number(user.profit || 0) + dailyProfit;
     addTransaction(user, `📈 ربح يومي (${user.plan})`, dailyProfit, '✅ مكتمل');
     user.timerStart = Date.now();
-    saveUser(user);
+    saveUserToServer(user).then(() => {
+      if (document.body.dataset.page === "dashboard") renderDashboard();
+    });
     toast(t('profitAdded').replace('${amount}', dailyProfit.toFixed(2)));
-    if (document.body.dataset.page === "dashboard") renderDashboard();
     timerEl.textContent = '00:00:00';
     return;
   }
@@ -1058,7 +1041,7 @@ function startTimerLoop() {
 }
 
 // =========================================================
-//  PLAN ACTIVATION WITH CONFIRMATION + FIXED TIMER
+//  PLAN ACTIVATION
 // =========================================================
 
 function activatePlan(planId) {
@@ -1084,15 +1067,6 @@ function activatePlan(planId) {
   if (Number(user.balance || 0) < plan.amount) {
     toast("⚠️ " + t("insufficientBalance") + " رصيدك: $" + Number(user.balance || 0).toFixed(2) + " — المطلوب: $" + plan.amount);
     console.log("❌ Insufficient balance");
-    const btns = document.querySelectorAll('[data-plan="' + planId + '"]');
-    btns.forEach(btn => {
-      btn.style.animation = 'shake 0.5s ease';
-      btn.style.borderColor = 'var(--danger)';
-      setTimeout(() => {
-        btn.style.animation = '';
-        btn.style.borderColor = '';
-      }, 600);
-    });
     return;
   }
 
@@ -1118,8 +1092,6 @@ function executePlanActivation(plan, user) {
   console.log("✅ Executing plan activation for:", plan.id);
 
   user.balance = Number(user.balance || 0) - plan.amount;
-  console.log("💰 New balance after deduction:", user.balance);
-
   user.plan = plan.id;
   user.planAmount = plan.amount;
   user.planRate = plan.rate;
@@ -1129,17 +1101,14 @@ function executePlanActivation(plan, user) {
 
   addTransaction(user, `🚀 تفعيل خطة ${plan.id}`, -plan.amount, '✅ مكتمل');
 
-  saveUser(user);
-  console.log("✅ User saved with plan:", user.plan);
-  console.log("⏱️ Timer started at:", new Date(user.timerStart).toLocaleString());
-
-  showCelebration(plan);
-
-  toast("🎉 " + t("planActivated"));
-
-  setTimeout(() => {
-    window.location.href = "dashboard.html";
-  }, 2500);
+  saveUserToServer(user).then(() => {
+    console.log("✅ User saved with plan:", user.plan);
+    showCelebration(plan);
+    toast("🎉 " + t("planActivated"));
+    setTimeout(() => {
+      window.location.href = "dashboard.html";
+    }, 2500);
+  });
 }
 
 // =========================================================
@@ -1588,7 +1557,7 @@ function setupDepositForm() {
     return;
   }
 
-  form.addEventListener("submit", event => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!ensureAuth()) {
       return;
@@ -1603,12 +1572,14 @@ function setupDepositForm() {
     }
 
     const user = getCurrentUser();
+    if (!user) return;
+
     user.balance = Number(user.balance || 0) + amount;
     addTransaction(user, t("depositOp"), amount, t("complete"));
 
     // Referral bonus 20%
     if (user.referredBy) {
-      const allUsers = getUsers();
+      const allUsers = await getUsersFromServer();
       const referrer = allUsers[user.referredBy];
       
       if (referrer) {
@@ -1625,12 +1596,12 @@ function setupDepositForm() {
         }
         
         addTransaction(referrer, t("referralBonus"), commission, t("complete"), { note: `من إيداع ${user.name} (${user.email})` });
-        saveUser(referrer);
+        await saveUserToServer(referrer);
         toast(`🎉 تم إضافة عمولة $${commission.toFixed(2)} من دعوتك!`);
       }
     }
 
-    saveUser(user);
+    await saveUserToServer(user);
     toast(t("depositDone"));
     form.reset();
 
@@ -1651,7 +1622,7 @@ function setupWithdrawForm() {
     return;
   }
 
-  form.addEventListener("submit", event => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
     if (!ensureAuth()) {
       return;
@@ -1673,7 +1644,7 @@ function setupWithdrawForm() {
 
     user.balance -= amount;
     addTransaction(user, t("withdrawOp"), -amount, t("complete"), { address: address });
-    saveUser(user);
+    await saveUserToServer(user);
     toast(t("withdrawDone"));
     form.reset();
 
@@ -1685,7 +1656,7 @@ function setupWithdrawForm() {
 }
 
 // =========================================================
-//  REGISTER (WITH REFERRAL) - FIXED
+//  REGISTER (WITH REFERRAL)
 // =========================================================
 
 function setupRegister() {
@@ -1708,72 +1679,27 @@ function setupRegister() {
       return;
     }
 
-    const database = getUsers();
-    if (database[email]) {
-      toast(t("already"));
-      return;
-    }
-
     const newUser = {
-      userId: null,
       name: name,
       email: email,
       password: password,
-      balance: 0,
-      profit: 0,
-      plan: null,
-      planAmount: 0,
-      planRate: 0,
-      planDays: 0,
-      planStart: null,
-      lastProfitDate: null,
-      transactions: [],
-      referralCode: null,
-      referredBy: null,
-      referralBonus: 0,
-      referredUsers: [],
-      timerStart: null
+      referralCode: referralCode || undefined
     };
 
-    if (referralCode) {
-      let referrer = null;
-      for (const key in database) {
-        if (database[key].referralCode === referralCode) {
-          referrer = database[key];
-          break;
-        }
-      }
-
-      if (referrer) {
-        newUser.referredBy = referrer.email;
-        if (!referrer.referredUsers) {
-          referrer.referredUsers = [];
-        }
-        referrer.referredUsers.push({
-          email: email,
-          name: name,
-          joinedAt: new Date().toISOString(),
-          totalDeposits: 0,
-          commissionEarned: 0
-        });
-        saveUser(referrer);
-        toast("✅ تم التسجيل باستخدام كود الدعوة!");
-      } else {
-        toast(t("referralInvalid"));
-      }
+    const saved = await saveUserToServer(newUser);
+    if (saved) {
+      toast(t("registered"));
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 500);
+    } else {
+      toast("❌ فشل إنشاء الحساب، حاول مرة أخرى");
     }
-
-    saveUser(newUser);
-    toast(t("registered"));
-
-    setTimeout(() => {
-      window.location.href = "index.html";
-    }, 500);
   });
 }
 
 // =========================================================
-//  LOGIN - FIXED
+//  LOGIN
 // =========================================================
 
 function setupLogin() {
@@ -1788,44 +1714,16 @@ function setupLogin() {
     const email = document.getElementById("loginEmail")?.value.trim().toLowerCase();
     const password = document.getElementById("loginPassword")?.value;
 
-    const database = getUsers();
-    const user = database[email];
-
-    if (!user || user.password !== password) {
+    const user = await loginToServer(email, password);
+    if (user) {
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      toast(t("logged"));
+      setTimeout(() => {
+        window.location.href = "dashboard.html";
+      }, 400);
+    } else {
       toast(t("badLogin"));
-      return;
     }
-
-    if (!user.userId) {
-      user.userId = generateUniqueUserId();
-      database[email] = user;
-      localStorage.setItem("miningUsersDB", JSON.stringify(database));
-    }
-
-    try {
-      const response = await fetch("http://localhost:3000/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await response.json();
-      if (data.success) {
-        localStorage.setItem("currentUser", JSON.stringify(data.user));
-        toast(t("logged"));
-        setTimeout(() => {
-          window.location.href = "dashboard.html";
-        }, 400);
-        return;
-      }
-    } catch (err) {
-      console.warn("⚠️ الخادم غير متصل، استخدام التخزين المحلي");
-    }
-
-    localStorage.setItem("currentUser", JSON.stringify(user));
-    toast(t("logged"));
-    setTimeout(() => {
-      window.location.href = "dashboard.html";
-    }, 400);
   });
 }
 
@@ -2110,7 +2008,8 @@ function setupGuestRedirect() {
   const currentPage = window.location.pathname.split('/').pop();
   
   if (protectedPages.includes(currentPage) || currentPage === '') {
-    if (!getCurrentUser()) {
+    const user = getCurrentUser();
+    if (!user) {
       window.location.href = 'register.html';
     }
   }
@@ -2381,7 +2280,7 @@ if (document.getElementById('onlineCount')) {
 //  PAGE INIT
 // =========================================================
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   console.log('🟢 DOM fully loaded - Initializing TΔWØRM-V99 🜁');
 
   setupGuestRedirect();
@@ -2423,6 +2322,19 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  // ✅ ربط أزرار تسجيل الخروج
+  document.querySelectorAll('[data-logout]').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      if (typeof window.logout === 'function') {
+        window.logout();
+      } else {
+        console.error('❌ logout not found!');
+        toast('❌ حدث خطأ في النظام');
+      }
+    });
+  });
+
   if (document.getElementById("plansGrid")) {
     renderPlans();
   }
@@ -2442,6 +2354,18 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 // =========================================================
+//  GET LANGUAGE
+// =========================================================
+
+function lang() {
+  const saved = localStorage.getItem("siteLang");
+  if (saved === "ar" || saved === "en" || saved === "tr") {
+    return saved;
+  }
+  return "ar";
+}
+
+// =========================================================
 //  EXPOSE FUNCTIONS GLOBALLY
 // =========================================================
 window.activatePlan = activatePlan;
@@ -2451,8 +2375,9 @@ window.t = t;
 window.money = money;
 window.PLANS = PLANS;
 window.getCurrentUser = getCurrentUser;
-window.saveUser = saveUser;
-window.getUsers = getUsers;
+window.saveUserToServer = saveUserToServer;
+window.getUsersFromServer = getUsersFromServer;
+window.loginToServer = loginToServer;
 window.generateReferralCode = generateReferralCode;
 window.generateUniqueUserId = generateUniqueUserId;
 window.renderPlans = renderPlans;
@@ -2464,7 +2389,8 @@ window.closeCelebration = closeCelebration;
 window.showConfirmDialog = showConfirmDialog;
 window.setLang = setLang;
 window.lang = lang;
-window.money = money;
+window.API_URL = API_URL;
 
 console.log('✅ TΔWØRM-V99 🜁 loaded successfully');
 console.log('📌 All functions exported globally');
+console.log('📡 API_URL:', API_URL);
