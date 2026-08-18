@@ -888,7 +888,7 @@ app.put("/api/admin/user/:userId", async (req, res) => {
 });
 
 // =========================================================
-// ADMIN - BALANCE (FIXED)
+// ADMIN - BALANCE (FIXED USING findOneAndUpdate)
 // =========================================================
 
 app.post("/api/admin/balance", async (req, res) => {
@@ -918,14 +918,11 @@ app.post("/api/admin/balance", async (req, res) => {
       });
     }
 
-    let user = null;
-    if (userId) {
-      user = await User.findOne({ userId });
-    }
-    if (!user && email) {
-      user = await User.findOne({ email });
-    }
+    // بناء الفلتر
+    const filter = userId ? { userId } : { email };
 
+    // جلب المستخدم للتحقق من الرصيد في حالة السحب
+    let user = await User.findOne(filter);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -934,39 +931,57 @@ app.post("/api/admin/balance", async (req, res) => {
     }
 
     const currentBalance = Number(user.balance || 0);
-    let newBalance, txType, txAmount;
+    let updateOperation;
+    let txType, txAmount;
 
     if (type === "deposit") {
-      newBalance = currentBalance + amount;
+      updateOperation = { $inc: { balance: amount } };
       txType = "💰 إيداع (أدمن)";
       txAmount = amount;
-    } else { // withdraw
+    } else {
+      // withdraw
       if (currentBalance < amount) {
         return res.status(400).json({
           success: false,
           message: "❌ الرصيد غير كافٍ"
         });
       }
-      newBalance = currentBalance - amount;
+      updateOperation = { $inc: { balance: -amount } };
       txType = "💸 سحب (أدمن)";
       txAmount = -amount;
     }
 
-    user.balance = newBalance;
-
-    if (!Array.isArray(user.transactions)) user.transactions = [];
-    user.transactions.unshift({
+    // إضافة المعاملة إلى المصفوفة
+    const transaction = {
       type: txType,
       amount: txAmount,
       date: new Date(),
       status: "✅ مكتمل",
       note: `بواسطة الأدمن ${adminName}`
-    });
+    };
 
-    // حفظ المستخدم
-    const updatedUser = await user.save();
+    // استخدام findOneAndUpdate لتحديث الرصيد ودفع المعاملة في عملية ذرية واحدة
+    const updatedUser = await User.findOneAndUpdate(
+      filter,
+      {
+        $inc: { balance: type === "deposit" ? amount : -amount },
+        $push: { transactions: transaction }
+      },
+      {
+        new: true,
+        runValidators: true
+      }
+    ).select("-password");
 
-    // إرجاع المستخدم المحدث
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ المستخدم غير موجود بعد التحديث"
+      });
+    }
+
+    console.log(`✅ Admin ${type} | user=${updatedUser.userId} | amount=${amount} | new balance=${updatedUser.balance}`);
+
     return res.json({
       success: true,
       message: type === "deposit" ? "✅ تم الإيداع بنجاح" : "✅ تم السحب بنجاح",
