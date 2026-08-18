@@ -1,6 +1,7 @@
 /* =========================================================
    MININGUSDT - MAIN SCRIPT (FULLY TRANSLATED)
    - Fixed: Plan activation, balance deduction, and timer start.
+   - Updated admin functions to work with server.
 ========================================================= */
 
 // =========================================================
@@ -1004,7 +1005,6 @@ function renderPlans() {
     `;
   }).join('');
 
-  // ✅ ربط الأزرار مباشرة بعد إنشائها
   document.querySelectorAll('.plan-activate-btn').forEach(btn => {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
@@ -1114,32 +1114,24 @@ window.activatePlan = activatePlan;
 function executePlanActivation(plan, user) {
   console.log("✅ Executing plan activation for:", plan.id);
 
-  // خصم الرصيد
   user.balance = Number(user.balance || 0) - plan.amount;
-  
-  // تعيين بيانات الخطة
   user.plan = plan.id;
   user.planAmount = plan.amount;
   user.planRate = plan.rate;
   user.planDays = plan.days;
   user.planStart = new Date().toISOString();
-  user.timerStart = Date.now(); // بدء التايمر فوراً
+  user.timerStart = Date.now();
 
-  // إضافة عملية شراء
   addTransaction(user, `🚀 تفعيل خطة ${plan.id}`, -plan.amount, '✅ مكتمل');
 
-  // حفظ المستخدم وتحديث الواجهة
   saveUserToServer(user).then((savedUser) => {
     console.log("✅ User saved with plan:", savedUser.plan);
-    // تحديث localStorage
     localStorage.setItem('currentUser', JSON.stringify(savedUser));
-    // تحديث الرصيد في الواجهة إذا كانت الصفحة الحالية هي dashboard
     if (document.body.dataset.page === "dashboard") {
       renderDashboard();
     }
     showCelebration(plan);
     toast("🎉 " + t("planActivated"));
-    // توجيه المستخدم إلى لوحة التحكم بعد 2.5 ثانية
     setTimeout(() => {
       window.location.href = "dashboard.html";
     }, 2500);
@@ -1378,7 +1370,6 @@ function closeCelebration() {
   }
 }
 
-// إضافة الـ Keyframes
 const celebrationStyles = document.createElement('style');
 celebrationStyles.textContent = `
   @keyframes fadeIn {
@@ -2381,12 +2372,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   setupAddressCopy();
   setupDepositUI();
 
-  // ✅ ربط أزرار تفعيل الخطة عند تحميل الصفحة
   if (document.getElementById("plansGrid")) {
     renderPlans();
   }
 
-  // ✅ ربط أزرار تسجيل الخروج
   document.querySelectorAll('[data-logout]').forEach(btn => {
     btn.addEventListener('click', function(e) {
       e.preventDefault();
