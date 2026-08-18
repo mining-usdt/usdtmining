@@ -1162,31 +1162,87 @@ function activatePlan(planId) {
 }
 window.activatePlan = activatePlan;
 
-function executePlanActivation(plan, user) {
+async function executePlanActivation(plan, user) {
   console.log("✅ Executing plan activation for:", plan.id);
 
-  user.balance = Number(user.balance || 0) - plan.amount;
-  user.plan = plan.id;
-  user.planAmount = plan.amount;
-  user.planRate = plan.rate;
-  user.planDays = plan.days;
-  user.planStart = new Date().toISOString();
-  user.timerStart = Date.now();
+  try {
+    const res = await fetch(`${API_URL}/activate-plan`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        userId: user.userId,
+        planId: plan.id,
+        planAmount: plan.amount,
+        planRate: plan.rate,
+        planDays: plan.days
+      })
+    });
 
-  addTransaction(user, `🚀 تفعيل خطة ${plan.id}`, -plan.amount, '✅ مكتمل');
+    console.log("📥 Plan activation response status:", res.status);
 
-  saveUserToServer(user).then((savedUser) => {
-    console.log("✅ User saved with plan:", savedUser.plan);
-    localStorage.setItem('currentUser', JSON.stringify(savedUser));
+    const data = await res.json();
+
+    console.log("📥 Plan activation response:", data);
+
+    if (!res.ok || !data.success || !data.user) {
+      console.error(
+        "❌ Plan activation failed:",
+        data.message || "Unknown server error"
+      );
+
+      toast(
+        "❌ " +
+        (data.message || "فشل تفعيل الخطة")
+      );
+
+      return;
+    }
+
+    // حفظ بيانات المستخدم الجديدة القادمة من MongoDB
+    localStorage.setItem(
+      "currentUser",
+      JSON.stringify(data.user)
+    );
+
+    console.log(
+      "✅ Plan activated successfully:",
+      data.user.plan
+    );
+
+    console.log(
+      "💰 New balance:",
+      data.user.balance
+    );
+
+    console.log(
+      "⏱️ Timer started:",
+      data.user.timerStart
+    );
+
+    // تحديث لوحة المستخدم إذا كانت مفتوحة
     if (document.body.dataset.page === "dashboard") {
       renderDashboard();
     }
+
     showCelebration(plan);
+
     toast("🎉 " + t("planActivated"));
+
+    // الانتقال للداشبورد
     setTimeout(() => {
       window.location.href = "dashboard.html";
-    }, 2500);
-  });
+    }, 1500);
+
+  } catch (error) {
+    console.error(
+      "❌ Plan activation request failed:",
+      error
+    );
+
+    toast("❌ تعذر الاتصال بالسيرفر");
+  }
 }
 
 // =========================================================
