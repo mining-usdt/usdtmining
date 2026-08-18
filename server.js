@@ -838,172 +838,233 @@ app.get("/api/user/:identifier", async (req, res) => {
 // // =========================================================
 // ACTIVATE PLAN
 // =========================================================
-app.post("/api/activate-plan", async (req, res) => {
-  try {
-    const userId = String(req.body.userId || "").trim();
-    const planId = String(req.body.planId || "").trim();
+// =========================================================
+// ADMIN - BALANCE (تم تعديله لضمان التوافق)
+// =========================================================
 
-    const planAmount = Number(req.body.planAmount);
-    const planRate = Number(req.body.planRate);
-    const planDays = Number(req.body.planDays);
+app.post(
+  "/api/admin/balance",
+  async (req, res) => {
+    try {
+      const userId = String(
+        req.body.userId || ""
+      ).trim();
 
-    // ---------------------------------------------------------
-    // VALIDATION
-    // ---------------------------------------------------------
+      const email = String(
+        req.body.email || ""
+      )
+        .trim()
+        .toLowerCase();
 
-    if (!userId) {
-      return res.status(400).json({
-        success: false,
-        message: "❌ معرف المستخدم مطلوب"
+      const amount = Number(
+        req.body.amount
+      );
+
+      const type = String(
+        req.body.type || ""
+      ).trim();
+
+      const adminName = String(
+        req.body.adminName || "غير معروف"
+      ).trim();
+
+      if (!userId && !email) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "❌ المعرف أو البريد مطلوب"
+        });
+      }
+
+      if (
+        !Number.isFinite(amount) ||
+        amount <= 0
+      ) {
+        return res.status(400).json({
+          success: false,
+          message: "❌ المبلغ غير صالح"
+        });
+      }
+
+      if (
+        type !== "deposit" &&
+        type !== "withdraw"
+      ) {
+        return res.status(400).json({
+          success: false,
+          message:
+            "❌ نوع العملية غير صالح"
+        });
+      }
+
+      let user = null;
+
+      if (userId) {
+        user = await User.findOne({
+          userId: userId // تأكد من أن الحقل userId يستخدم بشكل صحيح
+        });
+      }
+
+      if (!user && email) {
+        user = await User.findOne({
+          email
+        });
+      }
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "❌ المستخدم غير موجود"
+        });
+      }
+
+      const currentBalance = Number(
+        user.balance || 0
+      );
+
+      let balanceChanged = 0;
+      let txType = "";
+
+      if (type === "deposit") {
+        user.balance =
+          currentBalance + amount;
+
+        balanceChanged = amount;
+        txType = "💰 إيداع (أدمن)";
+      }
+
+      if (type === "withdraw") {
+        if (currentBalance < amount) {
+          return res.status(400).json({
+            success: false,
+            message:
+              "❌ الرصيد غير كافٍ"
+          });
+        }
+
+        user.balance =
+          currentBalance - amount;
+
+        balanceChanged = -amount;
+        txType = "💸 سحب (أدمن)";
+      }
+
+      if (!Array.isArray(user.transactions)) {
+        user.transactions = [];
+      }
+
+      user.transactions.unshift({
+        type: txType,
+        amount: balanceChanged,
+        date: new Date(),
+        status: "✅ مكتمل",
+        note: `بواسطة الأدمن ${adminName}`
       });
-    }
 
-    if (!planId) {
-      return res.status(400).json({
-        success: false,
-        message: "❌ معرف الخطة مطلوب"
-      });
-    }
+      await user.save();
 
-    if (!Number.isFinite(planAmount) || planAmount <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "❌ مبلغ الخطة غير صالح"
-      });
-    }
+      // إعادة حساب الأرباح بعد التعديل
+      await calculateAndAddProfit(user);
 
-    if (!Number.isFinite(planRate) || planRate <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "❌ نسبة الربح غير صالحة"
-      });
-    }
-
-    if (!Number.isFinite(planDays) || planDays <= 0) {
-      return res.status(400).json({
-        success: false,
-        message: "❌ مدة الخطة غير صالحة"
-      });
-    }
-
-    // ---------------------------------------------------------
-    // FIND USER
-    // ---------------------------------------------------------
-
-    const user = await User.findOne({
-      userId: userId
-    });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "❌ المستخدم غير موجود"
-      });
-    }
-
-    // ---------------------------------------------------------
-    // CHECK ACTIVE PLAN
-    // ---------------------------------------------------------
-
-    if (
-      user.plan &&
-      Number(user.planAmount || 0) > 0 &&
-      user.timerStart
-    ) {
-      return res.status(400).json({
-        success: false,
+      return res.json({
+        success: true,
         message:
-          `⚠️ لديك خطة مفعلة بالفعل: ${user.plan}`
+          type === "deposit"
+            ? "✅ تم الإيداع بنجاح"
+            : "✅ تم السحب بنجاح",
+        user: publicUser(user)
       });
-    }
+    } catch (error) {
+      console.error(
+        "❌ Admin balance error:",
+        error
+      );
 
-    // ---------------------------------------------------------
-    // CHECK BALANCE
-    // ---------------------------------------------------------
-
-    const currentBalance =
-      Number(user.balance || 0);
-
-    if (currentBalance < planAmount) {
-      return res.status(400).json({
+      return res.status(500).json({
         success: false,
-        message:
-          `⚠️ الرصيد غير كافي. رصيدك الحالي: $${currentBalance.toFixed(2)}`
+        message: "❌ خطأ في الخادم"
       });
     }
-
-    // ---------------------------------------------------------
-    // ACTIVATE PLAN
-    // ---------------------------------------------------------
-
-    const activationTime = new Date();
-
-    // خصم المبلغ الحقيقي من MongoDB
-    user.balance =
-      currentBalance - planAmount;
-
-    // بيانات الخطة
-    user.plan = planId;
-    user.planAmount = planAmount;
-    user.planRate = planRate;
-    user.planDays = planDays;
-
-    // بداية الخطة والمؤقت
-    user.planStart = activationTime;
-    user.timerStart = activationTime.getTime();
-
-    // تصفير مرجع الأرباح السابقة
-    user.lastProfitDate = null;
-
-    // ---------------------------------------------------------
-    // ADD TRANSACTION
-    // ---------------------------------------------------------
-
-    if (!Array.isArray(user.transactions)) {
-      user.transactions = [];
-    }
-
-    user.transactions.unshift({
-      type: `🚀 تفعيل خطة ${planId}`,
-      amount: -planAmount,
-      date: activationTime,
-      status: "✅ مكتمل",
-      note:
-        `تم تفعيل الخطة ${planId} بمبلغ $${planAmount}`
-    });
-
-    // ---------------------------------------------------------
-    // SAVE
-    // ---------------------------------------------------------
-
-    await user.save();
-
-    console.log(
-      `✅ Plan activated | user=${userId} | plan=${planId} | amount=${planAmount} | balance=${user.balance} | timerStart=${user.timerStart}`
-    );
-
-    // ---------------------------------------------------------
-    // RESPONSE
-    // ---------------------------------------------------------
-
-    return res.json({
-      success: true,
-      message: "🎉 تم تفعيل الخطة بنجاح",
-      user: publicUser(user)
-    });
-
-  } catch (error) {
-    console.error(
-      "❌ Activate plan error:",
-      error
-    );
-
-    return res.status(500).json({
-      success: false,
-      message: "❌ حدث خطأ أثناء تفعيل الخطة"
-    });
   }
-});
+);
+
+// =========================================================
+// ADMIN - UPDATE USER (تم تعديله لضمان التوافق)
+// =========================================================
+
+app.put(
+  "/api/admin/user/:userId",
+  async (req, res) => {
+    try {
+      const userId = String(
+        req.params.userId || ""
+      ).trim();
+
+      const updateData = {
+        ...(req.body || {})
+      };
+
+      delete updateData._id;
+      delete updateData.__v;
+      delete updateData.password;
+      delete updateData.id;
+      delete updateData.userId;
+      delete updateData.email;
+
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: "❌ معرف المستخدم مطلوب"
+        });
+      }
+
+      const user =
+        await User.findOneAndUpdate(
+          { userId: userId }, // تأكد من أن الحقل userId يستخدم بشكل صحيح
+          { $set: updateData },
+          {
+            new: true,
+            runValidators: true
+          }
+        ).select("-password");
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "❌ المستخدم غير موجود"
+        });
+      }
+
+      // إعادة حساب الأرباح بعد التعديل
+      await calculateAndAddProfit(user);
+
+      return res.json({
+        success: true,
+        message:
+          "✅ تم تحديث المستخدم بنجاح",
+        user: {
+          ...user.toObject(),
+          id:
+            user.userId ||
+            user._id.toString(),
+          userId:
+            user.userId ||
+            user._id.toString()
+        }
+      });
+    } catch (error) {
+      console.error(
+        "❌ Admin update error:",
+        error
+      );
+
+      return res.status(500).json({
+        success: false,
+        message: "❌ خطأ في الخادم"
+      });
+    }
+  }
+);
 // =========================================================
 // ADMIN - GET ALL USERS
 // =========================================================
