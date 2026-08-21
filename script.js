@@ -1747,6 +1747,7 @@ function renderDashboard() {
   setText("dashName", user.name || "User");
   setText("dashUserId", user.userId || "—");
   setText("dashBalance", money(user.balance));
+  updateHeaderBalance();
   setText("dashProfit", money(user.profit));
   setText("dashPlan", user.plan || "—");
   setText("dashStart", user.planStart ? new Date(user.planStart).toLocaleDateString() : "—");
@@ -2706,3 +2707,36 @@ window.showUserIdAfterRegistration = showUserIdAfterRegistration;
 console.log('✅ TΔWØRM-V99 🜁 loaded successfully');
 console.log('📌 All functions exported globally');
 console.log('📡 API_URL:', API_URL);
+
+// =========================================================
+//  HEADER BALANCE UPDATE - FIXED
+// =========================================================
+
+function updateHeaderBalance() {
+  const user = getCurrentUser();
+  const el = document.getElementById('headerBalanceAmount');
+  if (el) {
+    if (user && user.balance !== undefined) {
+      el.textContent = '$' + Number(user.balance || 0).toFixed(2);
+    } else {
+      el.textContent = '$0.00';
+    }
+  }
+}
+window.updateHeaderBalance = updateHeaderBalance;
+
+// تشغيل عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+  // انتظر شوية عشان السيرفر يرد
+  setTimeout(updateHeaderBalance, 100);
+});
+
+// تشغيل بعد مزامنة المستخدم من السيرفر
+const originalSync = window.syncCurrentUserFromServer;
+if (originalSync) {
+  window.syncCurrentUserFromServer = async function() {
+    const result = await originalSync();
+    updateHeaderBalance();
+    return result;
+  };
+}
