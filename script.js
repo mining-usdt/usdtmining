@@ -115,6 +115,7 @@ window.toast = toast;
 
 const I18N = {
   ar: {
+    referral: "🎯 كود الدعوة",
     home: "الرئيسية",
     plans: "خطط التعدين",
     deposit: "الإيداع",
