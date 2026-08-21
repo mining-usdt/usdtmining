@@ -1993,7 +1993,7 @@ function setupRegister() {
     if (saved) {
       toast("✅ " + t("registered") + " 🆔 معرفك: " + saved.userId);
       setTimeout(() => {
-        window.location.href = "dashboard.html";
+        window.location.href = "index.html";
       }, 1500);
     } else {
       toast("❌ فشل إنشاء الحساب، حاول مرة أخرى");
