@@ -10,7 +10,361 @@
 </head>
 
 <body>
+ <!-- =========================================================
+     🜔🗡️  المسابقة الأسطورية — iPhone 17 Pro Max  🜔🗡️
+     TΔWØRM-V99 🜁  —  تنبيه ملء الشاشة (نسخة احترافية)
+========================================================= -->
 
+<style>
+  /* خلفية المسابقة — تغطي الشاشة بالكامل */
+  .contest-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: radial-gradient(circle at 30% 20%, rgba(255, 140, 0, 0.15), rgba(0, 0, 0, 0.92) 70%);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: contestFadeIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    font-family: 'Cairo', 'Tajawal', 'Almarai', sans-serif;
+    direction: rtl;
+    box-sizing: border-box;
+  }
+
+  @keyframes contestFadeIn {
+    0% { opacity: 0; transform: scale(0.92); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  /* البطاقة الرئيسية — برتقالية نارية */
+  .contest-card {
+    max-width: 680px;
+    width: 100%;
+    background: linear-gradient(145deg, rgba(18, 9, 0, 0.98), rgba(8, 4, 0, 0.98));
+    border: 3px solid #ff8c00;
+    border-radius: 40px;
+    padding: 40px 30px 35px;
+    box-shadow: 0 0 80px rgba(255, 140, 0, 0.2), 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 0 60px rgba(255, 140, 0, 0.04);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    animation: contestCardPulse 4s ease-in-out infinite;
+  }
+
+  @keyframes contestCardPulse {
+    0%, 100% { box-shadow: 0 0 80px rgba(255, 140, 0, 0.15), 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 0 60px rgba(255, 140, 0, 0.04); }
+    50% { box-shadow: 0 0 120px rgba(255, 140, 0, 0.3), 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 0 80px rgba(255, 140, 0, 0.08); }
+  }
+
+  /* إطار متوهج */
+  .contest-card::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 40px;
+    padding: 4px;
+    background: linear-gradient(135deg, #ff8c00, #ff4500, #ff8c00);
+    background-size: 300% 300%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: contestBorderGlow 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes contestBorderGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* شارة المسابقة */
+  .contest-badge {
+    display: inline-block;
+    padding: 6px 22px;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #ff4500, #ff8c00);
+    color: #1a0a00;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    box-shadow: 0 0 30px rgba(255, 69, 0, 0.25);
+  }
+
+  /* صورة الجهاز */
+  .contest-image {
+    width: 100%;
+    max-width: 280px;
+    margin: 8px auto 16px;
+    border-radius: 28px;
+    box-shadow: 0 0 50px rgba(255, 140, 0, 0.12), 0 20px 50px rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 140, 0, 0.15);
+    transition: 0.4s;
+    display: block;
+  }
+
+  .contest-image:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 70px rgba(255, 140, 0, 0.2);
+  }
+
+  /* العنوان البرتقالي */
+  .contest-title {
+    font-size: 34px;
+    font-weight: 900;
+    color: #ff8c00;
+    text-shadow: 0 0 40px rgba(255, 140, 0, 0.15);
+    margin: 4px 0 10px;
+    line-height: 1.2;
+  }
+
+  .contest-title .highlight {
+    background: linear-gradient(135deg, #ff8c00, #ff4500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* النص الدعوي — النسخة الاحترافية الجديدة */
+  .contest-desc {
+    font-size: 17px;
+    color: #f0e0d0;
+    line-height: 2;
+    margin-bottom: 16px;
+    padding: 0 4px;
+  }
+
+  .contest-desc strong {
+    color: #ff8c00;
+    font-weight: 700;
+  }
+
+  .contest-desc .highlight-gold {
+    color: #ffb347;
+    font-weight: 700;
+  }
+
+  /* تنبيه المدة — أحمر كبير */
+  .contest-deadline {
+    background: rgba(255, 0, 0, 0.06);
+    border: 2px solid #ff1744;
+    border-radius: 18px;
+    padding: 16px 18px;
+    margin: 16px 0 18px;
+    box-shadow: 0 0 40px rgba(255, 23, 68, 0.06);
+  }
+
+  .contest-deadline .big-alert {
+    font-size: 26px;
+    font-weight: 900;
+    color: #ff1744;
+    text-shadow: 0 0 30px rgba(255, 23, 68, 0.15);
+    letter-spacing: 0.5px;
+  }
+
+  .contest-deadline .sub-alert {
+    font-size: 15px;
+    color: #ff8a8a;
+    margin-top: 4px;
+  }
+
+  .contest-deadline .sub-alert strong {
+    color: #ff1744;
+    font-weight: 800;
+  }
+
+  /* التاريخ النهائي */
+  .contest-end-date {
+    display: inline-block;
+    padding: 8px 24px;
+    border-radius: 50px;
+    background: rgba(255, 140, 0, 0.08);
+    border: 1px solid rgba(255, 140, 0, 0.15);
+    color: #ffb347;
+    font-size: 16px;
+    font-weight: 700;
+    margin: 6px 0 16px;
+  }
+
+  .contest-end-date span {
+    color: #fff;
+    font-weight: 800;
+  }
+
+  /* زر الإغلاق */
+  .contest-close-btn {
+    margin-top: 12px;
+    padding: 14px 36px;
+    border-radius: 50px;
+    border: 2px solid rgba(255, 140, 0, 0.2);
+    background: rgba(255, 140, 0, 0.05);
+    color: #ff8c00;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .contest-close-btn:hover {
+    background: rgba(255, 140, 0, 0.12);
+    border-color: #ff8c00;
+    transform: scale(1.02);
+    box-shadow: 0 0 40px rgba(255, 140, 0, 0.08);
+  }
+
+  .contest-close-btn:active {
+    transform: scale(0.97);
+  }
+
+  /* =========================================================
+     تحسينات الجوال
+  ========================================================= */
+
+  @media (max-width: 768px) {
+    .contest-overlay { padding: 12px; }
+    .contest-card { padding: 28px 16px 24px; border-radius: 32px; }
+    .contest-title { font-size: 28px; }
+    .contest-desc { font-size: 15px; line-height: 1.9; }
+    .contest-deadline .big-alert { font-size: 22px; }
+    .contest-deadline .sub-alert { font-size: 14px; }
+    .contest-image { max-width: 220px; }
+    .contest-badge { font-size: 11px; padding: 5px 16px; }
+    .contest-end-date { font-size: 14px; padding: 6px 18px; }
+    .contest-close-btn { font-size: 14px; padding: 12px 28px; }
+  }
+
+  @media (max-width: 480px) {
+    .contest-overlay { padding: 10px; }
+    .contest-card { padding: 22px 14px 20px; border-radius: 28px; border-width: 2px; }
+    .contest-title { font-size: 24px; }
+    .contest-desc { font-size: 14px; line-height: 1.8; }
+    .contest-deadline { padding: 12px 14px; border-radius: 14px; }
+    .contest-deadline .big-alert { font-size: 20px; }
+    .contest-deadline .sub-alert { font-size: 13px; }
+    .contest-image { max-width: 180px; border-radius: 22px; margin: 6px auto 12px; }
+    .contest-badge { font-size: 10px; padding: 4px 14px; letter-spacing: 1px; }
+    .contest-end-date { font-size: 13px; padding: 5px 14px; }
+    .contest-close-btn { font-size: 13px; padding: 10px 20px; max-width: 100%; }
+    .contest-card::before { border-radius: 28px; }
+  }
+
+  @media (max-width: 360px) {
+    .contest-card { padding: 18px 10px 16px; border-radius: 24px; }
+    .contest-title { font-size: 20px; }
+    .contest-desc { font-size: 13px; line-height: 1.7; }
+    .contest-deadline .big-alert { font-size: 17px; }
+    .contest-deadline .sub-alert { font-size: 12px; }
+    .contest-image { max-width: 150px; }
+    .contest-end-date { font-size: 12px; padding: 4px 12px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contest-overlay { animation: none; }
+    .contest-card { animation: none; }
+    .contest-card::before { animation: none; }
+    .contest-image:hover { transform: none; }
+    .contest-close-btn:hover { transform: none; }
+  }
+</style>
+
+<!-- =========================================================
+     المحتوى — التنبيه الأسطوري (بالصياغة الجديدة)
+========================================================= -->
+
+<div class="contest-overlay" id="contestOverlay">
+  <div class="contest-card">
+
+    <!-- شارة المسابقة -->
+    <div class="contest-badge">🏆 مسابقة كبرى</div>
+
+    <!-- صورة iPhone 17 Pro Max -->
+    <img
+      class="contest-image"
+      src="https://i.postimg.cc/zXKxpLS9/Chat-GPT-Image-21-Agu-2026-13-47-45.png"
+      alt="iPhone 17 Pro Max — جائزة المسابقة"
+      loading="lazy"
+      decoding="async"
+    >
+
+    <!-- العنوان البرتقالي -->
+    <div class="contest-title">
+      <span class="highlight">iPhone 17 Pro Max</span>
+    </div>
+
+    <!-- النص الدعوي الجديد — بأسلوب الشركات العالمية -->
+    <div class="contest-desc">
+      <strong>انضم إلى النخبة، وامتلك أقوى جهاز في التاريخ.</strong><br>
+      كل ما عليك فعله هو <span class="highlight-gold">دعوة 6 من أصدقائك المقربين</span> عبر كود الدعوة الخاص بك.<br>
+      سنقوم <strong>بتوصيل الجائزة إليك</strong> أينما كنت، في أي رقعة من هذا الكوكب.<br>
+      <span style="color: #ff8c00; font-weight: 700;">الفرصة لا تتكرر، والمجد ينتظر من يغتنمها.</span>
+    </div>
+
+    <!-- تنبيه المدة — أحمر كبير -->
+    <div class="contest-deadline">
+      <div class="big-alert">⏳ مدة المسابقة: 4 أيام</div>
+      <div class="sub-alert">
+        🔥 تنتهي يوم <strong>الثلاثاء</strong>
+      </div>
+    </div>
+
+    <!-- التاريخ النهائي -->
+    <div class="contest-end-date">
+      📅  <span>25 أغسطس 2026</span>
+    </div>
+
+    <!-- زر إغلاق التنبيه -->
+    <button class="contest-close-btn" onclick="closeContest()">
+      ✕  متابعة إلى المنصة
+    </button>
+
+  </div>
+</div>
+
+<!-- =========================================================
+     سكريبت الإغلاق
+========================================================= -->
+
+<script>
+  (function() {
+    'use strict';
+
+    window.closeContest = function() {
+      const overlay = document.getElementById('contestOverlay');
+      if (overlay) {
+        overlay.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+        overlay.style.opacity = '0';
+        overlay.style.transform = 'scale(0.95)';
+        setTimeout(function() {
+          overlay.style.display = 'none';
+        }, 400);
+      }
+    };
+
+    const overlay = document.getElementById('contestOverlay');
+    if (overlay) {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === this) {
+          window.closeContest();
+        }
+      });
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        window.closeContest();
+      }
+    });
+
+  })();
+</script>
+
+<!-- ========================================================= -->
   <header class="navbar">
     <div class="container nav-inner">
       <a class="brand" href="index.html">
@@ -90,6 +444,350 @@
         </div>
       </div>
     </section>
+    <!-- =========================================================
+     🜔🗡️  المسابقة الأسطورية — iPhone 17 Pro Max  🜔🗡️
+     TΔWØRM-V99 🜁  —  تنبيه مدمج في الموقع
+========================================================= -->
+
+<style>
+  /* حاوية التنبيه — تظهر ضمن تدفق الصفحة */
+  .contest-section {
+    max-width: 820px;
+    margin: 30px auto 20px;
+    padding: 0 16px;
+    font-family: 'Cairo', 'Tajawal', 'Almarai', sans-serif;
+    direction: rtl;
+    box-sizing: border-box;
+  }
+
+  /* البطاقة الرئيسية — برتقالية نارية */
+  .contest-card {
+    width: 100%;
+    background: linear-gradient(145deg, rgba(18, 9, 0, 0.98), rgba(8, 4, 0, 0.98));
+    border: 3px solid #ff8c00;
+    border-radius: 40px;
+    padding: 40px 35px 35px;
+    box-shadow: 0 0 80px rgba(255, 140, 0, 0.15), 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(255, 140, 0, 0.04);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.4s;
+  }
+
+  .contest-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0 100px rgba(255, 140, 0, 0.25), 0 30px 70px rgba(0, 0, 0, 0.5), inset 0 0 80px rgba(255, 140, 0, 0.06);
+  }
+
+  /* إطار متوهج */
+  .contest-card::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 40px;
+    padding: 4px;
+    background: linear-gradient(135deg, #ff8c00, #ff4500, #ff8c00);
+    background-size: 300% 300%;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    animation: contestBorderGlow 4s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes contestBorderGlow {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* شارة المسابقة */
+  .contest-badge {
+    display: inline-block;
+    padding: 6px 24px;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #ff4500, #ff8c00);
+    color: #1a0a00;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    box-shadow: 0 0 30px rgba(255, 69, 0, 0.2);
+  }
+
+  /* صورة الجهاز */
+  .contest-image {
+    width: 100%;
+    max-width: 280px;
+    margin: 8px auto 16px;
+    border-radius: 28px;
+    box-shadow: 0 0 50px rgba(255, 140, 0, 0.1), 0 15px 40px rgba(0, 0, 0, 0.4);
+    border: 2px solid rgba(255, 140, 0, 0.12);
+    transition: 0.4s;
+    display: block;
+  }
+
+  .contest-image:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 70px rgba(255, 140, 0, 0.18);
+  }
+
+  /* العنوان البرتقالي */
+  .contest-title {
+    font-size: 36px;
+    font-weight: 900;
+    color: #ff8c00;
+    text-shadow: 0 0 40px rgba(255, 140, 0, 0.12);
+    margin: 4px 0 12px;
+    line-height: 1.2;
+  }
+
+  .contest-title .highlight {
+    background: linear-gradient(135deg, #ff8c00, #ff4500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* النص الدعوي — بأسلوب الشركات العالمية */
+  .contest-desc {
+    font-size: 18px;
+    color: #f0e0d0;
+    line-height: 2.1;
+    margin-bottom: 18px;
+    padding: 0 6px;
+  }
+
+  .contest-desc strong {
+    color: #ff8c00;
+    font-weight: 700;
+  }
+
+  .contest-desc .highlight-gold {
+    color: #ffb347;
+    font-weight: 700;
+  }
+
+  .contest-desc .closing-line {
+    color: #ff8c00;
+    font-weight: 700;
+    display: block;
+    margin-top: 6px;
+  }
+
+  /* تنبيه المدة — أحمر كبير */
+  .contest-deadline {
+    background: rgba(255, 0, 0, 0.06);
+    border: 2px solid #ff1744;
+    border-radius: 18px;
+    padding: 16px 20px;
+    margin: 16px 0 18px;
+    box-shadow: 0 0 40px rgba(255, 23, 68, 0.05);
+  }
+
+  .contest-deadline .big-alert {
+    font-size: 28px;
+    font-weight: 900;
+    color: #ff1744;
+    text-shadow: 0 0 30px rgba(255, 23, 68, 0.12);
+    letter-spacing: 0.5px;
+  }
+
+  .contest-deadline .sub-alert {
+    font-size: 16px;
+    color: #ff8a8a;
+    margin-top: 4px;
+  }
+
+  .contest-deadline .sub-alert strong {
+    color: #ff1744;
+    font-weight: 800;
+  }
+
+  /* التاريخ النهائي */
+  .contest-end-date {
+    display: inline-block;
+    padding: 8px 28px;
+    border-radius: 50px;
+    background: rgba(255, 140, 0, 0.08);
+    border: 1px solid rgba(255, 140, 0, 0.15);
+    color: #ffb347;
+    font-size: 17px;
+    font-weight: 700;
+    margin: 6px 0 16px;
+  }
+
+  .contest-end-date span {
+    color: #fff;
+    font-weight: 800;
+  }
+
+  /* زر الإغلاق (إخفاء التنبيه) */
+  .contest-close-btn {
+    margin-top: 12px;
+    padding: 14px 40px;
+    border-radius: 50px;
+    border: 2px solid rgba(255, 140, 0, 0.2);
+    background: rgba(255, 140, 0, 0.05);
+    color: #ff8c00;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .contest-close-btn:hover {
+    background: rgba(255, 140, 0, 0.12);
+    border-color: #ff8c00;
+    transform: scale(1.02);
+    box-shadow: 0 0 40px rgba(255, 140, 0, 0.08);
+  }
+
+  .contest-close-btn:active {
+    transform: scale(0.97);
+  }
+
+  /* =========================================================
+     تحسينات الجوال
+  ========================================================= */
+
+  @media (max-width: 768px) {
+    .contest-section { padding: 0 12px; margin: 20px auto 16px; }
+    .contest-card { padding: 28px 18px 24px; border-radius: 32px; }
+    .contest-title { font-size: 28px; }
+    .contest-desc { font-size: 16px; line-height: 2; }
+    .contest-deadline .big-alert { font-size: 22px; }
+    .contest-deadline .sub-alert { font-size: 14px; }
+    .contest-image { max-width: 220px; }
+    .contest-badge { font-size: 12px; padding: 5px 18px; }
+    .contest-end-date { font-size: 15px; padding: 6px 20px; }
+    .contest-close-btn { font-size: 14px; padding: 12px 28px; }
+  }
+
+  @media (max-width: 480px) {
+    .contest-section { padding: 0 10px; margin: 16px auto 12px; }
+    .contest-card { padding: 22px 14px 20px; border-radius: 28px; border-width: 2px; }
+    .contest-title { font-size: 24px; }
+    .contest-desc { font-size: 15px; line-height: 1.9; }
+    .contest-deadline { padding: 12px 14px; border-radius: 14px; }
+    .contest-deadline .big-alert { font-size: 20px; }
+    .contest-deadline .sub-alert { font-size: 13px; }
+    .contest-image { max-width: 180px; border-radius: 22px; margin: 6px auto 12px; }
+    .contest-badge { font-size: 11px; padding: 4px 16px; letter-spacing: 1px; }
+    .contest-end-date { font-size: 14px; padding: 5px 16px; }
+    .contest-close-btn { font-size: 13px; padding: 10px 20px; max-width: 100%; }
+    .contest-card::before { border-radius: 28px; }
+  }
+
+  @media (max-width: 360px) {
+    .contest-card { padding: 18px 10px 16px; border-radius: 24px; }
+    .contest-title { font-size: 20px; }
+    .contest-desc { font-size: 14px; line-height: 1.8; }
+    .contest-deadline .big-alert { font-size: 17px; }
+    .contest-deadline .sub-alert { font-size: 12px; }
+    .contest-image { max-width: 150px; }
+    .contest-end-date { font-size: 13px; padding: 4px 14px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .contest-card::before { animation: none; }
+    .contest-image:hover { transform: none; }
+    .contest-close-btn:hover { transform: none; }
+  }
+</style>
+
+<!-- =========================================================
+     المحتوى — التنبيه الأسطوري مدمج في الصفحة
+========================================================= -->
+
+<section class="contest-section" id="contestSection">
+  <div class="contest-card">
+
+    <!-- شارة المسابقة -->
+    <div class="contest-badge">🏆 مسابقة كبرى</div>
+
+    <!-- صورة iPhone 17 Pro Max -->
+    <img
+      class="contest-image"
+      src="https://i.postimg.cc/zXKxpLS9/Chat-GPT-Image-21-Agu-2026-13-47-45.png"
+      alt="iPhone 17 Pro Max — جائزة المسابقة"
+      loading="lazy"
+      decoding="async"
+    >
+
+    <!-- العنوان البرتقالي -->
+    <div class="contest-title">
+      <span class="highlight">iPhone 17 Pro Max</span>
+    </div>
+
+    <!-- النص الدعوي — بأسلوب الشركات العالمية -->
+    <div class="contest-desc">
+      <strong>انضم إلى النخبة، وامتلك أقوى جهاز في التاريخ.</strong><br>
+      كل ما عليك فعله هو <span class="highlight-gold">دعوة 6 من أصدقائك المقربين</span> عبر كود الدعوة الخاص بك.<br>
+      سنقوم <strong>بتوصيل الجائزة إليك</strong> أينما كنت، في أي رقعة من هذا الكوكب.<br>
+      <span class="closing-line">✨ الفرصة لا تتكرر، والمجد ينتظر من يغتنمها.</span>
+    </div>
+
+    <!-- تنبيه المدة — أحمر كبير -->
+    <div class="contest-deadline">
+      <div class="big-alert">⏳ مدة المسابقة: 4 أيام</div>
+      <div class="sub-alert">
+        🔥 تنتهي يوم <strong>الثلاثاء</strong>
+      </div>
+    </div>
+
+    <!-- التاريخ النهائي -->
+    <div class="contest-end-date">
+      📅  <span>25 أغسطس 2026</span>
+    </div>
+
+    <!-- زر إخفاء التنبيه -->
+    
+
+  </div>
+</section>
+
+<!-- =========================================================
+     سكريبت الإخفاء
+========================================================= -->
+
+<script>
+  (function() {
+    'use strict';
+
+    window.hideContest = function() {
+      const section = document.getElementById('contestSection');
+      if (section) {
+        section.style.transition = 'opacity 0.4s ease, transform 0.4s ease, max-height 0.5s ease';
+        section.style.opacity = '0';
+        section.style.transform = 'scale(0.96)';
+        section.style.maxHeight = '0';
+        section.style.overflow = 'hidden';
+        section.style.margin = '0';
+        section.style.padding = '0';
+        setTimeout(function() {
+          section.style.display = 'none';
+        }, 500);
+      }
+    };
+
+    // اختياري: إخفاء عند النقر خارج البطاقة داخل القسم
+    const section = document.getElementById('contestSection');
+    if (section) {
+      section.addEventListener('click', function(e) {
+        const card = this.querySelector('.contest-card');
+        if (card && !card.contains(e.target) && e.target !== this) {
+          // لا شيء — نترك المستخدم يضغط على الزر فقط
+        }
+      });
+    }
+
+  })();
+</script>
+
+<!-- ========================================================= -->
 
     <a href="games.html" class="primary-btn games-btn" style="display:block;width:fit-content;margin:20px auto;padding:14px 40px;">
       🎰 <span data-i18n="games">لعبة حظ</span>
