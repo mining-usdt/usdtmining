@@ -950,7 +950,7 @@
 
         plansGrid.innerHTML = plans.map(p => `
           <div class="plan ${p.featured ? 'featured' : ''}">
-            ${p.featured ? '<span class="plan-badge">🔥 الأكثر ربحية</span>' : ''}
+            ${p.featured ? '<span class="plan-badge"> </span>' : ''}
             <h3>${p.id}</h3>
             <div class="plan-price">$${p.amount}</div>
             <ul>
