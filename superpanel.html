@@ -293,6 +293,173 @@
     .glow-pulse-gold { animation: glowPulseGold 2s ease-in-out infinite; }
     @keyframes glowPulseGold { 0%, 100% { box-shadow: 0 0 20px rgba(255,215,0,0.05); } 50% { box-shadow: 0 0 40px rgba(255,215,0,0.15); } }
 
+    /* =========================================================
+       WITHDRAW SECTION STYLES
+    ========================================================= */
+    .withdraw-section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .withdraw-section-header h3 {
+      color: #ffd700;
+      font-size: 20px;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .withdraw-section-header .withdraw-stats {
+      display: flex;
+      gap: 18px;
+      font-size: 13px;
+      color: #77949a;
+    }
+    .withdraw-section-header .withdraw-stats span {
+      color: #f3fffb;
+      font-weight: 700;
+    }
+    .withdraw-section-header .withdraw-stats .pending-count { color: #ffd700; }
+    .withdraw-section-header .withdraw-stats .total-count { color: #00ff9d; }
+
+    .withdraw-table-wrap {
+      overflow-x: auto;
+      margin-top: 5px;
+      border-radius: 16px;
+      border: 1px solid rgba(0,255,157,0.04);
+    }
+    .withdraw-table-wrap table {
+      width: 100%;
+      min-width: 800px;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .withdraw-table-wrap th {
+      background: rgba(0,255,157,0.04);
+      color: #00ff9d;
+      padding: 14px 16px;
+      text-align: right;
+      font-weight: 700;
+      border-bottom: 2px solid rgba(0,255,157,0.08);
+    }
+    .withdraw-table-wrap td {
+      padding: 12px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      color: #c8d8db;
+    }
+    .withdraw-table-wrap tr:hover td {
+      background: rgba(0,255,157,0.02);
+    }
+    .withdraw-table-wrap .status-badge {
+      display: inline-block;
+      padding: 3px 14px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .withdraw-table-wrap .status-badge.pending {
+      background: rgba(255,215,0,0.12);
+      color: #ffd700;
+      border: 1px solid rgba(255,215,0,0.15);
+    }
+    .withdraw-table-wrap .status-badge.completed {
+      background: rgba(0,255,157,0.12);
+      color: #00ff9d;
+      border: 1px solid rgba(0,255,157,0.15);
+    }
+    .withdraw-table-wrap .status-badge.cancelled {
+      background: rgba(255,93,108,0.12);
+      color: #ff5d6c;
+      border: 1px solid rgba(255,93,108,0.15);
+    }
+    .withdraw-table-wrap .action-btns {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .withdraw-table-wrap .action-btns button {
+      padding: 5px 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .withdraw-table-wrap .action-btns button:hover { transform: scale(1.05); }
+    .withdraw-table-wrap .action-btns .approve-btn {
+      background: linear-gradient(135deg, #00b879, #00ff9d);
+      color: #00130d;
+    }
+    .withdraw-table-wrap .action-btns .approve-btn:hover { box-shadow: 0 0 20px rgba(0,255,157,0.25); }
+    .withdraw-table-wrap .action-btns .cancel-btn {
+      background: linear-gradient(135deg, #ff5d6c, #ff3366);
+      color: white;
+    }
+    .withdraw-table-wrap .action-btns .cancel-btn:hover { box-shadow: 0 0 20px rgba(255,93,108,0.25); }
+    .withdraw-table-wrap .action-btns .disabled-btn {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+    .withdraw-table-wrap .empty-row td {
+      text-align: center;
+      color: #77949a;
+      padding: 40px 0;
+    }
+    .withdraw-search-box {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+    .withdraw-search-box input {
+      flex: 1;
+      min-width: 180px;
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 2px solid rgba(0,255,157,0.08);
+      background: rgba(6,16,23,0.8);
+      color: white;
+      outline: none;
+      font-size: 14px;
+      transition: 0.3s;
+    }
+    .withdraw-search-box input:focus {
+      border-color: #00ff9d;
+      box-shadow: 0 0 30px rgba(0,255,157,0.06);
+    }
+    .withdraw-search-box .search-btn-sm {
+      padding: 10px 22px;
+      border-radius: 12px;
+      border: 2px solid rgba(50,184,255,0.15);
+      background: linear-gradient(135deg, rgba(50,184,255,0.05), rgba(50,184,255,0.02));
+      color: #32b8ff;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .withdraw-search-box .search-btn-sm:hover {
+      transform: translateY(-2px);
+      border-color: #32b8ff;
+      box-shadow: 0 0 30px rgba(50,184,255,0.1);
+    }
+    .withdraw-search-box .clear-btn-sm {
+      padding: 10px 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+      background: rgba(255,255,255,0.02);
+      color: #77949a;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .withdraw-search-box .clear-btn-sm:hover {
+      border-color: #ff5d6c;
+      color: #ff5d6c;
+    }
+
     @media (max-width: 1050px) { .admin-stats-premium { grid-template-columns: repeat(2, 1fr); } .admin-grid-premium { grid-template-columns: 1fr; } }
     @media (max-width: 650px) {
       .admin-stats-premium { grid-template-columns: 1fr; }
@@ -309,6 +476,10 @@
       .admin-login-premium .subtitle { font-size: 13px; letter-spacing: 2px; }
       .admin-header-premium .admin-title h1 { font-size: 24px; }
       .admin-header-premium .admin-title small { font-size: 12px; }
+      .withdraw-section-header { flex-direction: column; align-items: stretch; text-align: center; }
+      .withdraw-section-header .withdraw-stats { justify-content: center; }
+      .withdraw-search-box { flex-direction: column; }
+      .withdraw-search-box input { width: 100%; }
     }
     @media (max-width: 450px) {
       .action-grid-premium { grid-template-columns: 1fr; }
@@ -350,64 +521,113 @@
       <div><h1>SUPER PANEL V99</h1><small>KBS <span>✕</span> RT7</small></div>
     </div>
     <div class="admin-actions">
+      <button onclick="switchTab('dashboard')" id="tabDashboardBtn"><span>📊</span> الرئيسية</button>
+      <button onclick="switchTab('withdrawals')" id="tabWithdrawalsBtn" style="border-color:rgba(255,215,0,0.2);color:#ffd700;"><span>💸</span> السحوبات</button>
       <button onclick="refreshData()"><span>🔄</span> تحديث</button>
       <button onclick="exportData()"><span>📥</span> تصدير</button>
       <button class="logout-btn" onclick="adminLogout()"><span>🚪</span> خروج</button>
     </div>
   </div>
 
-  <div class="admin-stats-premium">
-    <div class="admin-stat-premium"><div class="stat-icon">👥</div><div class="stat-number cyan" id="adminTotalUsers">0</div><div class="stat-label">إجمالي المستخدمين</div></div>
-    <div class="admin-stat-premium"><div class="stat-icon">💰</div><div class="stat-number gold" id="adminTotalBalance">$0</div><div class="stat-label">إجمالي الأرصدة</div></div>
-    <div class="admin-stat-premium"><div class="stat-icon">📈</div><div class="stat-number purple" id="adminTotalProfit">$0</div><div class="stat-label">إجمالي الأرباح</div></div>
-    <div class="admin-stat-premium"><div class="stat-icon">📊</div><div class="stat-number" id="adminActivePlans">0</div><div class="stat-label">الخطط النشطة</div></div>
-  </div>
-
-  <div class="admin-grid-premium">
-    <div class="admin-card-premium glow-pulse">
-      <div class="card-title"><span class="icon">🔍</span>التحكم بالحساب<span class="badge">VIP</span></div>
-      <label>🆔 معرف المستخدم (ID) أو البريد</label>
-      <input type="text" id="adminUserId" placeholder="مثال: 497198458 أو email@example.com" dir="ltr">
-      <button class="search-btn" onclick="searchUser()"><span>🔎</span> بحث عن المستخدم</button>
-
-      <div class="user-info-premium" id="userInfoDisplay">
-        <div class="info-grid">
-          <div class="info-row"><span class="info-label">🆔 المعرف</span><span class="info-value green" id="infoUserId">—</span></div>
-          <div class="info-row"><span class="info-label">👤 الاسم</span><span class="info-value" id="infoName">—</span></div>
-          <div class="info-row"><span class="info-label">📧 البريد</span><span class="info-value" id="infoEmail">—</span></div>
-          <div class="info-row"><span class="info-label">💰 الرصيد</span><span class="info-value gold" id="infoBalance">$0.00</span></div>
-          <div class="info-row"><span class="info-label">📈 الأرباح</span><span class="info-value gold" id="infoProfit">$0.00</span></div>
-          <div class="info-row"><span class="info-label">📋 الخطة</span><span class="info-value cyan" id="infoPlan">—</span></div>
-          <div class="info-row full"><span class="info-label">📅 تاريخ الإنشاء</span><span class="info-value" id="infoCreated">—</span></div>
-          <div class="info-row full"><span class="info-label">⏱️ التايمر المتبقي</span><span class="info-value timer-display-admin" id="infoTimer">—</span></div>
-          <div class="info-row full"><span class="info-label">📊 العمليات</span><span class="info-value purple" id="infoTransactions">0</span></div>
-          <div class="info-row full"><span class="info-label">🔗 كود الدعوة</span><span class="info-value green" id="infoReferral">—</span></div>
-        </div>
-      </div>
-
-      <div class="action-grid-premium" id="adminActions">
-        <button class="action-btn-premium deposit" onclick="adminDeposit()">💰 إيداع</button>
-        <button class="action-btn-premium withdraw" onclick="adminWithdraw()">💸 سحب</button>
-        <button class="action-btn-premium info" onclick="viewTransactions()">📜 العمليات</button>
-        <button class="action-btn-premium reset" onclick="resetUserPlan()">🔄 إلغاء الخطة</button>
-        <button class="action-btn-premium timer-reset full" onclick="resetTimerTo25Seconds()">⏱️ تصفير التايمر (25 ثانية)</button>
-        <button class="action-btn-premium delete full" onclick="adminDeleteUser()">🗑️ حذف الحساب</button>
-      </div>
-
-      <div class="amount-input-premium">
-        <input type="number" id="adminAmount" placeholder="المبلغ" step="0.01" min="0" dir="ltr">
-        <div class="quick-btns">
-          <button onclick="setAmount(10)">$10</button>
-          <button onclick="setAmount(50)">$50</button>
-          <button onclick="setAmount(100)">$100</button>
-          <button onclick="setAmount(500)">$500</button>
-        </div>
-      </div>
+  <!-- =========================================================
+       TAB 1: DASHBOARD (original)
+  ========================================================= -->
+  <div id="tabDashboard">
+    <div class="admin-stats-premium">
+      <div class="admin-stat-premium"><div class="stat-icon">👥</div><div class="stat-number cyan" id="adminTotalUsers">0</div><div class="stat-label">إجمالي المستخدمين</div></div>
+      <div class="admin-stat-premium"><div class="stat-icon">💰</div><div class="stat-number gold" id="adminTotalBalance">$0</div><div class="stat-label">إجمالي الأرصدة</div></div>
+      <div class="admin-stat-premium"><div class="stat-icon">📈</div><div class="stat-number purple" id="adminTotalProfit">$0</div><div class="stat-label">إجمالي الأرباح</div></div>
+      <div class="admin-stat-premium"><div class="stat-icon">📊</div><div class="stat-number" id="adminActivePlans">0</div><div class="stat-label">الخطط النشطة</div></div>
     </div>
 
-    <div class="admin-card-premium glow-pulse-gold">
-      <div class="card-title"><span class="icon">📋</span>المستخدمين<span class="badge" id="userCountLabel">0</span></div>
-      <div class="user-list-premium" id="userList"><div style="text-align:center;color:var(--muted);padding:40px 0;">⏳ جاري التحميل...</div></div>
+    <div class="admin-grid-premium">
+      <div class="admin-card-premium glow-pulse">
+        <div class="card-title"><span class="icon">🔍</span>التحكم بالحساب<span class="badge">VIP</span></div>
+        <label>🆔 معرف المستخدم (ID) أو البريد</label>
+        <input type="text" id="adminUserId" placeholder="مثال: 497198458 أو email@example.com" dir="ltr">
+        <button class="search-btn" onclick="searchUser()"><span>🔎</span> بحث عن المستخدم</button>
+
+        <div class="user-info-premium" id="userInfoDisplay">
+          <div class="info-grid">
+            <div class="info-row"><span class="info-label">🆔 المعرف</span><span class="info-value green" id="infoUserId">—</span></div>
+            <div class="info-row"><span class="info-label">👤 الاسم</span><span class="info-value" id="infoName">—</span></div>
+            <div class="info-row"><span class="info-label">📧 البريد</span><span class="info-value" id="infoEmail">—</span></div>
+            <div class="info-row"><span class="info-label">💰 الرصيد</span><span class="info-value gold" id="infoBalance">$0.00</span></div>
+            <div class="info-row"><span class="info-label">📈 الأرباح</span><span class="info-value gold" id="infoProfit">$0.00</span></div>
+            <div class="info-row"><span class="info-label">📋 الخطة</span><span class="info-value cyan" id="infoPlan">—</span></div>
+            <div class="info-row full"><span class="info-label">📅 تاريخ الإنشاء</span><span class="info-value" id="infoCreated">—</span></div>
+            <div class="info-row full"><span class="info-label">⏱️ التايمر المتبقي</span><span class="info-value timer-display-admin" id="infoTimer">—</span></div>
+            <div class="info-row full"><span class="info-label">📊 العمليات</span><span class="info-value purple" id="infoTransactions">0</span></div>
+            <div class="info-row full"><span class="info-label">🔗 كود الدعوة</span><span class="info-value green" id="infoReferral">—</span></div>
+          </div>
+        </div>
+
+        <div class="action-grid-premium" id="adminActions">
+          <button class="action-btn-premium deposit" onclick="adminDeposit()">💰 إيداع</button>
+          <button class="action-btn-premium withdraw" onclick="adminWithdraw()">💸 سحب</button>
+          <button class="action-btn-premium info" onclick="viewTransactions()">📜 العمليات</button>
+          <button class="action-btn-premium reset" onclick="resetUserPlan()">🔄 إلغاء الخطة</button>
+          <button class="action-btn-premium timer-reset full" onclick="resetTimerTo25Seconds()">⏱️ تصفير التايمر (25 ثانية)</button>
+          <button class="action-btn-premium delete full" onclick="adminDeleteUser()">🗑️ حذف الحساب</button>
+        </div>
+
+        <div class="amount-input-premium">
+          <input type="number" id="adminAmount" placeholder="المبلغ" step="0.01" min="0" dir="ltr">
+          <div class="quick-btns">
+            <button onclick="setAmount(10)">$10</button>
+            <button onclick="setAmount(50)">$50</button>
+            <button onclick="setAmount(100)">$100</button>
+            <button onclick="setAmount(500)">$500</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card-premium glow-pulse-gold">
+        <div class="card-title"><span class="icon">📋</span>المستخدمين<span class="badge" id="userCountLabel">0</span></div>
+        <div class="user-list-premium" id="userList"><div style="text-align:center;color:var(--muted);padding:40px 0;">⏳ جاري التحميل...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       TAB 2: WITHDRAWALS (NEW)
+  ========================================================= -->
+  <div id="tabWithdrawals" style="display:none;">
+    <div class="admin-card-premium" style="padding:25px;">
+      <div class="withdraw-section-header">
+        <h3>💸 إدارة السحوبات</h3>
+        <div class="withdraw-stats">
+          <span>🟡 قيد الانتظار: <span class="pending-count" id="withdrawPendingCount">0</span></span>
+          <span>✅ مكتملة: <span id="withdrawCompletedCount">0</span></span>
+          <span>📊 إجمالي: <span class="total-count" id="withdrawTotalCount">0</span></span>
+        </div>
+      </div>
+
+      <div class="withdraw-search-box">
+        <input type="text" id="withdrawSearchInput" placeholder="🔍 بحث عن طريق معرف المستخدم أو البريد..." dir="ltr">
+        <button class="search-btn-sm" onclick="searchWithdrawals()">🔎 بحث</button>
+        <button class="clear-btn-sm" onclick="clearWithdrawSearch()">✕ مسح</button>
+        <button class="search-btn-sm" style="border-color:rgba(0,255,157,0.15);color:#00ff9d;" onclick="refreshWithdrawals()">🔄 تحديث</button>
+      </div>
+
+      <div class="withdraw-table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>🆔 المستخدم</th>
+              <th>👤 الاسم</th>
+              <th>💰 المبلغ</th>
+              <th>🏦 المحفظة</th>
+              <th>📅 التاريخ</th>
+              <th>📌 الحالة</th>
+              <th>⚡ الإجراء</th>
+            </tr>
+          </thead>
+          <tbody id="withdrawTableBody">
+            <tr class="empty-row"><td colspan="7">⏳ جاري تحميل السحوبات...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
@@ -427,7 +647,7 @@
 
 <script>
 // =========================================================
-//   SUPER PANEL V99 - FULLY UPGRADED (FIXED DEPOSIT)
+//   SUPER PANEL V99 - FULLY UPGRADED (FIXED DEPOSIT + WITHDRAWALS)
 // =========================================================
 
 const API_URL = window.location.origin + '/api';
@@ -437,6 +657,8 @@ let soundEnabled = true;
 let currentAdmin = null;
 let selectedUser = null;
 let allUsers = {};
+let currentTab = 'dashboard';
+let withdrawData = [];
 
 // =========================================================
 //   SOUND SYSTEM
@@ -533,6 +755,35 @@ function closeModal() { document.getElementById('modalOverlay').classList.remove
 function confirmModal() {}
 
 // =========================================================
+//   TAB SWITCHING
+// =========================================================
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabDashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
+  document.getElementById('tabWithdrawals').style.display = tab === 'withdrawals' ? 'block' : 'none';
+  
+  // Highlight active tab button
+  const dashboardBtn = document.getElementById('tabDashboardBtn');
+  const withdrawalsBtn = document.getElementById('tabWithdrawalsBtn');
+  if (tab === 'dashboard') {
+    dashboardBtn.style.borderColor = 'rgba(0,255,157,0.15)';
+    dashboardBtn.style.color = '#f3fffb';
+    withdrawalsBtn.style.borderColor = 'rgba(255,215,0,0.2)';
+    withdrawalsBtn.style.color = '#ffd700';
+  } else {
+    dashboardBtn.style.borderColor = 'rgba(0,255,157,0.08)';
+    dashboardBtn.style.color = '#77949a';
+    withdrawalsBtn.style.borderColor = 'rgba(255,215,0,0.3)';
+    withdrawalsBtn.style.color = '#ffd700';
+  }
+  
+  if (tab === 'withdrawals') {
+    refreshWithdrawals();
+  }
+  playSound('click');
+}
+
+// =========================================================
 //   ADMIN LOGIN
 // =========================================================
 const ADMIN_CREDENTIALS = [{ username: 'kbs', password: 'kbs' }, { username: 'rt7', password: 'rt7' }];
@@ -592,6 +843,8 @@ async function loadUsers() {
         }
       }
       showNotification('✅ تم تحديث البيانات من الخادم', '🔄');
+      // Refresh withdrawals if tab is active
+      if (currentTab === 'withdrawals') refreshWithdrawals();
     } else {
       showNotification('❌ فشل تحميل المستخدمين: ' + (data.message || 'خطأ غير معروف'), '❌');
     }
@@ -747,7 +1000,7 @@ function getAmount() {
 }
 
 // =========================================================
-//   ADMIN DEPOSIT (FIXED - now uses updated balance from server)
+//   ADMIN DEPOSIT (FIXED)
 // =========================================================
 async function adminDeposit() {
   console.log('💰 adminDeposit called');
@@ -790,17 +1043,11 @@ async function adminDeposit() {
     if (data.success) {
       const updatedUser = data.user;
       if (updatedUser) {
-        // تحديث البيانات محلياً من البيانات التي أرجعها الخادم
         selectedUser = updatedUser;
         if (updatedUser.userId) allUsers[updatedUser.userId] = updatedUser;
         if (updatedUser.email) allUsers[updatedUser.email] = updatedUser;
-        
-        // عرض المعلومات المحدثة فوراً
         displayUserInfo(updatedUser);
-        
-        // تحديث قائمة المستخدمين من الخادم للتأكد من التطابق
         await loadUsers();
-        
         playSound('coin');
         showNotification(`✅ تم إيداع $${amount.toFixed(2)} بنجاح`, '💰');
         document.getElementById('adminAmount').value = '';
@@ -1050,11 +1297,289 @@ async function viewTransactions() {
 }
 
 // =========================================================
+//   WITHDRAWALS SECTION - CORE FUNCTIONS
+// =========================================================
+
+function extractWithdrawals(users) {
+  const allWithdraws = [];
+  const userIds = Object.keys(users);
+  for (const key of userIds) {
+    const user = users[key];
+    if (!user.transactions || !Array.isArray(user.transactions)) continue;
+    for (const tx of user.transactions) {
+      // Check if it's a withdrawal transaction
+      const isWithdraw = 
+        (tx.type && (tx.type.includes('سحب') || tx.type.includes('Withdraw') || tx.type.includes('💸') || tx.type.includes('withdraw'))) &&
+        (tx.amount && tx.amount < 0);
+      
+      if (isWithdraw) {
+        allWithdraws.push({
+          userId: user.userId || user.id || '—',
+          name: user.name || 'غير معروف',
+          amount: Math.abs(tx.amount),
+          address: tx.address || tx.walletAddress || '—',
+          date: tx.date || new Date().toISOString(),
+          status: tx.status || 'pending',
+          txIndex: user.transactions.indexOf(tx),
+          rawTx: tx,
+          userEmail: user.email || '—'
+        });
+      }
+    }
+  }
+  
+  // Sort by date (newest first)
+  allWithdraws.sort((a, b) => new Date(b.date) - new Date(a.date));
+  return allWithdraws;
+}
+
+function refreshWithdrawals() {
+  const users = allUsers;
+  const allWithdraws = extractWithdrawals(users);
+  withdrawData = allWithdraws;
+  renderWithdrawalsTable(withdrawData);
+  updateWithdrawStats(withdrawData);
+}
+
+function renderWithdrawalsTable(data) {
+  const tbody = document.getElementById('withdrawTableBody');
+  if (!data.length) {
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="7">📭 لا توجد طلبات سحب حتى الآن</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = data.map(item => {
+    const statusClass = item.status === 'completed' ? 'completed' : item.status === 'cancelled' ? 'cancelled' : 'pending';
+    const statusLabel = item.status === 'completed' ? '✅ مكتمل' : item.status === 'cancelled' ? '❌ ملغي' : '🟡 قيد الانتظار';
+    
+    let actionsHtml = '';
+    if (item.status === 'pending') {
+      actionsHtml = `
+        <div class="action-btns">
+          <button class="approve-btn" onclick="approveWithdrawal('${item.userId}', ${item.txIndex}, '${item.userEmail}')">✅ تأكيد</button>
+          <button class="cancel-btn" onclick="cancelWithdrawal('${item.userId}', ${item.txIndex}, ${item.amount}, '${item.userEmail}')">❌ إلغاء</button>
+        </div>
+      `;
+    } else {
+      actionsHtml = `
+        <div class="action-btns">
+          <button class="disabled-btn" disabled>${item.status === 'completed' ? '✅ تم' : '❌ ملغي'}</button>
+        </div>
+      `;
+    }
+    
+    return `
+      <tr>
+        <td><span style="color:#00ff9d;font-family:monospace;font-size:12px;">${item.userId}</span></td>
+        <td>${item.name}</td>
+        <td style="color:#ffd700;font-weight:700;">$${item.amount.toFixed(2)}</td>
+        <td style="font-family:monospace;font-size:11px;color:#77949a;direction:ltr;text-align:left;">${item.address}</td>
+        <td style="font-size:12px;color:#77949a;">${new Date(item.date).toLocaleString()}</td>
+        <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+        <td>${actionsHtml}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function updateWithdrawStats(data) {
+  const pending = data.filter(item => item.status === 'pending').length;
+  const completed = data.filter(item => item.status === 'completed').length;
+  document.getElementById('withdrawPendingCount').textContent = pending;
+  document.getElementById('withdrawCompletedCount').textContent = completed;
+  document.getElementById('withdrawTotalCount').textContent = data.length;
+}
+
+function searchWithdrawals() {
+  const query = document.getElementById('withdrawSearchInput').value.trim().toLowerCase();
+  if (!query) {
+    renderWithdrawalsTable(withdrawData);
+    return;
+  }
+  const filtered = withdrawData.filter(item => 
+    item.userId.toLowerCase().includes(query) ||
+    item.name.toLowerCase().includes(query) ||
+    item.userEmail.toLowerCase().includes(query)
+  );
+  renderWithdrawalsTable(filtered);
+  updateWithdrawStats(filtered);
+}
+
+function clearWithdrawSearch() {
+  document.getElementById('withdrawSearchInput').value = '';
+  renderWithdrawalsTable(withdrawData);
+  updateWithdrawStats(withdrawData);
+}
+
+// =========================================================
+//   APPROVE WITHDRAWAL
+// =========================================================
+async function approveWithdrawal(userId, txIndex, userEmail) {
+  try {
+    await showModal({
+      icon: '✅',
+      title: 'تأكيد السحب',
+      type: 'success',
+      message: `هل أنت متأكد من تأكيد طلب السحب هذا؟<br><br><span style="color:#ffd700;">سيتم تغيير الحالة إلى "مكتمل"</span>`,
+      details: {
+        '🆔 المستخدم': userId,
+        '💰 المبلغ': '$' + (withdrawData.find(w => w.userId === userId && w.txIndex === txIndex)?.amount || '0').toFixed(2),
+        '📌 الحالة الحالية': 'قيد الانتظار → مكتمل'
+      },
+      confirmText: '✅ تأكيد',
+      cancelText: 'إلغاء'
+    });
+
+    // Find the user in allUsers
+    let targetUser = null;
+    let targetUserKey = null;
+    for (const [key, user] of Object.entries(allUsers)) {
+      if (user.userId === userId || user.email === userEmail) {
+        targetUser = user;
+        targetUserKey = key;
+        break;
+      }
+    }
+    
+    if (!targetUser) {
+      showNotification('❌ لم يتم العثور على المستخدم', '❌');
+      playSound('error');
+      return;
+    }
+
+    // Update the transaction status
+    if (targetUser.transactions && targetUser.transactions[txIndex]) {
+      targetUser.transactions[txIndex].status = 'completed';
+      
+      // Update on server
+      const res = await fetch(`${API_URL}/admin/user/${targetUser.userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactions: targetUser.transactions })
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        // Update local cache
+        if (targetUser.userId) allUsers[targetUser.userId] = data.user;
+        if (targetUser.email) allUsers[targetUser.email] = data.user;
+        
+        // Refresh data
+        await loadUsers();
+        refreshWithdrawals();
+        playSound('success');
+        showNotification('✅ تم تأكيد السحب بنجاح', '✅');
+      } else {
+        showNotification('❌ فشل تحديث الحالة: ' + data.message, '❌');
+        playSound('error');
+      }
+    } else {
+      showNotification('❌ لم يتم العثور على العملية', '❌');
+      playSound('error');
+    }
+  } catch (e) {
+    console.error('❌ Approve withdrawal error:', e);
+    showNotification('❌ فشل تأكيد السحب', '❌');
+    playSound('error');
+  }
+}
+
+// =========================================================
+//   CANCEL WITHDRAWAL (REFUND MONEY)
+// =========================================================
+async function cancelWithdrawal(userId, txIndex, amount, userEmail) {
+  try {
+    await showModal({
+      icon: '💰',
+      title: 'إلغاء السحب واسترجاع المبلغ',
+      type: 'danger',
+      message: `هل أنت متأكد من إلغاء هذا السحب؟<br><br><span style="color:#ffd700;">سيتم <strong>إرجاع $${amount.toFixed(2)}</strong> إلى رصيد المستخدم</span>`,
+      details: {
+        '🆔 المستخدم': userId,
+        '💰 المبلغ المسترجع': '$' + amount.toFixed(2),
+        '📌 الإجراء': 'إلغاء السحب + استرجاع الرصيد'
+      },
+      confirmText: '💰 تأكيد الإلغاء والاسترجاع',
+      cancelText: 'إلغاء'
+    });
+
+    // Find the user in allUsers
+    let targetUser = null;
+    let targetUserKey = null;
+    for (const [key, user] of Object.entries(allUsers)) {
+      if (user.userId === userId || user.email === userEmail) {
+        targetUser = user;
+        targetUserKey = key;
+        break;
+      }
+    }
+    
+    if (!targetUser) {
+      showNotification('❌ لم يتم العثور على المستخدم', '❌');
+      playSound('error');
+      return;
+    }
+
+    // Update the transaction status and refund the money
+    if (targetUser.transactions && targetUser.transactions[txIndex]) {
+      // Remove the withdrawal transaction (or mark as cancelled)
+      targetUser.transactions[txIndex].status = 'cancelled';
+      
+      // Add a refund transaction
+      targetUser.transactions.unshift({
+        type: '💰 استرجاع سحب (إلغاء)',
+        amount: amount,
+        date: new Date().toISOString(),
+        status: 'completed',
+        note: `تم إلغاء طلب السحب واسترجاع المبلغ بواسطة الأدمن ${currentAdmin || 'نظام'}`
+      });
+      
+      // Add the money back to balance
+      targetUser.balance = Number(targetUser.balance || 0) + Number(amount);
+      
+      // Update on server
+      const res = await fetch(`${API_URL}/admin/user/${targetUser.userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          transactions: targetUser.transactions,
+          balance: targetUser.balance
+        })
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        // Update local cache
+        if (targetUser.userId) allUsers[targetUser.userId] = data.user;
+        if (targetUser.email) allUsers[targetUser.email] = data.user;
+        
+        // Refresh data
+        await loadUsers();
+        refreshWithdrawals();
+        playSound('coin');
+        showNotification(`💰 تم إلغاء السحب واسترجاع $${amount.toFixed(2)}`, '💰');
+      } else {
+        showNotification('❌ فشل إلغاء السحب: ' + data.message, '❌');
+        playSound('error');
+      }
+    } else {
+      showNotification('❌ لم يتم العثور على العملية', '❌');
+      playSound('error');
+    }
+  } catch (e) {
+    console.error('❌ Cancel withdrawal error:', e);
+    showNotification('❌ فشل إلغاء السحب', '❌');
+    playSound('error');
+  }
+}
+
+// =========================================================
 //   KEYBOARD SHORTCUTS
 // =========================================================
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && document.getElementById('adminUserId') === document.activeElement) searchUser();
   if (e.key === 'Escape') { closeModal(); document.getElementById('adminNotif').classList.remove('show'); }
+  if (e.key === 'F5') { e.preventDefault(); refreshData(); }
 });
 
 // =========================================================
