@@ -373,6 +373,22 @@ document.addEventListener("DOMContentLoaded", function() {
       return;
     }
 
+    // =========================================================
+    //  🛑 إشعار للمستخدم بوجود مشاكل في السحب
+    // =========================================================
+    // عرض تنبيه منفصل لإعلام المستخدم بأن عمليات السحب قيد الصيانة
+    showAlert(
+      "نود إعلامكم بوجود بعض المشاكل في عمليات السحب، ونعمل على حلّها في أقرب وقت ممكن. لا داعي للقلق، فنحن معكم دائمًا.",
+      "🔧"
+    );
+    
+    // نوقف تنفيذ الكود هنا لمنع إتمام عملية السحب
+    return;
+    // =========================================================
+
+    // باقي الكود الخاص بعملية السحب (لن يتم تنفيذه بسبب الـ return أعلاه)
+    // تم تعطيله مؤقتاً لحين حل المشكلة
+    /*
     const amount = Number(document.getElementById("withdrawAmount")?.value || 0);
     const address = document.getElementById("withdrawAddress")?.value.trim();
 
@@ -461,6 +477,7 @@ document.addEventListener("DOMContentLoaded", function() {
     setTimeout(() => {
       window.location.href = "dashboard.html";
     }, 1500);
+    */
   });
 
   // Toast function if not already defined
@@ -479,6 +496,74 @@ document.addEventListener("DOMContentLoaded", function() {
       window.toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
     };
   }
+
+  // =========================================================
+  //  دالة showAlert لإنشاء التنبيهات المخصصة
+  // =========================================================
+  function showAlert(message, icon = '⚠️') {
+    // إزالة أي تنبيه موجود مسبقاً
+    const existing = document.getElementById('customAlert');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'customAlert';
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.3s ease;
+      padding: 20px;
+    `;
+
+    overlay.innerHTML = `
+      <div style="
+        max-width: 480px;
+        width: 100%;
+        background: linear-gradient(145deg, rgba(8, 24, 31, 0.98), rgba(3, 10, 15, 0.98));
+        border: 2px solid #ffd700;
+        border-radius: 28px;
+        padding: 35px 30px 30px;
+        box-shadow: 0 30px 100px rgba(0, 0, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.15);
+        animation: celebrationPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        text-align: center;
+      ">
+        <div style="font-size: 52px; margin-bottom: 10px;">${icon}</div>
+        <h2 style="font-size: 24px; font-weight: 800; color: #ffd700; margin-bottom: 10px;">⚠️ عذراً، السحب غير متاح حالياً</h2>
+        <div style="color: #f3fffb; font-size: 15px; line-height: 1.9; margin-bottom: 25px; padding: 15px; background: rgba(255, 215, 0, 0.06); border-radius: 16px; border: 1px solid rgba(255, 215, 0, 0.15);">
+          ${message}
+        </div>
+        <button onclick="document.getElementById('customAlert').remove()" style="
+          padding: 14px 32px;
+          border-radius: 14px;
+          border: none;
+          background: linear-gradient(135deg, #ffd700, #ffab00);
+          color: #1a0a00;
+          font-weight: 800;
+          font-size: 16px;
+          cursor: pointer;
+          transition: all 0.3s;
+          box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+          حسناً
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // إغلاق عند الضغط خارج النافذة
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) overlay.remove();
+    });
+  }
+
+  // جعل الدالة عامة
+  window.showAlert = showAlert;
 });
 </script>
 
