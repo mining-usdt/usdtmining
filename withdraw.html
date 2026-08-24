@@ -159,6 +159,7 @@ class="icon-btn mobile-toggle"
 class="mini"
 data-i18n="withdrawSub"
 >
+السحب يتم بشكل فوري بعد التأكيد.
 </p>
 
 
@@ -217,7 +218,7 @@ required
 
 <input
 id="withdrawAddress"
-placeholder="-WALLET-ADDRESS-"
+placeholder="أدخل عنوان محفظتك هنا"
 required
 >
 
@@ -238,8 +239,7 @@ data-i18n="requestWithdraw"
 
 
 <div class="notice" data-i18n="withdrawNotice">
-
-
+⚠️ سيتم مراجعة طلب السحب من قبل الإدارة قبل إتمامه.
 </div>
 
 
@@ -319,7 +319,7 @@ Dashboard
 <div>
 
 <h4 data-i18n="footerSocial">
-Socıal
+Social
 </h4>
 
 <a href="#" data-i18n="telegram">
@@ -344,6 +344,143 @@ Email
 
 </footer>
 
+<script>
+// =========================================================
+//   WITHDRAW PAGE - FIXED: Saves wallet address correctly
+// =========================================================
+
+document.addEventListener("DOMContentLoaded", function() {
+  
+  const form = document.getElementById("withdrawForm");
+  if (!form) return;
+
+  // Load user balance
+  const user = JSON.parse(localStorage.getItem("currentUser"));
+  const balanceEl = document.getElementById("withdrawBalance");
+  if (user && balanceEl) {
+    balanceEl.textContent = "$" + Number(user.balance || 0).toFixed(2);
+  }
+
+  form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const user = JSON.parse(localStorage.getItem("currentUser"));
+    if (!user) {
+      toast("⚠️ يرجى تسجيل الدخول أولاً");
+      setTimeout(() => {
+        window.location.href = "register.html";
+      }, 1000);
+      return;
+    }
+
+    const amount = Number(document.getElementById("withdrawAmount")?.value || 0);
+    const address = document.getElementById("withdrawAddress")?.value.trim();
+
+    // =========================================================
+    //  شرط الـ 7 أيام
+    // =========================================================
+    if (user.createdAt) {
+      const createdAt = new Date(user.createdAt);
+      const now = new Date();
+      const diffTime = Math.abs(now - createdAt);
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const requiredDays = 7;
+
+      if (diffDays < requiredDays) {
+        const remaining = requiredDays - diffDays;
+        toast(`⛔ لا يمكنك السحب إلا بعد إكمال 7 أيام من التسجيل. الأيام المتبقية: ${remaining} يومًا`);
+        return;
+      }
+    }
+
+    if (!amount || amount <= 0) {
+      toast("⚠️ أدخل مبلغ صحيح");
+      return;
+    }
+
+    if (!address || address.length < 5) {
+      toast("⚠️ أدخل عنوان محفظة صحيح");
+      return;
+    }
+
+    if (Number(user.balance || 0) < amount) {
+      toast("❌ الرصيد غير كافٍ");
+      return;
+    }
+
+    // =========================================================
+    //  CRITICAL FIX: Save wallet address in both fields
+    // =========================================================
+    
+    // Deduct balance
+    user.balance = Number(user.balance || 0) - amount;
+
+    // Add withdrawal transaction with address properly saved
+    if (!user.transactions) user.transactions = [];
+    user.transactions.unshift({
+      type: "💸 طلب سحب",
+      amount: -amount,
+      date: new Date().toISOString(),
+      status: "pending",
+      address: address,           // <--- Main field for Super Panel
+      walletAddress: address,     // <--- Backup field
+      note: `طلب سحب إلى المحفظة: ${address}`
+    });
+
+    // Save to localStorage
+    localStorage.setItem("currentUser", JSON.stringify(user));
+
+    // Also save to server if available
+    try {
+      const res = await fetch(`${window.location.origin}/api/admin/user/${user.userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          balance: user.balance,
+          transactions: user.transactions
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem("currentUser", JSON.stringify(data.user));
+      }
+    } catch (e) {
+      console.warn("⚠️ Could not sync with server, saved locally only");
+    }
+
+    toast("✅ تم تسجيل طلب السحب بنجاح");
+    form.reset();
+
+    // Update balance display
+    const balanceEl = document.getElementById("withdrawBalance");
+    if (balanceEl) {
+      balanceEl.textContent = "$" + Number(user.balance || 0).toFixed(2);
+    }
+
+    // Redirect to dashboard after 2 seconds
+    setTimeout(() => {
+      window.location.href = "dashboard.html";
+    }, 1500);
+  });
+
+  // Toast function if not already defined
+  if (typeof toast !== "function") {
+    window.toast = function(message) {
+      let el = document.getElementById("toast");
+      if (!el) {
+        el = document.createElement("div");
+        el.id = "toast";
+        el.className = "toast";
+        document.body.appendChild(el);
+      }
+      el.textContent = message;
+      el.classList.add("show");
+      clearTimeout(window.toastTimer);
+      window.toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
+    };
+  }
+});
+</script>
 
 </body>
 </html>
