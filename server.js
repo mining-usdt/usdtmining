@@ -1131,6 +1131,67 @@ if (type === "deposit" && updatedUser.referredBy) {
           }
         }
       };
+      // =========================================================
+//  SUBMIT WITHDRAWAL REQUEST (FROM USER)
+// =========================================================
+
+app.post("/api/withdraw", async (req, res) => {
+  try {
+    const userId = String(req.body.userId || "").trim();
+    const amount = Number(req.body.amount);
+    const address = String(req.body.address || "").trim();
+
+    if (!userId) {
+      return res.status(400).json({ success: false, message: "❌ معرف المستخدم مطلوب" });
+    }
+    if (!amount || amount <= 0) {
+      return res.status(400).json({ success: false, message: "❌ المبلغ غير صالح" });
+    }
+    if (!address || address.length < 5) {
+      return res.status(400).json({ success: false, message: "❌ عنوان المحفظة غير صالح (يجب أن يكون 5 أحرف على الأقل)" });
+    }
+
+    const user = await User.findOne({ userId });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "❌ المستخدم غير موجود" });
+    }
+
+    const currentBalance = Number(user.balance || 0);
+    if (currentBalance < amount) {
+      return res.status(400).json({ success: false, message: `❌ الرصيد غير كافٍ. رصيدك: $${currentBalance.toFixed(2)}` });
+    }
+
+    // خصم الرصيد
+    user.balance = currentBalance - amount;
+
+    // إضافة معاملة السحب
+    if (!Array.isArray(user.transactions)) user.transactions = [];
+    user.transactions.unshift({
+      type: "💸 طلب سحب",
+      amount: -amount,
+      date: new Date(),
+      status: "pending",
+      address: address,
+      walletAddress: address,
+      note: `طلب سحب إلى المحفظة: ${address}`
+    });
+
+    await user.save();
+
+    console.log(`✅ Withdrawal request | user=${userId} | amount=${amount} | address=${address}`);
+    console.log(`📊 New balance: $${user.balance.toFixed(2)}`);
+
+    return res.json({
+      success: true,
+      message: "✅ تم تسجيل طلب السحب بنجاح، في انتظار مراجعة الإدارة",
+      user: publicUser(user)
+    });
+
+  } catch (error) {
+    console.error("❌ Withdrawal error:", error);
+    return res.status(500).json({ success: false, message: "❌ حدث خطأ في الخادم" });
+  }
+});
 
       const referredIndex = (referrer.referredUsers || []).findIndex(
         u => String(u.email).trim().toLowerCase() ===
