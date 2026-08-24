@@ -613,7 +613,7 @@
   </div>
 
   <!-- =========================================================
-       TAB 2: WITHDRAWALS (NEW)
+       TAB 2: WITHDRAWALS (FIXED)
   ========================================================= -->
   <div id="tabWithdrawals" style="display:none;">
     <div class="admin-card-premium" style="padding:25px;">
@@ -785,7 +785,6 @@ function switchTab(tab) {
   document.getElementById('tabDashboard').style.display = tab === 'dashboard' ? 'block' : 'none';
   document.getElementById('tabWithdrawals').style.display = tab === 'withdrawals' ? 'block' : 'none';
   
-  // Highlight active tab button
   const dashboardBtn = document.getElementById('tabDashboardBtn');
   const withdrawalsBtn = document.getElementById('tabWithdrawalsBtn');
   if (tab === 'dashboard') {
@@ -866,7 +865,6 @@ async function loadUsers() {
         }
       }
       showNotification('✅ تم تحديث البيانات من الخادم', '🔄');
-      // Refresh withdrawals if tab is active
       if (currentTab === 'withdrawals') refreshWithdrawals();
     } else {
       showNotification('❌ فشل تحميل المستخدمين: ' + (data.message || 'خطأ غير معروف'), '❌');
@@ -1320,7 +1318,7 @@ async function viewTransactions() {
 }
 
 // =========================================================
-//   WITHDRAWALS SECTION - CORE FUNCTIONS
+//   WITHDRAWALS SECTION - CORE FUNCTIONS (FIXED)
 // =========================================================
 
 function extractWithdrawals(users) {
@@ -1330,7 +1328,7 @@ function extractWithdrawals(users) {
     const user = users[key];
     if (!user.transactions || !Array.isArray(user.transactions)) continue;
     for (const [index, tx] of user.transactions.entries()) {
-      // Check if it's a withdrawal transaction
+      // البحث عن معاملات السحب
       const isWithdraw = 
         tx.type && (
           tx.type.includes('سحب') || 
@@ -1342,7 +1340,6 @@ function extractWithdrawals(users) {
         tx.amount && tx.amount < 0;
       
       if (isWithdraw) {
-        // Get wallet address from multiple possible fields
         const walletAddress = tx.address || tx.walletAddress || tx.wallet || tx.note?.match(/المحفظة:\s*([^\s]+)/)?.[1] || '—';
         
         allWithdraws.push({
@@ -1361,7 +1358,6 @@ function extractWithdrawals(users) {
     }
   }
   
-  // Sort by date (newest first)
   allWithdraws.sort((a, b) => new Date(b.date) - new Date(a.date));
   return allWithdraws;
 }
@@ -1401,7 +1397,6 @@ function renderWithdrawalsTable(data) {
       `;
     }
     
-    // Truncate address for display
     let displayAddress = item.address;
     if (displayAddress.length > 25) {
       displayAddress = displayAddress.substring(0, 12) + '...' + displayAddress.substring(displayAddress.length - 10);
@@ -1473,7 +1468,6 @@ function clearWithdrawSearch() {
 // =========================================================
 async function approveWithdrawal(userId, txIndex, userEmail) {
   try {
-    // Find the withdrawal item to show details
     const withdrawItem = withdrawData.find(w => w.userId === userId && w.txIndex === txIndex);
     
     await showModal({
@@ -1492,7 +1486,6 @@ async function approveWithdrawal(userId, txIndex, userEmail) {
       cancelText: 'إلغاء'
     });
 
-    // Find the user in allUsers
     let targetUser = null;
     for (const [key, user] of Object.entries(allUsers)) {
       if (user.userId === userId || user.email === userEmail) {
@@ -1507,11 +1500,9 @@ async function approveWithdrawal(userId, txIndex, userEmail) {
       return;
     }
 
-    // Update the transaction status
     if (targetUser.transactions && targetUser.transactions[txIndex]) {
       targetUser.transactions[txIndex].status = 'completed';
       
-      // Update on server
       const res = await fetch(`${API_URL}/admin/user/${targetUser.userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -1542,11 +1533,10 @@ async function approveWithdrawal(userId, txIndex, userEmail) {
 }
 
 // =========================================================
-//   CANCEL WITHDRAWAL (REFUND MONEY)
+//   CANCEL WITHDRAWAL (REFUND MONEY) - FIXED
 // =========================================================
 async function cancelWithdrawal(userId, txIndex, amount, userEmail) {
   try {
-    // Find the withdrawal item to show details
     const withdrawItem = withdrawData.find(w => w.userId === userId && w.txIndex === txIndex);
     
     await showModal({
@@ -1565,7 +1555,6 @@ async function cancelWithdrawal(userId, txIndex, amount, userEmail) {
       cancelText: 'إلغاء'
     });
 
-    // Find the user in allUsers
     let targetUser = null;
     for (const [key, user] of Object.entries(allUsers)) {
       if (user.userId === userId || user.email === userEmail) {
@@ -1580,7 +1569,6 @@ async function cancelWithdrawal(userId, txIndex, amount, userEmail) {
       return;
     }
 
-    // Update the transaction status and refund the money
     if (targetUser.transactions && targetUser.transactions[txIndex]) {
       targetUser.transactions[txIndex].status = 'cancelled';
       
