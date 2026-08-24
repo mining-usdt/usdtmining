@@ -333,7 +333,7 @@
     }
     .withdraw-table-wrap table {
       width: 100%;
-      min-width: 800px;
+      min-width: 850px;
       border-collapse: collapse;
       font-size: 13px;
     }
@@ -460,6 +460,24 @@
       color: #ff5d6c;
     }
 
+    .wallet-address-cell {
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: #18ffff;
+      max-width: 160px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      display: inline-block;
+      direction: ltr;
+      text-align: left;
+      cursor: pointer;
+    }
+    .wallet-address-cell:hover {
+      color: #00ff9d;
+      text-decoration: underline;
+    }
+
     @media (max-width: 1050px) { .admin-stats-premium { grid-template-columns: repeat(2, 1fr); } .admin-grid-premium { grid-template-columns: 1fr; } }
     @media (max-width: 650px) {
       .admin-stats-premium { grid-template-columns: 1fr; }
@@ -480,12 +498,17 @@
       .withdraw-section-header .withdraw-stats { justify-content: center; }
       .withdraw-search-box { flex-direction: column; }
       .withdraw-search-box input { width: 100%; }
+      .withdraw-table-wrap table { min-width: 600px; font-size: 12px; }
+      .wallet-address-cell { max-width: 100px; font-size: 10px; }
     }
     @media (max-width: 450px) {
       .action-grid-premium { grid-template-columns: 1fr; }
       .admin-login-premium .login-hint { font-size: 10px; }
       .admin-modal { padding: 25px 18px; }
       .admin-modal .modal-actions button { min-width: 80px; padding: 10px 18px; font-size: 12px; }
+      .withdraw-table-wrap table { min-width: 500px; font-size: 11px; }
+      .withdraw-table-wrap th, .withdraw-table-wrap td { padding: 8px 10px; }
+      .wallet-address-cell { max-width: 70px; font-size: 9px; }
     }
   </style>
 </head>
@@ -1306,23 +1329,33 @@ function extractWithdrawals(users) {
   for (const key of userIds) {
     const user = users[key];
     if (!user.transactions || !Array.isArray(user.transactions)) continue;
-    for (const tx of user.transactions) {
+    for (const [index, tx] of user.transactions.entries()) {
       // Check if it's a withdrawal transaction
       const isWithdraw = 
-        (tx.type && (tx.type.includes('سحب') || tx.type.includes('Withdraw') || tx.type.includes('💸') || tx.type.includes('withdraw'))) &&
-        (tx.amount && tx.amount < 0);
+        tx.type && (
+          tx.type.includes('سحب') || 
+          tx.type.includes('Withdraw') || 
+          tx.type.includes('💸') || 
+          tx.type.includes('withdraw') ||
+          tx.type === '💸 طلب سحب'
+        ) &&
+        tx.amount && tx.amount < 0;
       
       if (isWithdraw) {
+        // Get wallet address from multiple possible fields
+        const walletAddress = tx.address || tx.walletAddress || tx.wallet || tx.note?.match(/المحفظة:\s*([^\s]+)/)?.[1] || '—';
+        
         allWithdraws.push({
           userId: user.userId || user.id || '—',
           name: user.name || 'غير معروف',
           amount: Math.abs(tx.amount),
-          address: tx.address || tx.walletAddress || '—',
+          address: walletAddress,
           date: tx.date || new Date().toISOString(),
           status: tx.status || 'pending',
-          txIndex: user.transactions.indexOf(tx),
+          txIndex: index,
           rawTx: tx,
-          userEmail: user.email || '—'
+          userEmail: user.email || '—',
+          note: tx.note || ''
         });
       }
     }
@@ -1368,18 +1401,40 @@ function renderWithdrawalsTable(data) {
       `;
     }
     
+    // Truncate address for display
+    let displayAddress = item.address;
+    if (displayAddress.length > 25) {
+      displayAddress = displayAddress.substring(0, 12) + '...' + displayAddress.substring(displayAddress.length - 10);
+    }
+    
     return `
       <tr>
         <td><span style="color:#00ff9d;font-family:monospace;font-size:12px;">${item.userId}</span></td>
         <td>${item.name}</td>
         <td style="color:#ffd700;font-weight:700;">$${item.amount.toFixed(2)}</td>
-        <td style="font-family:monospace;font-size:11px;color:#77949a;direction:ltr;text-align:left;">${item.address}</td>
+        <td><span class="wallet-address-cell" title="${item.address}" onclick="copyAddress('${item.address}')">${displayAddress}</span></td>
         <td style="font-size:12px;color:#77949a;">${new Date(item.date).toLocaleString()}</td>
         <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
         <td>${actionsHtml}</td>
       </tr>
     `;
   }).join('');
+}
+
+function copyAddress(address) {
+  if (!address || address === '—') return;
+  navigator.clipboard.writeText(address).then(() => {
+    showNotification('📋 تم نسخ العنوان', '📋');
+    playSound('click');
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = address;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    showNotification('📋 تم نسخ العنوان', '📋');
+  });
 }
 
 function updateWithdrawStats(data) {
@@ -1394,12 +1449,14 @@ function searchWithdrawals() {
   const query = document.getElementById('withdrawSearchInput').value.trim().toLowerCase();
   if (!query) {
     renderWithdrawalsTable(withdrawData);
+    updateWithdrawStats(withdrawData);
     return;
   }
   const filtered = withdrawData.filter(item => 
     item.userId.toLowerCase().includes(query) ||
     item.name.toLowerCase().includes(query) ||
-    item.userEmail.toLowerCase().includes(query)
+    item.userEmail.toLowerCase().includes(query) ||
+    item.address.toLowerCase().includes(query)
   );
   renderWithdrawalsTable(filtered);
   updateWithdrawStats(filtered);
@@ -1416,6 +1473,9 @@ function clearWithdrawSearch() {
 // =========================================================
 async function approveWithdrawal(userId, txIndex, userEmail) {
   try {
+    // Find the withdrawal item to show details
+    const withdrawItem = withdrawData.find(w => w.userId === userId && w.txIndex === txIndex);
+    
     await showModal({
       icon: '✅',
       title: 'تأكيد السحب',
@@ -1423,7 +1483,9 @@ async function approveWithdrawal(userId, txIndex, userEmail) {
       message: `هل أنت متأكد من تأكيد طلب السحب هذا؟<br><br><span style="color:#ffd700;">سيتم تغيير الحالة إلى "مكتمل"</span>`,
       details: {
         '🆔 المستخدم': userId,
-        '💰 المبلغ': '$' + (withdrawData.find(w => w.userId === userId && w.txIndex === txIndex)?.amount || '0').toFixed(2),
+        '👤 الاسم': withdrawItem?.name || '—',
+        '💰 المبلغ': '$' + (withdrawItem?.amount || 0).toFixed(2),
+        '🏦 المحفظة': withdrawItem?.address || '—',
         '📌 الحالة الحالية': 'قيد الانتظار → مكتمل'
       },
       confirmText: '✅ تأكيد',
@@ -1432,11 +1494,9 @@ async function approveWithdrawal(userId, txIndex, userEmail) {
 
     // Find the user in allUsers
     let targetUser = null;
-    let targetUserKey = null;
     for (const [key, user] of Object.entries(allUsers)) {
       if (user.userId === userId || user.email === userEmail) {
         targetUser = user;
-        targetUserKey = key;
         break;
       }
     }
@@ -1460,11 +1520,8 @@ async function approveWithdrawal(userId, txIndex, userEmail) {
       
       const data = await res.json();
       if (data.success) {
-        // Update local cache
         if (targetUser.userId) allUsers[targetUser.userId] = data.user;
         if (targetUser.email) allUsers[targetUser.email] = data.user;
-        
-        // Refresh data
         await loadUsers();
         refreshWithdrawals();
         playSound('success');
@@ -1489,6 +1546,9 @@ async function approveWithdrawal(userId, txIndex, userEmail) {
 // =========================================================
 async function cancelWithdrawal(userId, txIndex, amount, userEmail) {
   try {
+    // Find the withdrawal item to show details
+    const withdrawItem = withdrawData.find(w => w.userId === userId && w.txIndex === txIndex);
+    
     await showModal({
       icon: '💰',
       title: 'إلغاء السحب واسترجاع المبلغ',
@@ -1496,7 +1556,9 @@ async function cancelWithdrawal(userId, txIndex, amount, userEmail) {
       message: `هل أنت متأكد من إلغاء هذا السحب؟<br><br><span style="color:#ffd700;">سيتم <strong>إرجاع $${amount.toFixed(2)}</strong> إلى رصيد المستخدم</span>`,
       details: {
         '🆔 المستخدم': userId,
+        '👤 الاسم': withdrawItem?.name || '—',
         '💰 المبلغ المسترجع': '$' + amount.toFixed(2),
+        '🏦 المحفظة': withdrawItem?.address || '—',
         '📌 الإجراء': 'إلغاء السحب + استرجاع الرصيد'
       },
       confirmText: '💰 تأكيد الإلغاء والاسترجاع',
@@ -1505,11 +1567,9 @@ async function cancelWithdrawal(userId, txIndex, amount, userEmail) {
 
     // Find the user in allUsers
     let targetUser = null;
-    let targetUserKey = null;
     for (const [key, user] of Object.entries(allUsers)) {
       if (user.userId === userId || user.email === userEmail) {
         targetUser = user;
-        targetUserKey = key;
         break;
       }
     }
@@ -1522,10 +1582,8 @@ async function cancelWithdrawal(userId, txIndex, amount, userEmail) {
 
     // Update the transaction status and refund the money
     if (targetUser.transactions && targetUser.transactions[txIndex]) {
-      // Remove the withdrawal transaction (or mark as cancelled)
       targetUser.transactions[txIndex].status = 'cancelled';
       
-      // Add a refund transaction
       targetUser.transactions.unshift({
         type: '💰 استرجاع سحب (إلغاء)',
         amount: amount,
@@ -1534,10 +1592,8 @@ async function cancelWithdrawal(userId, txIndex, amount, userEmail) {
         note: `تم إلغاء طلب السحب واسترجاع المبلغ بواسطة الأدمن ${currentAdmin || 'نظام'}`
       });
       
-      // Add the money back to balance
       targetUser.balance = Number(targetUser.balance || 0) + Number(amount);
       
-      // Update on server
       const res = await fetch(`${API_URL}/admin/user/${targetUser.userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -1549,11 +1605,8 @@ async function cancelWithdrawal(userId, txIndex, amount, userEmail) {
       
       const data = await res.json();
       if (data.success) {
-        // Update local cache
         if (targetUser.userId) allUsers[targetUser.userId] = data.user;
         if (targetUser.email) allUsers[targetUser.email] = data.user;
-        
-        // Refresh data
         await loadUsers();
         refreshWithdrawals();
         playSound('coin');
