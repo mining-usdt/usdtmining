@@ -1040,11 +1040,9 @@ app.post("/api/admin/balance", async (req, res) => {
       });
     }
 
-    // بناء الفلتر
     const filter = userId ? { userId } : { email };
     console.log(`🔍 Searching with filter:`, filter);
 
-    // جلب المستخدم للتحقق من الرصيد في حالة السحب
     let user = await User.findOne(filter);
     if (!user) {
       return res.status(404).json({
@@ -1054,36 +1052,22 @@ app.post("/api/admin/balance", async (req, res) => {
     }
 
     const currentBalance = Number(user.balance || 0);
-    let updateOperation;
-    let txType, txAmount;
 
-    if (type === "deposit") {
-      updateOperation = { $inc: { balance: amount } };
-      txType = "💰 إيداع (أدمن)";
-      txAmount = amount;
-    } else {
-      // withdraw
-      if (currentBalance < amount) {
-        return res.status(400).json({
-          success: false,
-          message: "❌ الرصيد غير كافٍ"
-        });
-      }
-      updateOperation = { $inc: { balance: -amount } };
-      txType = "💸 سحب (أدمن)";
-      txAmount = -amount;
+    if (type === "withdraw" && currentBalance < amount) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ الرصيد غير كافٍ"
+      });
     }
 
-    // إضافة المعاملة إلى المصفوفة
     const transaction = {
-      type: txType,
-      amount: txAmount,
+      type: type === "deposit" ? "💰 إيداع (أدمن)" : "💸 سحب (أدمن)",
+      amount: type === "deposit" ? amount : -amount,
       date: new Date(),
       status: "✅ مكتمل",
       note: `بواسطة الأدمن ${adminName}`
     };
 
-    // استخدام findOneAndUpdate لتحديث الرصيد ودفع المعاملة في عملية ذرية واحدة
     const updatedUser = await User.findOneAndUpdate(
       filter,
       {
@@ -1104,34 +1088,75 @@ app.post("/api/admin/balance", async (req, res) => {
     }
 
     console.log(`✅ Admin ${type} | user=${updatedUser.userId} | amount=${amount} | new balance=${updatedUser.balance}`);
+
     // =========================================================
-// REFERRAL COMMISSION - 10%
-// =========================================================
-if (type === "deposit" && updatedUser.referredBy) {
-  try {
-    const commission = amount * 0.10;
+    // REFERRAL COMMISSION - 10%
+    // =========================================================
+    if (type === "deposit" && updatedUser.referredBy) {
+      try {
+        const commission = amount * 0.10;
 
-    const referrer = await User.findOne({
-      email: String(updatedUser.referredBy).trim().toLowerCase()
-    });
+        const referrer = await User.findOne({
+          email: String(updatedUser.referredBy).trim().toLowerCase()
+        });
 
-    if (referrer) {
-      const referralUpdate = {
-        $inc: {
-          balance: commission,
-          referralBonus: commission
-        },
-        $push: {
-          transactions: {
-            type: "🎁 عمولة دعوة 10%",
-            amount: commission,
-            date: new Date(),
-            status: "✅ مكتمل",
-            note: `عمولة 10% من إيداع المدعو ${updatedUser.email}`
+        if (referrer) {
+          const referralUpdate = {
+            $inc: {
+              balance: commission,
+              referralBonus: commission
+            },
+            $push: {
+              transactions: {
+                type: "🎁 عمولة دعوة 10%",
+                amount: commission,
+                date: new Date(),
+                status: "✅ مكتمل",
+                note: `عمولة 10% من إيداع المدعو ${updatedUser.email}`
+              }
+            }
+          };
+
+          const referredIndex = (referrer.referredUsers || []).findIndex(
+            u => String(u.email).trim().toLowerCase() ===
+                 String(updatedUser.email).trim().toLowerCase()
+          );
+
+          if (referredIndex !== -1) {
+            referralUpdate.$inc[`referredUsers.${referredIndex}.totalDeposits`] = amount;
+            referralUpdate.$inc[`referredUsers.${referredIndex}.commissionEarned`] = commission;
           }
+
+          await User.findOneAndUpdate(
+            { _id: referrer._id },
+            referralUpdate,
+            { new: true, runValidators: true }
+          );
+
+          console.log(
+            `🎁 Referral 10% = ${commission} | referrer=${referrer.email} | referred=${updatedUser.email}`
+          );
         }
-      };
-      // =========================================================
+      } catch (referralError) {
+        console.error("❌ Referral commission error:", referralError);
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: type === "deposit" ? "✅ تم الإيداع بنجاح" : "✅ تم السحب بنجاح",
+      user: publicUser(updatedUser)
+    });
+  } catch (error) {
+    console.error("❌ Admin balance error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "❌ خطأ في الخادم"
+    });
+  }
+});
+
+// =========================================================
 //  SUBMIT WITHDRAWAL REQUEST (FROM USER)
 // =========================================================
 
@@ -1190,44 +1215,6 @@ app.post("/api/withdraw", async (req, res) => {
   } catch (error) {
     console.error("❌ Withdrawal error:", error);
     return res.status(500).json({ success: false, message: "❌ حدث خطأ في الخادم" });
-  }
-});
-
-      const referredIndex = (referrer.referredUsers || []).findIndex(
-        u => String(u.email).trim().toLowerCase() ===
-             String(updatedUser.email).trim().toLowerCase()
-      );
-
-      if (referredIndex !== -1) {
-        referralUpdate.$inc[`referredUsers.${referredIndex}.totalDeposits`] = amount;
-        referralUpdate.$inc[`referredUsers.${referredIndex}.commissionEarned`] = commission;
-      }
-
-      await User.findOneAndUpdate(
-        { _id: referrer._id },
-        referralUpdate,
-        { new: true, runValidators: true }
-      );
-
-      console.log(
-        `🎁 Referral 10% = ${commission} | referrer=${referrer.email} | referred=${updatedUser.email}`
-      );
-    }
-  } catch (referralError) {
-    console.error("❌ Referral commission error:", referralError);
-  }
-}
-    return res.json({
-      success: true,
-      message: type === "deposit" ? "✅ تم الإيداع بنجاح" : "✅ تم السحب بنجاح",
-      user: publicUser(updatedUser)
-    });
-  } catch (error) {
-    console.error("❌ Admin balance error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "❌ خطأ في الخادم"
-    });
   }
 });
 
