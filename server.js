@@ -16,15 +16,6 @@ const PROTECTED_FILES = [
   '.git'
 ];
 
-// منع الوصول إلى هذه الملفات تماماً (تعطي خطأ 404)
-app.use((req, res, next) => {
-  const fileName = req.path.split('/').pop();
-  if (PROTECTED_FILES.includes(fileName)) {
-    return res.status(404).send('الصفحة غير موجودة');
-  }
-  next();
-});
-
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -34,6 +25,17 @@ const path = require("path");
 const fs = require("fs");
 
 const app = express();
+
+// =========================================================
+// منع الوصول إلى الملفات الحساسة (بعد تعريف app)
+// =========================================================
+app.use((req, res, next) => {
+  const fileName = req.path.split('/').pop();
+  if (PROTECTED_FILES.includes(fileName)) {
+    return res.status(404).send('الصفحة غير موجودة');
+  }
+  next();
+});
 
 // =========================================================
 // MIDDLEWARE
@@ -67,6 +69,8 @@ app.options(/.*/, (req, res) => {
   res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   res.sendStatus(200);
 });
+
+// ... باقي الكود كما هو ...
 
 // =========================================================
 // MONGODB CONNECTION
