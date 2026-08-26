@@ -1898,30 +1898,7 @@ function setupWithdrawForm() {
       return;
     }
 
-    // =========================================================
-    //  شرط الـ 7 أيام
-    // =========================================================
-    if (user.createdAt) {
-      const createdAt = new Date(user.createdAt);
-      const now = new Date();
-      const diffTime = Math.abs(now - createdAt);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      const requiredDays = 7;
-
-      if (diffDays < requiredDays) {
-        const remaining = requiredDays - diffDays;
-        const msg = `
-          ⛔ لا يمكنك السحب إلا بعد إكمال 7 أيام من التسجيل في المنصة.<br>
-          <strong style="color: #ffd700;">الأيام المتبقية: ${remaining} يومًا</strong>
-        `;
-        showAlert(msg, '⛔');
-        return;
-      }
-    } else {
-      // إذا لم يكن هناك تاريخ تسجيل (مستخدم قديم)، نسمح بالسحب
-      // أو يمكنك إضافة رسالة تنبيه بدلاً من السماح
-      console.warn('⚠️ المستخدم ليس لديه تاريخ تسجيل، تم السماح بالسحب.');
-    }
+    // ✅ شرط 7 أيام تم حذفه من هنا
 
     const amount = Number(document.getElementById("withdrawAmount")?.value || 0);
     const address = document.getElementById("withdrawAddress")?.value.trim();
