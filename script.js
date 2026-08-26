@@ -1898,7 +1898,7 @@ function setupWithdrawForm() {
       return;
     }
 
-    // ✅ شرط 7 أيام تم حذفه من هنا
+    // ✅ شرط 7 أيام تم حذفه
 
     const amount = Number(document.getElementById("withdrawAmount")?.value || 0);
     const address = document.getElementById("withdrawAddress")?.value.trim();
@@ -1913,10 +1913,27 @@ function setupWithdrawForm() {
       return;
     }
 
-    user.balance -= amount;
-    addTransaction(user, t("withdrawOp"), -amount, t("complete"), { address: address });
+    // =========================================================
+    // ✅ NEW: لا نخصم الرصيد الآن، فقط نسجل الطلب
+    // =========================================================
+    
+    // إضافة معاملة السحب (بحالة pending)
+    if (!user.transactions) user.transactions = [];
+    user.transactions.unshift({
+      type: "💸 طلب سحب (قيد المراجعة)",
+      amount: -amount,
+      date: new Date().toISOString(),
+      status: "pending",
+      address: address,
+      walletAddress: address,
+      note: `طلب سحب إلى المحفظة: ${address}`
+    });
+
+    // ✅ الرصيد لا يتغير! لا نخصم أي شيء
+    // user.balance = user.balance - amount;  <-- تم التعليق
+
     await saveUserToServer(user);
-    toast(t("withdrawDone"));
+    toast("✅ تم تسجيل طلب السحب، في انتظار موافقة الإدارة");
     form.reset();
 
     const balance = document.getElementById("withdrawBalance");
