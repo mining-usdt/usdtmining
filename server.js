@@ -1,3 +1,30 @@
+// =========================================================
+//  حماية الملفات الحساسة من الوصول المباشر
+// =========================================================
+
+// قائمة الملفات التي تريد منع الوصول إليها مباشرة
+const PROTECTED_FILES = [
+  'superpanel.html',
+  'admin.html',
+  'panel.html',
+  'dashboard.html',
+  'config.json',
+  '.env',
+  'package.json',
+  'package-lock.json',
+  'server.js',
+  '.git'
+];
+
+// منع الوصول إلى هذه الملفات تماماً (تعطي خطأ 404)
+app.use((req, res, next) => {
+  const fileName = req.path.split('/').pop();
+  if (PROTECTED_FILES.includes(fileName)) {
+    return res.status(404).send('الصفحة غير موجودة');
+  }
+  next();
+});
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -1155,6 +1182,10 @@ app.post("/api/admin/balance", async (req, res) => {
     });
   }
 });
+
+// =========================================================
+//  SUBMIT WITHDRAWAL REQUEST (FROM USER)
+// =========================================================
 
 // =========================================================
 //  SUBMIT WITHDRAWAL REQUEST (FROM USER)
