@@ -1187,10 +1187,6 @@ app.post("/api/admin/balance", async (req, res) => {
 //  SUBMIT WITHDRAWAL REQUEST (FROM USER)
 // =========================================================
 
-// =========================================================
-//  SUBMIT WITHDRAWAL REQUEST (FROM USER)
-// =========================================================
-
 app.post("/api/withdraw", async (req, res) => {
   try {
     const userId = String(req.body.userId || "").trim();
