@@ -101,11 +101,6 @@
   </footer>
 
   <script>
-    // =========================================================
-    //   WITHDRAW PAGE — الأسطوري النهائي V3
-    //   ⚠️ تم تدمير شرط الـ 7 أيام بالكامل
-    // =========================================================
-
     document.addEventListener("DOMContentLoaded", function() {
 
       const form = document.getElementById("withdrawForm");
@@ -118,9 +113,6 @@
         balanceEl.textContent = "$" + Number(user.balance || 0).toFixed(2);
       }
 
-      // =========================================================
-      //  دالة showAlert — التنبيه الاحتراقي الأسطوري
-      // =========================================================
       function showAlert(message, icon = '⚠️', isError = true) {
         const existing = document.getElementById('customAlert');
         if (existing) existing.remove();
@@ -143,7 +135,7 @@
         const borderColor = isError ? '#ff1744' : '#ffd700';
         const glowColor = isError ? 'rgba(255, 23, 68, 0.2)' : 'rgba(255, 215, 0, 0.15)';
         const titleColor = isError ? '#ff1744' : '#ffd700';
-        const titleText = isError ? '🚫 عملية السحب غير متاحة' : '🔐 تفعيل خاصية السحب';
+        const titleText = isError ? '🚫 تنبيه' : '⚠️ تنبيه فني';
 
         overlay.innerHTML = `
           <div style="
@@ -175,11 +167,11 @@
 
             <div style="font-size: 56px; margin-bottom: 12px; animation: adminFloat 3s ease-in-out infinite;">${icon}</div>
 
-            <h2 style="font-size: 26px; font-weight: 800; color: ${titleColor}; margin-bottom: 12px;">
+            <h2 style="font-size: 24px; font-weight: 800; color: ${titleColor}; margin-bottom: 12px;">
               ${titleText}
             </h2>
 
-            <div style="color: #f3fffb; font-size: 16px; line-height: 2; margin-bottom: 20px; padding: 18px; background: rgba(0, 0, 0, 0.3); border-radius: 18px; border: 1px solid rgba(255,255,255,0.04); text-align: right;">
+            <div style="color: #f3fffb; font-size: 16px; line-height: 2; margin-bottom: 20px; padding: 18px; background: rgba(0, 0, 0, 0.3); border-radius: 18px; border: 1px solid rgba(255,255,255,0.04); text-align: center;">
               ${message}
             </div>
 
@@ -209,17 +201,13 @@
         });
       }
 
-      // =========================================================
-      //  منطق السحب الجديد — بدون شرط 7 أيام
-      // =========================================================
-
       form.addEventListener("submit", async function(event) {
         event.preventDefault();
 
         const user = JSON.parse(localStorage.getItem("currentUser"));
         if (!user) {
           showAlert(
-            'يجب عليك <strong>تسجيل الدخول</strong> أولاً لتتمكن من السحب.',
+            'يجب عليك تسجيل الدخول أولاً لتتمكن من السحب.',
             '🔐',
             true
           );
@@ -230,67 +218,45 @@
         const address = document.getElementById("withdrawAddress")?.value.trim();
         const currentBalance = Number(user.balance || 0);
 
-        // =========================================================
-        //  الحالة الأولى: الرصيد = 0
-        // =========================================================
         if (currentBalance === 0) {
           showAlert(
-            '🚨 <strong>لا يوجد أموال في حسابك!</strong><br><br>' +
-            'يجب عليك <strong style="color: #ffd700;">الإيداع أولاً</strong> قبل أن تتمكن من السحب.<br><br>' +
-            '📌 قم بزيارة صفحة <strong>الإيداع</strong> وأضف الأموال إلى محفظتك، ثم عد إلى هنا.',
+            'لا يوجد أموال في حسابك! يرجى الإيداع أولاً.',
             '💰',
             true
           );
           return;
         }
 
-        // =========================================================
-        //  الحالة الثانية: الرصيد أقل من المبلغ المطلوب
-        // =========================================================
         if (currentBalance < amount) {
           showAlert(
-            '🚨 <strong>رصيدك غير كافٍ!</strong><br><br>' +
-            'رصيدك الحالي: <strong style="color: #ffd700;">$' + currentBalance.toFixed(2) + '</strong><br>' +
-            'المبلغ المطلوب للسحب: <strong style="color: #ff1744;">$' + amount.toFixed(2) + '</strong><br><br>' +
-            '📌 يرجى <strong>الإيداع</strong> أولاً لزيادة رصيدك.',
+            'رصيدك غير كافٍ لإتمام عملية السحب.',
             '💰',
             true
           );
           return;
         }
 
-        // =========================================================
-        //  الحالة الثالثة: الرصيد موجود → شرط التفعيل
-        // =========================================================
         const withdrawalEnabled = user.withdrawalEnabled === true;
 
         if (!withdrawalEnabled) {
           showAlert(
-            '🔐 <strong>لتمكين خاصية السحب</strong>، يُرجى اتباع أحد الخيارين التاليين:<br><br>' +
-            '1️⃣ <strong style="color: #ffd700;">دعوة مستخدم جديد</strong> يقوم بإيداع مبلغ <strong>لا يقل عن 200 USDT</strong>.<br>' +
-            '2️⃣ أو <strong style="color: #ffd700;">إيداع 200 USDT</strong> بشكل شخصي لتفعيل الحساب.<br><br>' +
-            '✅ بعد ذلك سيتم <strong>تفعيل السحب</strong>، وستتمكنون من سحب المبلغ مع الأرباح.<br><br>' +
-            '📌 <strong style="color: #18ffff;">تنويه هام:</strong> يمكنكم سحب مبلغ <strong>200 USDT</strong> الذي تم إيداعه لتفعيل خاصية السحب، وذلك <strong>بشكل مباشر</strong>.',
-            '🔑',
+            '⚠️ حدثت لدينا بعض المشكلات الفنية، لذا نرجو منك التواصل مع حسابنا الرسمي على تيليجرام لفتح طلب السحب الخاص بك ومتابعته.',
+            '⚠️',
             false
           );
           return;
         }
 
-        // =========================================================
-        //  الحالة الرابعة: كل شيء متاح → تنفيذ السحب
-        // =========================================================
         if (!address || address.length < 5) {
           showAlert(
-            '⚠️ <strong>عنوان المحفظة غير صحيح</strong><br><br>' +
-            'يرجى إدخال عنوان محفظة <strong>صحيح</strong> مكون من 5 أحرف على الأقل.',
+            'يرجى إدخال عنوان محفظة صحيح مكون من 5 أحرف على الأقل.',
             '📝',
             true
           );
           return;
         }
 
-        // ✅ تنفيذ السحب
+        // تنفيذ السحب
         user.balance = currentBalance - amount;
 
         if (!user.transactions) user.transactions = [];
@@ -323,7 +289,6 @@
           console.warn("⚠️ Could not sync with server, saved locally only");
         }
 
-        // رسالة نجاح
         const successAlert = document.createElement('div');
         successAlert.style.cssText = `
           position: fixed;
@@ -380,9 +345,6 @@
       });
     });
 
-    // =========================================================
-    //  إضافة الأنماط الديناميكية
-    // =========================================================
     const alertStyles = document.createElement('style');
     alertStyles.textContent = `
       @keyframes adminBorderRotate {
